@@ -1,0 +1,6 @@
+1) test passing undercloud config options instead of passing undercloud.conf
+--config-options DEFAULT.local_interface=em1 --config-options DEFAULT.local_ip=192.168.0.1/16 --config-options DEFAULT.undercloud_public_host=192.168.0.2 --config-options DEFAULT.undercloud_admin_host=192.168.0.3 --config-options DEFAULT.clean_nodes=True --config-options ctlplane-subnet.cidr=192.168.0.0/16 --config-options ctlplane-subnet.dhcp_start=192.168.3.1 --config-options ctlplane-subnet.dhcp_end=192.168.6.254 --config-options ctlplane-subnet.inspection_iprange=192.168.0.5,192.168.2.254 --config-options ctlplane-subnet.gateway=192.168.0.1 
+
+
+
+
