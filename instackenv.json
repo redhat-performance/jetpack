@@ -1,0 +1,30 @@
+{
+    "nodes": [
+        {
+            "arch": "x86_64", 
+            "cpu": "2", 
+            "disk": "20", 
+            "mac": [
+                "24:6E:96:C3:CC:E0"
+            ], 
+            "memory": "1024", 
+            "pm_addr": "mgmt-e23-h37-740xd.alias.bos.scalelab.redhat.com", 
+            "pm_password": "491702", 
+            "pm_type": "pxe_ipmitool", 
+            "pm_user": "quads"
+        }, 
+        {
+            "arch": "x86_64", 
+            "cpu": "2", 
+            "disk": "20", 
+            "mac": [
+                "24:6E:96:C3:AB:34"
+            ], 
+            "memory": "1024", 
+            "pm_addr": "mgmt-e24-h11-740xd.alias.bos.scalelab.redhat.com", 
+            "pm_password": "491702", 
+            "pm_type": "pxe_ipmitool", 
+            "pm_user": "quads"
+        }
+    ]
+}

@@ -1,0 +1,12 @@
+1) run ir foreman plugin to add undercloud node into inventory
+ir foreman -vv --host-address e23-h35-740xd.alias.bos.scalelab.redhat.com --roles baremetal,undercloud,tester --host-user root --host-key ~/.ssh/id_rsa --user quads --url  https://mgmt-e23-h35-740xd.alias.bos.scalelab.redhat.com  --password 491702
+
+2) create undercloud.conf file in infrared host 
+
+3) run tripleo-undercloud plugin
+infrared tripleo-undercloud --config-file /root/undercloud.conf --version 13 --images-task rpm
+
+4) prepare instackenv.json and nic-configs
+
+5) run tripleo-overcloud plugin
+infrared tripleo-overcloud -vvv --version 13 --instackenv-file /root/instackenv.json --deployment-files /root/virt_baremetal --network-protocol ipv4 --network-backend vlan --public-network false --introspect yes --tagging yes --deploy
