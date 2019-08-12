@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  vars:
+    alias_lab: "http://quads.alias.bos.scalelab.redhat.com"
+    scale_lab: "http://quads.rdu2.scalelab.redhat.com"
+  tasks:
+     - name: clone infrared
+       git:
+           repo: "https://github.com/redhat-openstack/infrared"
+           dest: "{{ infrared_dir }}"
+     - name: Get repo requirements
+       pip:
+           virtualenv: ".venv"
+           chdir: "{{ infrared_dir }}"
+           requirements: "requirements.txt"
+     - name: set instackfile
+       set_fact:
+           instackenv_path: "{{ instackenv_file|default(ansible_user_dir/instackenv.json) }}"
+     - name: Download instackenv.json
+       get_url:
+           url: "{{ alias_lab }}/cloud/{{ cloud_name }}_instackenv.json"
+           dest: "{{ instackenv_path }}"
+           mode: '0440'
+       when: (instackenv_file is not defined and lab_type == "alias")
+     - name: Download instackenv.json
+       get_url:
+           url: "{{ scale_lab }}/cloud/{{ cloud_name }}_instackenv.json"
+           dest: "{{ instackenv_path }}"
+           mode: '0440'
+       when: (instackenv_file is not defined and lab_type == "scale")
+     - name: read instackenv.json
+       set_fact:
+         json_file: "{{ lookup('file', '{{ instackenv_path }}') | from_json }}"
+     - name: set undercloud pm_addr
+       set_fact:
+         pm_addr: "{{ json_file.nodes[0].pm_addr }}"
+    - name: get host
+      set_fact: 
+        undercloud_host: "{{ pm_addr | replace('mgmt-','') | replace('-drac', '') }}"
+      when: undercloud_host is not defined
+    - name: add undercloud_host to inventory file
+      add_host:
+          name: "{{ undercloud_host }}"
+          ansible_host: "{{ undercloud_host }}"
+          ansible_user: "{{ ansible_ssh_user }}"
+          ansible_ssh_pass: "{{ ansible_ssh_pass | default(omit) }}"
+          inventory_dir: '{{ ansible_user_dir }}'
+    - name: copy jump host key to undercloud
+      shell: "echo '{{ ansible_ssh_pass }}' | ssh-copy-id -f {{ ansible_ssh_user }}@{{ undercloud_host }}"
+    - name: Get nics
+      include_tasks: get_interfaces.yml
+      delegate_to: "{{ undercloud_host }}"
+    - name: Ensure deployment folder nested structure exists
+      copy:
+          src: '{{ source_dir }}'
+          dest: '{{ ansible_user_dir }}/'
+    - name: check hypervisors has three or more nics
+      fail:
+          msg: "hypervisor has less nics" 
+      when: ifaces|length < 3
+    - name: Replace nic names with interface names
+      vars:
+          template_base: "{{ ansible_user_dir }}/{{ source_dir | basename }}"
+      include_tasks: prepare_interfaces.yml
+      loop: "{{ ifaces }}"
+      loop_control:
+          index_var: iface_index
