@@ -1,8 +1,12 @@
 infrared_dir: "/root/infrared"
 ansible_user_dir: "/root"
-source_dir: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/deployment/files/virt"
+deployment_files: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/deployment/files"
 cloud_name: "cloud05"
 lab_type: "alias"
 ansible_ssh_user: "root"
 ansible_ssh_pass: "100yard-"
+ansible_ssh_key: "~/.ssh/id_rsa"
+foreman_user: quads
+foreman_password: 491702
+osp_release: 13
 

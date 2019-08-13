@@ -1,0 +1,22 @@
+---
+- name: run infrared foreman plugin to add undercloud node into inventory
+  shell: |
+     source .venv/bin/activate
+     infrared foreman -vv --host-address {{ undercloud_host }} --roles baremetal,undercloud,tester --host-user {{ ansible_ssh_user }} --host-key {{ ansible_ssh_key }} --user {{ foreman_user }} --url  https://{{ pm_addr }}  --password {{ foreman_password }} --wait no --action status
+  args:
+      chdir: "{{ infrared_dir }}"
+  check_mode: yes
+- name: run tripleo-undercloud
+  shell: |
+     source .venv/bin/activate
+     infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} --config-options DEFAULT.local_ip=192.168.0.1/16 --config-options DEFAULT.undercloud_public_host=192.168.0.2 --config-options DEFAULT.undercloud_admin_host=192.168.0.3 --config-options DEFAULT.clean_nodes=True --config-options ctlplane-subnet.cidr=192.168.0.0/16 --config-options ctlplane-subnet.dhcp_start=192.168.3.1 --config-options ctlplane-subnet.dhcp_end=192.168.6.254 --config-options ctlplane-subnet.inspection_iprange=192.168.0.5,192.168.2.254 --config-options ctlplane-subnet.gateway=192.168.0.1
+  args:
+      chdir: "{{ infrared_dir }}" 
+  check_mode: yes
+- name: run tripleo-overcloud
+  shell: |
+     source .venv/bin/activate
+     infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ undercloud_instackenv_path }} --deployment-files {{ nic_configs }} --network-protocol ipv4 --network-backend vlan --public-network false --introspect yes --tagging yes --deploy yes
+  args:
+      chdir: "{{ infrared_dir }}" 
+  check_mode: yes
