@@ -13,6 +13,7 @@
       - name: Add all plugins
         shell: |
             cd {{ infrared_dir }}
+            git fetch "https://review.gerrithub.io/redhat-openstack/infrared" refs/changes/76/463576/1 && git checkout FETCH_HEAD
             virtualenv .venv && source .venv/bin/activate
             pip install --upgrade pip
             pip install --upgrade setuptools
@@ -20,9 +21,9 @@
             infrared plugin add all
             infrared workspace create {{ workspace_name }}
             infrared workspace checkout {{ workspace_name }}
-      - name: set infrared infrared_inventory_dir
+      - name: set infrared infrared_hosts_dir
         set_fact:
-            infrared_inventory_dir: "{{ ansible_user_dir }}/.infrared/.workspaces/active"
+            infrared_hosts_dir: "{{ ansible_user_dir }}/.infrared/.workspaces/active"
       - name: disable selinux
         shell: setenforce 0
       - name: set instackfile
@@ -50,6 +51,11 @@
         set_fact: 
             undercloud_hostname: "{{ pm_addr | replace('mgmt-','') | replace('-drac', '') }}"
         when: undercloud_host is not defined
+      - name: add localhost to inventory file
+        add_host:
+            name: "localhost"
+            groups: "local"
+            ansible_connection: "local"
       - name: add undercloud_host to inventory file
         add_host:
             name: "undercloud_host"
@@ -59,12 +65,12 @@
             ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
       - name: generate inventory file
         template:
-            dest: "{{ infrared_inventory_dir }}/{{ inventory_file_name }}"
+            dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
             src: inventory.j2
             force: yes
       - name: update inventory file symlink
         file:
-            dest: "{{ infrared_inventory_dir }}/hosts"
+            dest: "{{ infrared_hosts_dir }}/hosts"
             state: link
             src: "{{ inventory_file_name }}"
       - name: copy jump host key to undercloud
