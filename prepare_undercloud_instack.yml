@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  tasks:
+      - name: set undercloud instackfile path
+        set_fact:
+            undercloud_instackenv_path: "{{ ansible_user_dir + '/undercloud_instackenv.json' }}"
+      - name: set undercloud_instackenv content
+        set_fact:
+            json_file: |
+              {% set a=json_file.pop('nodes') %}
+              {{ json_file | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
+      - name: create undercloud_instackenv.json file
+        copy:
+            dest: "{{ undercloud_instackenv_path }}"
+            content: "{{ json_file }}"

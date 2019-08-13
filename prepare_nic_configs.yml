@@ -1,22 +1,37 @@
 ---
-- name: check hypervisors has three or more nics
-  fail:
-      msg: "hypervisor has less nics" 
-  when: ifaces|length < 3
-- name: select nic-configs virt folder
-  set_fact:
-      virt: "{{ (ifaces|length == 3)|ternary('virt', 'virt_4nics') }}"
-- name: Ensure deployment folder nested structure exists
-  copy:
-      src: "{{ deployment_files }}/{{ virt }}"
-      dest: "{{ ansible_user_dir }}/"
-- name: Replace nic names with interface names
-  vars:
-      template_base: "{{ ansible_user_dir }}/{{ deployment_files | basename }}"
-  include_tasks: prepare_interfaces.yml
-  loop: "{{ ifaces }}"
-  loop_control:
-      index_var: iface_index
-- name: set nic_configs
-  set_fact:
-     nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
+- hosts: localhost
+  gather_facts: yes
+  any_errors_fatal: true
+  tasks:
+      - name: set ifaces
+        set_fact:
+            ifaces: "{{ hostvars['undercloud_host']['ifaces'] }}"
+      - name: check hypervisors has three or more nics
+        fail:
+            msg: "hypervisor has less nics" 
+        when: ifaces|length < 3
+      - name: select nic-configs virt folder
+        set_fact:
+            virt: "{{ (ifaces|length == 3)|ternary('virt', 'virt_4nics') }}"
+      - name: Ensure deployment folder nested structure exists
+        copy:
+            src: "{{ deployment_files }}/{{ virt }}"
+            dest: "{{ ansible_user_dir }}/"
+      - name: set nic_configs
+        set_fact:
+            nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
+      - name: set ctlplane_interface
+        set_fact:
+            ctlplane_interface: "{{ hostvars['undercloud_host']['ctlplane_interface'] }}"
+      - name: replace nic names              
+        replace:
+            path: "{{ item.src }}"
+            regexp: "nic1"
+            replace: "{{ ctlplane_interface }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+      - name: Replace other nic names with interface names
+        include_tasks: tasks/prepare_interfaces.yml
+        loop: "{{ ifaces }}"
+        loop_control:
+            index_var: iface_index

@@ -4,6 +4,5 @@
       path: "{{ item.src }}"
       regexp: "nic{{ iface_index|int + 1 }}"
       replace: "{{ ifaces[iface_index] }}"
-  with_filetree: '{{ template_base }}'
-  when: item.state == 'file'
+  with_filetree: "{{ nic_configs }}"
 

@@ -5,8 +5,8 @@ cloud_name: "cloud05"
 lab_type: "alias"
 ansible_ssh_user: "root"
 ansible_ssh_pass: "100yard-"
-ansible_ssh_key: "~/.ssh/id_rsa"
+ansible_ssh_key: "/root/.ssh/id_rsa"
 foreman_user: quads
 foreman_password: 491702
 osp_release: 13
-
+inventory_file_name: 'hosts-updated'
