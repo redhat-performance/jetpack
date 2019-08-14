@@ -26,6 +26,7 @@
             infrared_hosts_dir: "{{ ansible_user_dir }}/.infrared/.workspaces/active"
       - name: disable selinux
         shell: setenforce 0
+        ignore_errors: true
       - name: set instackfile
         set_fact:
             instackenv_path: "{{ instackenv_file|default(ansible_user_dir + '/instackenv.json') }}"
@@ -75,6 +76,13 @@
             src: "{{ inventory_file_name }}"
       - name: copy jump host key to undercloud
         shell: "echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}"
+        register: ssh_result
+        ignore_errors: true
+      - name: remove key and add again
+        shell: |
+            ssh-keygen -R {{ undercloud_hostname }}
+            echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}
+        when: ssh_result.stderr_lines|length > 0
       - name: Install repos on undercloud
         shell: |
             cd ~

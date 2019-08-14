@@ -3,6 +3,7 @@
   tasks:
       - name: install libselinux-python in undercloud
         shell: setenforce 0
+        ignore_errors: true
 
 - hosts: localhost
   tasks:
