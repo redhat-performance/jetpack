@@ -12,14 +12,12 @@ Below are the sequence of steps these playbooks run before deploying overcloud
    undercloud_host: first node in instackenv
    ctlplane_interface: will get the interface name from the mac provided in instackenv
 4) Tasks prepare eligible physical interfaces on the hosts to be used for nic-configs
-5) Infrared uses default nic-config templates from
-   https://github.com/redhat-openstack/infrared/tree/master/plugins/tripleo-overcloud/vars/deployment/files/virt/network
+5) We use nic-configs based on number of interfaces present in nodes.
    We use 'virt' if we have 3 eligible free interfaces ( prepared from stemp 4)
    or 'virt_4nics' if more than 3 interfaces.
    Interface names in these default template files are replaced with physical nic names which we got from step 4 above.
 6) Prepare undercloud_instackenv.json which will be used for tripleo undercloud install from instackenv file download from the scalelab.
    Tasks will remove undercloud node from the download file and generate new undercloud_instackenv.json file.
 7) Run infrared plugins
-   a) foreman plugin to add undercloud to inventory
-   b) undercloud to install the undercloud
-   c) overcloud plugin to install overcloud
+   a) undercloud to install the undercloud
+   b) overcloud plugin to install overcloud

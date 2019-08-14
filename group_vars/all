@@ -1,6 +1,5 @@
 infrared_dir: "/root/infrared"
 ansible_user_dir: "/root"
-deployment_files: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/deployment/files"
 cloud_name: "cloud05"
 lab_type: "alias"
 ansible_ssh_user: "root"
