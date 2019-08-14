@@ -6,6 +6,10 @@
 
 - hosts: localhost
   tasks:
+      - name: set compute_count
+        set_fact:
+            compute_count: "{{ json_file.nodes|length - (controller_count|int + 1) }}"
+        when: compute_count is not defined
       - name: run tripleo-undercloud
         shell: |
             cd {{ infrared_dir }}

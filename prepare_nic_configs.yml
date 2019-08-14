@@ -15,7 +15,7 @@
             virt: "{{ (ifaces|length == 3)|ternary('virt', 'virt_4nics') }}"
       - name: Ensure deployment folder nested structure exists
         copy:
-            src: "{{ deployment_files }}/{{ virt }}"
+            src: "{{ virt }}"
             dest: "{{ ansible_user_dir }}/"
       - name: set nic_configs
         set_fact:
