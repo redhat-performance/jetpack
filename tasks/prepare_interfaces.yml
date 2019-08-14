@@ -2,7 +2,7 @@
 - name: replace nic names              
   replace:
       path: "{{ item.src }}"
-      regexp: "nic{{ iface_index|int + 1 }}"
+      regexp: "nic{{ iface_index|int + 2 }}"
       replace: "{{ ifaces[iface_index] }}"
-  with_filetree: "{{ nic_configs }}"
-
+  with_filetree: '{{ nic_configs }}'
+  when: item.state == 'file'

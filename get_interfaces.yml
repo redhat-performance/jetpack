@@ -1,5 +1,5 @@
 ---
-- hosts: undercloud_host
+- hosts: undercloud
   tasks:
       - name: print hostvars
         debug: var=hostvars
@@ -30,6 +30,10 @@
       - name: bring up ifaces
         command: ip link set {{ item }} up
         with_items: "{{ nics }}"
+      - name: wait for 30 seconds for interface up
+        wait_for:
+            delay: 30
+            timeout: 0
       - name: detect ifaces
         command: ip link show dev {{ item }}
         with_items: "{{ nics }}"

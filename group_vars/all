@@ -10,3 +10,6 @@ foreman_user: quads
 foreman_password: 491702
 osp_release: 13
 inventory_file_name: 'hosts-updated'
+osp_puddle: passed_phase2
+controller_count: 1
+compute_count: 1

@@ -5,7 +5,7 @@
   tasks:
       - name: set ifaces
         set_fact:
-            ifaces: "{{ hostvars['undercloud_host']['ifaces'] }}"
+            ifaces: "{{ hostvars[groups.undercloud|first]['ifaces'] }}"
       - name: check hypervisors has three or more nics
         fail:
             msg: "hypervisor has less nics" 
@@ -22,7 +22,7 @@
             nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
       - name: set ctlplane_interface
         set_fact:
-            ctlplane_interface: "{{ hostvars['undercloud_host']['ctlplane_interface'] }}"
+            ctlplane_interface: "{{ hostvars[groups.undercloud|first]['ctlplane_interface'] }}"
       - name: replace nic names              
         replace:
             path: "{{ item.src }}"

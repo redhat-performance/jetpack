@@ -1,5 +1,5 @@
 ---
-- hosts: undercloud_host
+- hosts: undercloud
   tasks:
       - name: install libselinux-python in undercloud
         shell: setenforce 0
@@ -16,6 +16,6 @@
       - name: run tripleo-overcloud
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ undercloud_instackenv_path }} --deployment-files {{ nic_configs }} --network-protocol ipv4 --network-backend vlan --public-network false --introspect yes --tagging yes --deploy yes &> overcloud_install.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ undercloud_instackenv_path }} --deployment-files {{ nic_configs }} --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend vlan --public-network false --introspect yes --tagging yes --deploy yes &> overcloud_install.log
         args:
             chdir: "{{ infrared_dir }}" 
