@@ -1,9 +1,41 @@
 ---
 - hosts: undercloud
   tasks:
-      - name: install libselinux-python in undercloud
-        shell: setenforce 0
+      - name: Ensure SELinux is set to enforcing mode
+        selinux:
+            policy: targeted
+            state: enforcing
+      - name: reboot the undercloud
+        shell: "sleep 2 && reboot"
+        async: 1
+        poll: 0
         ignore_errors: true
+      - name: wait for undercloud to go down
+        command: "{{ ping -c1 hostvars['localhost']['undercloud_hostname'] }}"
+        register: node_down
+        until: node_down.rc != 0
+        retries: 100
+        delay: 3
+        ignore_errors: true
+        delegate_to: localhost
+      - name: wait for 180 seconds before checking for undercloud
+        wait_for:
+            delay: 180
+            timeout: 0
+        delegate_to: localhost
+      - name: waiting for the undercloud to be available
+        wait_for:
+            port: 22
+            host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
+            search_regex: OpenSSH
+            timeout: 30
+        register: uc_reachable
+        delegate_to: localhost
+        retries: 100
+        until: uc_reachable|succeeded
+      - name: check selinux enforcement
+        shell: getenforce
+
 
 - hosts: localhost
   tasks:
@@ -15,7 +47,7 @@
         shell: |
             cd {{ infrared_dir }}
             source {{ infrared_dir }}/.venv/bin/activate
-            infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} --config-options DEFAULT.local_ip=192.168.0.1/16 --config-options DEFAULT.undercloud_public_host=192.168.0.2 --config-options DEFAULT.undercloud_admin_host=192.168.0.3 --config-options DEFAULT.clean_nodes=True --config-options ctlplane-subnet.cidr=192.168.0.0/16 --config-options ctlplane-subnet.dhcp_start=192.168.3.1 --config-options ctlplane-subnet.dhcp_end=192.168.6.254 --config-options ctlplane-subnet.inspection_iprange=192.168.0.5,192.168.2.254 --config-options ctlplane-subnet.gateway=192.168.0.1 &> undercloud_install.log
+            infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} &> undercloud_install.log
         args:
             chdir: "{{ infrared_dir }}" 
       - name: run tripleo-overcloud
