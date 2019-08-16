@@ -3,7 +3,6 @@ These playbooks install OSP using infrared on scale/alias lab machines. User can
 Once the user gets allocation mail from lab team, he has to set below variables from the mail
 cloud_name: cloud05
 lab_type: alias
-foreman_password: 491702
 osp_release: 13
 Below are the sequence of steps these playbooks run before deploying overcloud
 1) Clone and setup infrared environment

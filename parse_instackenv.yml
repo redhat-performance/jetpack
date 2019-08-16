@@ -2,6 +2,7 @@
   vars:
     alias_lab: "http://quads.alias.bos.scalelab.redhat.com"
     scale_lab: "http://quads.rdu2.scalelab.redhat.com"
+    inventory_file_name: 'hosts-updated'
   tasks:
       - name: clone infrared
         git:
