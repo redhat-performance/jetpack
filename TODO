@@ -1,5 +1,4 @@
-1) Reorganise tasks, convert them into playbooks to run based on tags
-2) Let user provide foreman_url which he gets in allocation mail. We set lab type based on this url.
+1) Let user provide foreman_url which he gets in allocation mail. We set lab type based on this url.
 
 
 

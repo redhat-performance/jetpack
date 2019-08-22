@@ -1,5 +1,6 @@
-# infrared_perf
-These playbooks install OSP using infrared on scale/alias lab machines. User can run these playbooks inside a ansible jump host.
+# Description
+This tool will install OSP using infrared on scale/alias lab machines.
+User can run playbooks in this tool inside their laptop or a ansible jump host.
 Once the user gets allocation mail from lab team, he has to set below variables from the mail
 cloud_name: cloud05
 lab_type: alias
@@ -20,3 +21,22 @@ Below are the sequence of steps these playbooks run before deploying overcloud
 7) Run infrared plugins
    a) undercloud to install the undercloud
    b) overcloud plugin to install overcloud
+
+# Usage
+1) User has to either provide instackenv file by setting below ansible variable
+instackenv_file: "~/instackenv.json"
+or provide cloud details i.e cloud name and lab type to download the instackenv file.
+cloud_name: "cloud05"
+lab_type: "alias"
+note: undercloud host should be added in the instackenv as first node if the user is manually adding this file.
+
+2) run the playbook
+ansible-playbook main.yml
+note: user shouldn't provide any inventory file as playbooks will internally prepare the inventory.
+
+# Advanced usage
+User can use tags for running specific playbooks. For example,
+1) to skip undercloud setup run
+ansible-playbook --skip-tags setup_undercloud,undercloud main.yml
+2) to run only overcloud
+ansible-playbook main.yml --tags overcloud

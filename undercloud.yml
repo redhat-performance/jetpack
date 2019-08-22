@@ -1,0 +1,8 @@
+- hosts: localhost
+  tasks:
+      - name: run tripleo-undercloud
+        shell: |
+            source {{ infrared_dir }}/.venv/bin/activate
+            infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} &> undercloud_install.log
+        args:
+            chdir: "{{ infrared_dir }}"

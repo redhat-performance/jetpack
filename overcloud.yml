@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  vars:
+      instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
+  tasks:
+      - set_fact:
+            compute_count: "{{ compute_count|default(instackenv_content.nodes|length - (controller_count|int + 1)) }}" 
+      - name: get nodes
+        shell: |
+            source ~/stackrc
+            openstack baremetal node list -f value -c UUID
+        register: nodes_uuids
+        delegate_to: "{{ groups.undercloud|first }}"
+      - name: check registered nodes with requested node count 
+        debug:
+           msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
+        when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+      - name: Adjust compute count
+        set_fact:
+            compute_count: "{{ compute_count|int - 1 }}"
+        when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+        with_items: "{{ nodes_uuids }}"
+      - name: fail when compute count is less than 1
+        fail:
+            msg: "Failing as compute count is less than 1"
+        when: compute_count|int < 1
+      - name: run tripleo-overcloud deploy
+        shell: |
+            source .venv/bin/activate
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend vlan --public-network false &> overcloud_deploy.log
+        args:
+            chdir: "{{ infrared_dir }}"

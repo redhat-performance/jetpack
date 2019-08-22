@@ -183,8 +183,13 @@ resources:
                             name: nic1
                             primary: true
 {% else %}
-                          type: interface
-                          name: nic1
+                          type: ovs_bridge
+                          name: br-ex
+                          members:
+                            -
+                              type: interface
+                              name: nic1
+                              primary: true
 {% endif %}
                           use_dhcp: false
                           addresses:
@@ -233,10 +238,6 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: TenantIpSubnet
-                        -
-                          type: interface
-                          name: nic3
-                          use_dhcp: false
 
 outputs:
   OS::stack_id:

@@ -1,0 +1,21 @@
+---      
+- name: clone infrared
+  git:
+      repo: "https://github.com/redhat-openstack/infrared"
+      dest: "{{ infrared_dir }}"
+- name: Add all plugins
+  shell: |
+      cd {{ infrared_dir }}
+      git fetch "https://review.gerrithub.io/redhat-openstack/infrared" refs/changes/76/463576/1 && git checkout FETCH_HEAD
+      virtualenv .venv && source .venv/bin/activate
+      pip install --upgrade pip
+      pip install --upgrade setuptools
+      pip install .            
+      infrared plugin add all
+      infrared workspace create {{ workspace_name }}
+      infrared workspace checkout {{ workspace_name }}
+  vars:
+      workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-')}}"
+- name: disable selinux
+  shell: setenforce 0
+  ignore_errors: true

@@ -1,15 +1,20 @@
 ---
-- name: Parse cloud instackenv json file
-  import_playbook: parse_instackenv.yml
+- import_playbook: load_facts.yml
 
-- name: Get nics
-  import_playbook: get_interfaces.yml
+- import_playbook: setup_undercloud.yml
+  tags: setup_undercloud
+  
+- import_playbook: get_interfaces.yml
 
-- name: prepare nic_configs
-  import_playbook: prepare_nic_configs.yml
+- import_playbook: undercloud.yml
+  tags: undercloud
 
-- name: create undercloud instackfile
-  import_playbook: prepare_undercloud_instack.yml
+- import_playbook: intropsect.yml
+  tags: introspect
 
-- name: run infrared
-  import_playbook: run_infrared.yml
+- import_playbook: tag.yml
+  tags: tag
+
+- import_playbook: overcloud.yml
+  tags: overcloud
+

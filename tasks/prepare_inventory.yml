@@ -1,0 +1,24 @@
+---      
+- name: add localhost to inventory file
+  add_host:
+      name: "localhost"
+      groups: "local"
+      ansible_connection: "local"
+- name: add undercloud_host to inventory file
+  add_host:
+      name: "{{ undercloud_hostname }}"
+      groups: "baremetal,undercloud,tester"
+      ansible_host: "{{ undercloud_hostname }}"
+      ansible_user: "{{ ansible_ssh_user }}"
+      ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+- block:
+      - name: generate inventory file
+        template:
+            dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
+            src: inventory.j2
+      - name: update inventory file symlink
+        file:
+            dest: "{{ infrared_hosts_file }}"
+            state: link
+            src: "{{ inventory_file_name }}"
+  when: hosts_file_exist is not defined

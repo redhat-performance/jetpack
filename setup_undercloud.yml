@@ -1,6 +1,27 @@
----
-- hosts: undercloud
+- hosts: localhost
+  tags: setup_undercloud
   tasks:
+      - name: copy jump host key to undercloud
+        shell: "echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}"
+        register: ssh_result
+        ignore_errors: true
+      - name: remove key and add again
+        shell: |
+            ssh-keygen -R {{ undercloud_hostname }}
+            echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}
+        when: ssh_result.stderr_lines|length > 0
+
+- hosts: undercloud
+  tags: setup_undercloud
+  tasks:
+      - name: Install repos on undercloud
+        shell: |
+            cd ~
+            ./clean-interfaces.sh --nuke
+            curl -o rhos-release-latest.noarch.rpm http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+            yum install -y rhos-release-latest.noarch.rpm
+            rhos-release {{ osp_release }}-director -p {{ osp_puddle }}
+            yum update -y
       - name: Ensure SELinux is set to enforcing mode
         selinux:
             policy: targeted
@@ -35,24 +56,3 @@
         until: uc_reachable|succeeded
       - name: check selinux enforcement
         shell: getenforce
-
-
-- hosts: localhost
-  tasks:
-      - name: set compute_count
-        set_fact:
-            compute_count: "{{ json_file.nodes|length - (controller_count|int + 1) }}"
-        when: compute_count is not defined
-      - name: run tripleo-undercloud
-        shell: |
-            cd {{ infrared_dir }}
-            source {{ infrared_dir }}/.venv/bin/activate
-            infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} &> undercloud_install.log
-        args:
-            chdir: "{{ infrared_dir }}" 
-      - name: run tripleo-overcloud
-        shell: |
-            source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ undercloud_instackenv_path }} --deployment-files {{ nic_configs }} --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend vlan --public-network false --introspect yes --tagging yes --deploy yes &> overcloud_install.log
-        args:
-            chdir: "{{ infrared_dir }}" 

@@ -1,0 +1,13 @@
+- hosts: localhost
+  tasks:
+      - name: copy instack file to /home/stack/instackenv.json for infrared tagging
+        copy:
+            src: "{{ undercloud_instackenv_path }}"
+            dest: "/home/stack/instackenv.json"
+        delegate_to: "{{ groups.undercloud|first }}"
+      - name: run tripleo-overcloud tagging
+        shell: |
+            source .venv/bin/activate
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging yes &> overcloud_tagging.log
+        args:
+            chdir: "{{ infrared_dir }}"

@@ -1,11 +1,9 @@
 ---
 - hosts: undercloud
+  tags: always
+  vars:
+      instackenv_content: "{{ hostvars['localhost']['instackenv_content'] }}"
   tasks:
-      - name: print hostvars
-        debug: var=hostvars
-      - name: set json_file
-        set_fact:
-            json_file: "{{ hostvars['localhost']['json_file'] }}"
       - name: find virtual interfaces
         find:
             paths: /sys/devices/virtual/net
@@ -30,9 +28,9 @@
       - name: bring up ifaces
         command: ip link set {{ item }} up
         with_items: "{{ nics }}"
-      - name: wait for 30 seconds for interface up
+      - name: wait for 20 seconds for interface up
         wait_for:
-            delay: 30
+            delay: 20
             timeout: 0
       - name: detect ifaces
         command: ip link show dev {{ item }}
@@ -43,8 +41,6 @@
             ifaces: "{{ ifaces|default([]) + [item.item] }}"
         when: '"LOWER_UP" in item.stdout'
         with_items: "{{ detect_iface.results }}"
-      - name: print working interfaces
-        debug: var=ifaces
       - name: show addresses
         shell: "ip -4 address show {{ item }} | grep inet | awk '{ print $2}'"
         with_items: "{{ ifaces }}"
@@ -54,27 +50,59 @@
             public_interface: "{{ item.item }}"
         when: item.stdout | ipsubnet('10.0.0.0/8')
         with_items: "{{ addr_show.results }}"
-      - name: print public interface
-        debug: var=public_interface
       - name: set eligible interfaces
         set_fact:
             ifaces: "{{ ifaces | difference([public_interface]) }}"
-      - name: print eligible interfaces
-        debug: var=ifaces
-      - name: set ctlplane_mac
-        set_fact:
-            ctlplane_mac: "{{ json_file.nodes[0].mac[0] }}"
       - name: show macs
         shell: 'ip addr show {{ item }} | grep -Po "link/ether \K[\da-f:]+"'
         with_items: "{{ ifaces }}"
         register: macs_show
       - name: set ctlplane interface
+        vars:
+            ctlplane_mac: "{{ instackenv_content.nodes[0].mac[0] }}"
         set_fact:
             ctlplane_interface: "{{ item.item }}"
         when: item.stdout == ctlplane_mac|lower
         with_items: "{{ macs_show.results }}"
-      - name: print ctlplane interface
-        debug: var=ctlplane_interface
       - name: set eligible interfaces
         set_fact:
             ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
+      - name: check hypervisors has three or more nics
+        fail:
+            msg: "hypervisor has less nics" 
+        when: ifaces|length < 3
+
+- hosts: localhost
+  tags: always
+  vars:
+      undercloud_host: "{{ groups.undercloud|first }}"
+      interfaces: "{{ hostvars[undercloud_host]['ifaces'] }}"
+      virt: "{{ (interfaces|length == 3)|ternary('virt', 'virt_4nics') }}"
+  tasks:
+      - debug: var=undercloud_host
+      - debug: var=hostvars[groups.undercloud|first]['ifaces']
+      - set_fact:
+            ifaces: "{{ interfaces }}"
+            ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
+            nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
+      - stat:
+            path: "{{ nic_configs }}"
+        register: nic_configs_stat
+      - block:
+            - name: Ensure deployment folder nested structure exists
+              copy:
+                  src: "{{ virt }}"
+                  dest: "{{ ansible_user_dir }}/"
+            - name: replace nic names              
+              replace:
+                  path: "{{ item.src }}"
+                  regexp: "nic1"
+                  replace: "{{ ctlplane_interface }}"
+              with_filetree: '{{ nic_configs }}'
+              when: item.state == 'file'
+            - name: Replace other nic names with interface names
+              include_tasks: tasks/replace_nic_names.yml
+              loop: "{{ ifaces }}"
+              loop_control:
+                  index_var: iface_index
+        when: nic_configs_stat.stat.exists == False

@@ -1,0 +1,26 @@
+- hosts: localhost
+  tasks:
+      - name: remove {{ infrared_dir }}
+        file:
+            path: "{{ infrared_dir }}"
+            state: absent
+      - name: remove {{ infrared_workspaces_dir }}
+        file:
+            path: "{{ infrared_workspaces_dir }}"
+            state: absent
+      - name: remove {{ instackenv_file }}
+        file:
+            path: "{{ instackenv_file }}"
+            state: absent
+      - name: remove undercloud_instackenv.json
+        file:
+            path: "~/undercloud_instackenv.json"
+            state: absent
+      - name: remove nic-configs virt
+        file:
+            path: "{{ ansible_user_dir }}/virt"
+            state: absent
+      - name: remove nic-configs virt_4nics
+        file:
+            path: "{{ ansible_user_dir }}/virt_4nics"
+            state: absent
