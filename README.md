@@ -23,20 +23,20 @@ Below are the sequence of steps these playbooks run before deploying overcloud
    b) overcloud plugin to install overcloud
 
 # Usage
-1) User has to either provide instackenv file by setting below ansible variable
-instackenv_file: "~/instackenv.json"
-or provide cloud details i.e cloud name and lab type to download the instackenv file.
-cloud_name: "cloud05"
-lab_type: "alias"
-note: undercloud host should be added in the instackenv as first node if the user is manually adding this file.
+1) User has to either provide instackenv file by setting below ansible variable  
+instackenv_file: "~/instackenv.json"  
+or provide cloud details i.e cloud name and lab type to download the instackenv file.  
+cloud_name: "cloud05"  
+lab_type: "alias"  
+**Note:** undercloud host should be added in the instackenv as first node if the user is manually adding this file.
 
-2) run the playbook
-ansible-playbook main.yml
-note: user shouldn't provide any inventory file as playbooks will internally prepare the inventory.
+2) run the playbook  
+ansible-playbook main.yml  
+**Note:** user shouldn't provide any inventory file as playbooks will internally prepare the inventory.
 
 # Advanced usage
 User can use tags for running specific playbooks. For example,
-1) to skip undercloud setup run
-ansible-playbook --skip-tags setup_undercloud,undercloud main.yml
-2) to run only overcloud
-ansible-playbook main.yml --tags overcloud
+1) to skip undercloud setup run  
+   ansible-playbook --skip-tags setup_undercloud,undercloud main.yml
+2) to run only overcloud  
+   ansible-playbook main.yml --tags overcloud
