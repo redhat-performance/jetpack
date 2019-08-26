@@ -1,0 +1,43 @@
+- hosts: localhost
+  tag: boot_order
+  tasks:
+    - name: install packages
+      package:
+        name: ipmitool
+        state: present
+      become: true
+
+    - name: clone badfish
+      git:
+        repo: "https://github.com/redhat-performance/badfish.git"
+         dest: "{{ ansible_user_dir }}"
+         force: yes
+
+    - name: set foreman password
+      set_fact:
+        chassis_password:  "{{ instack_content.nodes[0].pm_password }}"
+
+    - name: Set boot oder for overcloud nodes if supermicro (scale)
+      shell: ipmitool -I lanplus -H {{ item.pm_addr }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
+      with_items: "{{ instack_content.nodes[1:] }}"
+      when: set_boot_order and lab_name == 'scale' and item.pm_addr.split('-').[4] in machines_types.supermicro
+
+    - name: Set boot oder for overcloud nodes if supermicro (alias)
+      shell: ipmitool -I lanplus -H {{ item.pm_addr }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
+      with_items: "{{ instack_content.nodes[1:] }}"
+      when: set_boot_order and lab_name == 'alias' and item.pm_addr.split('-').[2] in machines_types.supermicro
+
+    - name: Set boot oder for overcloud nodes if dell (scale)
+      shell: ./badfish.py -H {{ item.pm_addr }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml -t director
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish"
+      with_items: "{{ instack_content.nodes[1:] }}"
+      when: set_boot_order and lab_name == 'scale' and item.pm_addr.split('-').[4] in machines_types.dell
+
+    - name: Set boot oder for overcloud nodes if dell (scale)
+      shell: ./badfish.py -H {{ item.pm_addr }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml -t director
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish"
+      with_items: "{{ instack_content.nodes[1:] }}"
+
+

@@ -3,6 +3,9 @@
 
 - import_playbook: setup_undercloud.yml
   tags: setup_undercloud
+
+- import_playbook: boot_oder.yml
+  tags: boot_order
   
 - import_playbook: get_interfaces.yml
 

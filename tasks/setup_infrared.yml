@@ -3,6 +3,8 @@
   git:
       repo: "https://github.com/redhat-openstack/infrared"
       dest: "{{ infrared_dir }}"
+      force: yes
+
 - name: Add all plugins
   shell: |
       cd {{ infrared_dir }}
@@ -16,6 +18,7 @@
       infrared workspace checkout {{ workspace_name }}
   vars:
       workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-')}}"
+
 - name: disable selinux
   shell: setenforce 0
   ignore_errors: true
