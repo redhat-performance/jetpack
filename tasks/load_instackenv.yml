@@ -1,10 +1,13 @@
 ---
-- set_fact:
-  instackenv_file: "{{ instackenv_file|default('~/instackenv.json') }}"
+- name: set fact for instack file
+  set_fact:
+    instackenv_file: "{{ instackenv_file|default('~/instackenv.json') }}"
+
 - name: set instackfile
   stat:
       path: "{{ instackenv_file }}"
   register: stat_result
+
 - name: Download instackenv.json
   get_url:
       url: "{{ alias_lab }}/cloud/{{ cloud_name }}_instackenv.json"
@@ -13,6 +16,7 @@
   vars:
     alias_lab: "http://quads.alias.bos.scalelab.redhat.com"
   when: (stat_result.stat.exists == False and lab_type == "alias")
+
 - name: Download instackenv.json
   get_url:
       url: "{{ scale_lab }}/cloud/{{ cloud_name }}_instackenv.json"
@@ -21,17 +25,20 @@
   vars:
     scale_lab: "http://quads.rdu2.scalelab.redhat.com"
   when: (stat_result.stat.exists == False and lab_type == "scale")
-- set_fact:
-      instackenv_content: "{{ instackenv_content }}"
-      undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
-      undercloud_instackenv_path: "~/undercloud_instackenv.json"
+
+- name: set facts
+  set_fact:
+    instackenv_content: "{{ instackenv_content }}"
+    undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+    undercloud_instackenv_path: "~/undercloud_instackenv.json"
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
-- set_fact:
+
 - name: check undercloud_instackenv exists
   stat:
       path: "~/undercloud_instackenv.json"
   register: undercloud_instackenv_stat
+
 - block:
       - name: set undercloud_instackenv content
         set_fact:
