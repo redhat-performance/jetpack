@@ -1,6 +1,5 @@
 ---
 - hosts: undercloud
-  tags: always
   vars:
       instackenv_content: "{{ hostvars['localhost']['instackenv_content'] }}"
   tasks:

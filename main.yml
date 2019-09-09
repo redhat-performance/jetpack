@@ -1,20 +1,34 @@
 ---
 - import_playbook: load_facts.yml
+  tags:
+    - always
 
 - import_playbook: setup_undercloud.yml
-  tags: setup_undercloud
+  tags: 
+    - setup_undercloud
   
 - import_playbook: get_interfaces.yml
+  tags:
+    - always 
 
 - import_playbook: undercloud.yml
-  tags: undercloud
+  tags: 
+    - undercloud
 
 - import_playbook: intropsect.yml
-  tags: introspect
+  tags: 
+    - introspect
 
 - import_playbook: tag.yml
-  tags: tag
+  tags: 
+    - tag
 
 - import_playbook: overcloud.yml
-  tags: overcloud
+  tags:
+    - overcloud
+
+- import_playbook: cleanup.yml
+  tags:
+    - cleanup
+    - never
 

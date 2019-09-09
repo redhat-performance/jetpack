@@ -1,6 +1,4 @@
 - hosts: localhost
-  tags:
-      - always
   tasks:
       - name: load instackenv file
         include_tasks: tasks/load_instackenv.yml
