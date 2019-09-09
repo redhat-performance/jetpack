@@ -2,12 +2,12 @@
 infrared_dir: "{{ansible_user_dir}}/infrared"
 infrared_workspaces_dir: "{{ansible_user_dir}}/.infrared/.workspaces"
 infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
-instackenv_file: "{{ansible_user_dir}/instackenv.json"
+instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
 #cloud_name: cloud05
 #lab_type: alias
 ansible_ssh_user: root
 ansible_ssh_pass: password
-ansible_ssh_key: "{{ansible_user_dir}}/.ssh/id_rsa"
+ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
 osp_puddle: passed_phase2
 controller_count: 3
