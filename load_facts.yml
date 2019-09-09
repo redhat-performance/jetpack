@@ -2,16 +2,16 @@
   tasks:
       - name: load instackenv file
         include_tasks: tasks/load_instackenv.yml
+
       - name: stat infrared_hosts_file path
         stat:
             path: "{{ infrared_hosts_file }}"
         register: hosts_file_stat
-      - set_fact:
-            hosts_file_exist: True
-        when: hosts_file_stat.stat.exists == True
+
       - name: setup infrared
         include_tasks: tasks/setup_infrared.yml
-        when: hosts_file_exist is not defined
+        when: not hosts_file_stat.stat.exists
+
       - name: prepare inventory
         include_tasks: tasks/prepare_inventory.yml
         vars:

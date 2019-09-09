@@ -1,10 +1,10 @@
 - hosts: localhost
-  tags: setup_undercloud
   tasks:
       - name: copy jump host key to undercloud
         shell: "echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}"
         register: ssh_result
         ignore_errors: true
+
       - name: remove key and add again
         shell: |
             ssh-keygen -R {{ undercloud_hostname }}
@@ -12,25 +12,28 @@
         when: ssh_result.stderr_lines|length > 0
 
 - hosts: undercloud
-  tags: setup_undercloud
   tasks:
       - name: Install repos on undercloud
         shell: |
-            cd ~
-            ./clean-interfaces.sh --nuke
-            curl -o rhos-release-latest.noarch.rpm http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-            yum install -y rhos-release-latest.noarch.rpm
-            rhos-release {{ osp_release }}-director -p {{ osp_puddle }}
-            yum update -y
+          ./clean-interfaces.sh --nuke
+          curl -o rhos-release-latest.noarch.rpm http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
+          yum install -y rhos-release-latest.noarch.rpm
+          rhos-release {{ osp_release }}-director -p {{ osp_puddle }}
+          yum update -y
+        args:
+          chdir: "{{ ansible_user_dir }}"
+
       - name: Ensure SELinux is set to enforcing mode
         selinux:
             policy: targeted
             state: enforcing
-      - name: reboot the undercloud
-        shell: "sleep 2 && reboot"
-        async: 1
+
+      - name: Reboot machine
+        shell: "nohup sh -c '( sleep 5 ; shutdown -r now )' &"
+        async: 0
         poll: 0
         ignore_errors: true
+
       - name: wait for undercloud to go down
         command: "{{ ping -c1 hostvars['localhost']['undercloud_hostname'] }}"
         register: node_down
@@ -39,11 +42,13 @@
         delay: 3
         ignore_errors: true
         delegate_to: localhost
+
       - name: wait for 180 seconds before checking for undercloud
         wait_for:
             delay: 180
             timeout: 0
         delegate_to: localhost
+
       - name: waiting for the undercloud to be available
         wait_for:
             port: 22
@@ -54,5 +59,3 @@
         delegate_to: localhost
         retries: 100
         until: uc_reachable|succeeded
-      - name: check selinux enforcement
-        shell: getenforce

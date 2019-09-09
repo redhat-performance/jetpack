@@ -3,9 +3,9 @@
   git:
       repo: "https://github.com/redhat-openstack/infrared"
       dest: "{{ infrared_dir }}"
+
 - name: Add all plugins
   shell: |
-      cd {{ infrared_dir }}
       git fetch "https://review.gerrithub.io/redhat-openstack/infrared" refs/changes/76/463576/1 && git checkout FETCH_HEAD
       virtualenv .venv && source .venv/bin/activate
       pip install --upgrade pip
@@ -14,8 +14,12 @@
       infrared plugin add all
       infrared workspace create {{ workspace_name }}
       infrared workspace checkout {{ workspace_name }}
+  args:
+    chdir: "{{ infrared_dir }}"
   vars:
       workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-')}}"
+
+# Not sure why this is needed, need to remove in future
 - name: disable selinux
   shell: setenforce 0
   ignore_errors: true
