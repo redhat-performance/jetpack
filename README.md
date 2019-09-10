@@ -37,6 +37,6 @@ ansible-playbook main.yml
 # Advanced usage
 User can use tags for running specific playbooks. For example,
 1) to skip undercloud setup run  
-   ansible-playbook --skip-tags setup_undercloud,undercloud main.yml
+   ansible-playbook main.yml --skip-tags "setup_undercloud,undercloud"
 2) to run only overcloud  
-   ansible-playbook main.yml --tags overcloud
+   ansible-playbook main.yml --tags "overcloud"
