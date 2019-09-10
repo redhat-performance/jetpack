@@ -1,6 +1,6 @@
 ---
-infrared_dir: "{{ansible_user_dir}}/infrared"
-infrared_workspaces_dir: "{{ansible_user_dir}}/.infrared/.workspaces"
+infrared_dir: "{{ ansible_user_dir }}/infrared"
+infrared_workspaces_dir: "{{ ansible_user_dir }}/.infrared/.workspaces"
 infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
 instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
 #cloud_name: cloud05
