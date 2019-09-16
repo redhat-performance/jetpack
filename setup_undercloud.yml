@@ -1,18 +1,95 @@
 - hosts: localhost
   tasks:
-      - name: copy jump host key to undercloud
-        shell: "echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}"
-        register: ssh_result
-        ignore_errors: true
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ item }}"
+      loop:
+        - "{{ undercloud_hostname }}"
+        - "{{ hammer_host }}"
 
-      - name: remove key and add again
-        shell: |
-            ssh-keygen -R {{ undercloud_hostname }}
-            echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ undercloud_hostname }}
-        when: ssh_result.stderr_lines|length > 0
+    - name: clone badfish
+      git:
+        repo: "https://github.com/redhat-performance/badfish.git"
+        dest: "{{ ansible_user_dir }}/badfish"
+
+    - name: Install python3 pyyaml
+      pip:
+        name: bottle
+        executable: pip-3.6
+      become: true      
+     
+    - name: install ipmitool
+      package:
+        name: ipmitool
+        state: present
+      become: true
+
+         
+    - name: set foreman password
+      set_fact:
+        chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+
+    - name: RHEL 8 install for OSP 15 and above 
+      block:
+          - name: Set foreman RHEL 8 build
+            shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem 'RHEL 8' --parameters overcloud=false --overwrite 1
+            delegate_to: "{{ hammer_host }}"
+          
+          - name: set undercloud to PXE boot (Supermicro)
+            shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
+            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
+     
+          - name: power cycle undercloud (Supermicro)
+            shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle 
+            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
+         
+          - name: set undercloud to PXE boot off Foreman (Dell)
+            shell: ./badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
+            args:
+              chdir: "{{ ansible_user_dir }}/badfish"
+            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+
+          - name: power cycle undercloud
+            shell: ./badfish.py -H mgmt-{{undercloud_hostname}}  -u quads -p {{ chassis_password }} --reboot-only
+            args:
+              chdir: "{{ ansible_user_dir }}/badfish"
+            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+
+          - name: wait for 420 seconds before checking for undercloud
+            wait_for:
+                timeout: 420
+
+          - name: waiting for the undercloud to be available
+            wait_for:
+              port: 22
+              host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
+              search_regex: OpenSSH
+              timeout: 30
+            register: uc_reachable
+            delegate_to: localhost
+            retries: 100
+            until: uc_reachable|succeeded
+
+          - name: add keys to new undercloud
+            include_tasks: tasks/copykeys.yml
+            vars:
+              hostname: "{{ undercloud_hostname }}"
+
+          - name: add undercloud_host to inventory file
+            add_host:
+             name: "{{ undercloud_hostname }}"
+             groups: "baremetal,undercloud,tester"
+             ansible_host: "{{ undercloud_hostname }}"
+             ansible_user: "{{ ansible_ssh_user }}"
+             ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+             ansible_python_interpreter: /usr/libexec/platform-python
+
+      when: osp_release|int > 14
+
 
 - hosts: undercloud
-  tasks:
+  tasks: 
+      
       - name: Install repos on undercloud
         shell: |
           ./clean-interfaces.sh --nuke
@@ -25,8 +102,8 @@
 
       - name: Ensure SELinux is set to enforcing mode
         selinux:
-            policy: targeted
-            state: enforcing
+          policy: targeted
+          state: enforcing
 
       - name: Reboot machine
         shell: "nohup sh -c '( sleep 5 ; shutdown -r now )' &"
@@ -35,7 +112,7 @@
         ignore_errors: true
 
       - name: wait for undercloud to go down
-        command: "{{ ping -c1 hostvars['localhost']['undercloud_hostname'] }}"
+        command: ping -c 1 {{ hostvars['localhost']['undercloud_hostname'] }}
         register: node_down
         until: node_down.rc != 0
         retries: 100
@@ -45,8 +122,7 @@
 
       - name: wait for 180 seconds before checking for undercloud
         wait_for:
-            delay: 180
-            timeout: 0
+            timeout: 180
         delegate_to: localhost
 
       - name: waiting for the undercloud to be available
