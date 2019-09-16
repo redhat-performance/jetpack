@@ -10,8 +10,8 @@ osp_release: 13
 ```
 # Requirements
 
-Ansible >= 2.7
-Passwordless sudo for user running the playbook on localhost (host where the playbooks are being run from)
+Ansible >= 2.7  
+Passwordless sudo for user running the playbook on localhost (host where the playbooks are being run from)  
 A host for hammer cli operations referenced by the variable *hammer_host*
 
 ```
