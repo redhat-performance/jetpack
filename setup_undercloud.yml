@@ -14,7 +14,7 @@
 
     - name: Install python3 pyyaml
       pip:
-        name: bottle
+        name: pyyaml
         executable: pip-3.6
       become: true      
      
