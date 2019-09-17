@@ -2,11 +2,13 @@
 
 This tool will install OSP using infrared on scale/alias lab machines.
 User can run playbooks in this tool inside their laptop or a ansible jump host.
-Once the user gets allocation mail from lab team, he has to set below bareminimumvariables from the mail
+Once the user gets allocation mail from lab team, he has to set below bare minimum variables from the mail
 ```
 cloud_name: cloud05
-lab_type: alias
+lab_type: scale
 osp_release: 13
+hammer_host: <FQDN/IP of host with hammer cli>
+
 ```
 # Requirements
 
