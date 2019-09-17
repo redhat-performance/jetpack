@@ -72,7 +72,6 @@
         when: ifaces|length < 3
 
 - hosts: localhost
-  tags: always
   vars:
       undercloud_host: "{{ groups.undercloud|first }}"
       interfaces: "{{ hostvars[undercloud_host]['ifaces'] }}"

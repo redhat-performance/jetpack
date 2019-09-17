@@ -60,3 +60,18 @@ User can use tags for running specific playbooks. For example,
    ansible-playbook main.yml --skip-tags "setup_undercloud,undercloud"
 2) to run only overcloud  
    ansible-playbook main.yml --tags "overcloud"
+
+## Deploying with custom environment files  
+
+To deploy the overcloud with custom environment files, the user needs to add a section similar to below in the group_vars/all.yml
+```
+extra_templates:
+  - example.yml
+  - /usr/share/openstack-tripleo-heat-templates/environments/services/sahara.yaml
+parameter_defaults:
+  - NeutronOVSFirewallDriver: openvswitch`
+```
+
+*extra_templates* is a list of extra template files that you want to deploy the overcloud with. Jetpack searches the undercloud for these files when absolute path on undercloud is provided, and if the environment file does not exist on the undercloud then  <playbookdir>/files/ is searched onthe ansible controller machine for the custom environment file user wants to deploy with and if it exists, copies it over to the undercloud from where it is  used for deployment.
+
+*parameter_defaults* is a list of key value pairs for customizing the deployment like ```NeutronOVSFirewallDriver: openvswitch```.

@@ -1,0 +1,20 @@
+---
+{% if extra_templates is defined and extra_templates %}
+tripleo_heat_templates:
+{% for template in  env_files.results %}
+{% if template.stat.exists == False %}
+    - /home/stack/{{ template.item }}
+{% else %}
+    - {{ template.item }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% if parameter_defaults is defined and parameter_defaults %}
+custom_templates:
+    parameter_defaults:
+{% for parameter in parameter_defaults %}
+{% for key,value in parameter.items() %}
+        {{ key }}: {{ value }}
+{% endfor %}
+{% endfor %}
+{% endif %}
