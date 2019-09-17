@@ -9,63 +9,77 @@
             recurse: no
             file_type: directory
         register: find_virtual_nics
+
       - name: set virtual nics
         set_fact:
             virtual_nics: "{{ virtual_nics|default([]) + [item.path | basename] }}"
         with_items: "{{ find_virtual_nics.files }}"
+
       - name: find all interfaces
         find:
             paths: /sys/class/net
             recurse: no
             file_type: any
         register: find_nics
+
       - name: set nics
         set_fact:
             nics: "{{ nics|default([]) + [item.path | basename] }}"
         when: "item.path|basename not in virtual_nics"
         with_items: "{{ find_nics.files }}"
+
       - name: bring up ifaces
         command: ip link set {{ item }} up
         with_items: "{{ nics }}"
+
       - name: wait for 20 seconds for interface up
         wait_for:
             delay: 20
             timeout: 0
+
       - name: detect ifaces
         command: ip link show dev {{ item }}
         with_items: "{{ nics }}"
         register: detect_iface
+
       - name: working interfaces
         set_fact:
             ifaces: "{{ ifaces|default([]) + [item.item] }}"
         when: '"LOWER_UP" in item.stdout'
         with_items: "{{ detect_iface.results }}"
+
       - name: show addresses
         shell: "ip -4 address show {{ item }} | grep inet | awk '{ print $2}'"
         with_items: "{{ ifaces }}"
         register: addr_show
+ 
       - name: set public interface
         set_fact:
-            public_interface: "{{ item.item }}"
+          public_interface: "{{ item.item }}"
         when: item.stdout | ipsubnet('10.0.0.0/8')
         with_items: "{{ addr_show.results }}"
+
       - name: set eligible interfaces
         set_fact:
-            ifaces: "{{ ifaces | difference([public_interface]) }}"
+          ifaces: "{{ ifaces | difference([public_interface]) }}"
+
       - name: show macs
         shell: 'ip addr show {{ item }} | grep -Po "link/ether \K[\da-f:]+"'
         with_items: "{{ ifaces }}"
         register: macs_show
+
       - name: set ctlplane interface
         vars:
             ctlplane_mac: "{{ instackenv_content.nodes[0].mac[0] }}"
         set_fact:
-            ctlplane_interface: "{{ item.item }}"
+          ctlplane_interface: "{{ item.item }}"
         when: item.stdout == ctlplane_mac|lower
         with_items: "{{ macs_show.results }}"
+
       - name: set eligible interfaces
         set_fact:
-            ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
+          ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
+
       - name: check hypervisors has three or more nics
         fail:
             msg: "hypervisor has less nics" 
@@ -77,30 +91,35 @@
       interfaces: "{{ hostvars[undercloud_host]['ifaces'] }}"
       virt: "{{ (interfaces|length == 3)|ternary('virt', 'virt_4nics') }}"
   tasks:
-      - debug: var=undercloud_host
-      - debug: var=hostvars[groups.undercloud|first]['ifaces']
-      - set_fact:
-            ifaces: "{{ interfaces }}"
-            ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
-            nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
-      - stat:
+      - name: set some vars 
+        set_fact:
+          ifaces: "{{ interfaces }}"
+          ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
+          nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
+
+      - name: check nic-configs path
+        stat:
             path: "{{ nic_configs }}"
         register: nic_configs_stat
-      - block:
-            - name: Ensure deployment folder nested structure exists
-              copy:
-                  src: "{{ virt }}"
-                  dest: "{{ ansible_user_dir }}/"
-            - name: replace nic names              
-              replace:
-                  path: "{{ item.src }}"
-                  regexp: "nic1"
-                  replace: "{{ ctlplane_interface }}"
-              with_filetree: '{{ nic_configs }}'
-              when: item.state == 'file'
-            - name: Replace other nic names with interface names
-              include_tasks: tasks/replace_nic_names.yml
-              loop: "{{ ifaces }}"
-              loop_control:
-                  index_var: iface_index
+
+      - name: NIC config generation
+        block:
+          - name: Ensure deployment folder nested structure exists
+            copy:
+              src: "{{ virt }}"
+              dest: "{{ ansible_user_dir }}/"
+
+          - name: replace nic names              
+            replace:
+              path: "{{ item.src }}"
+              regexp: "nic1"
+              replace: "{{ ctlplane_interface }}"
+            with_filetree: '{{ nic_configs }}'
+            when: item.state == 'file'
+
+          - name: Replace other nic names with interface names
+            include_tasks: tasks/replace_nic_names.yml
+            loop: "{{ ifaces }}"
+            loop_control:
+              index_var: iface_index
         when: nic_configs_stat.stat.exists == False

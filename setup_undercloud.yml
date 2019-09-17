@@ -34,11 +34,19 @@
         name: ipmitool
         state: present
       become: true
+   
+    - name: isntall python-netaddr
+      package:
+        name: "{{ item }}"
+      loop:
+        - python-netaddr
+        - python3-netaddr
 
     - name: Install badfish requirements
       pip:
         requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
         executable: pip-3
+      become: true
          
     - name: set foreman password
       set_fact:

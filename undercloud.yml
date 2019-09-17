@@ -2,11 +2,11 @@
   vars:
     dhcp_start: 192.168.24.5
     dhcp_end: 192.168.24.105
-    inspection_range: 192.168.24.110,192.168.24.250
+    inspection_iprange: 192.168.24.110,192.168.24.250
   tasks:
       - name: run tripleo-undercloud
         shell: |
-            source {{ infrared_dir }}/.venv/bin/activate
-            infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} --config-options ctlplane-subnet.dhcp_start={{ dhcp_start }} --config-options ctlplane-subnet.dhcp_end={{ dhcp_end }} --config-options ctlplane-subnet.inspection_iprange={{ inspection_iprange }} &> undercloud_install.log
+          source {{ infrared_dir }}/.venv/bin/activate
+          infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} --config-options ctlplane-subnet.dhcp_start={{ dhcp_start }} --config-options ctlplane-subnet.dhcp_end={{ dhcp_end }} --config-options ctlplane-subnet.inspection_iprange={{ inspection_iprange }} &> undercloud_install.log
         args:
             chdir: "{{ infrared_dir }}"
