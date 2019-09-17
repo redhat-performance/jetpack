@@ -33,6 +33,11 @@
         name: ipmitool
         state: present
       become: true
+
+    - name: Install badfish requirements
+      pip:
+        requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
+        executable: pip-3
          
     - name: set foreman password
       set_fact:
