@@ -1,4 +1,16 @@
----      
+--- 
+- name: Install dependencies
+  package: 
+    name: "{{ item }}"
+    state: installed
+  loop:
+      - git
+      - gcc
+      - libffi-devel
+      - python-virtualenv
+      - libselinux-python 
+  become: true
+
 - name: clone infrared
   git:
       repo: "https://github.com/redhat-openstack/infrared"
@@ -18,8 +30,3 @@
     chdir: "{{ infrared_dir }}"
   vars:
       workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-')}}"
-
-# Not sure why this is needed, need to remove in future
-- name: disable selinux
-  shell: setenforce 0
-  ignore_errors: true

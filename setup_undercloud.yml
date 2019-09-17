@@ -12,10 +12,20 @@
         repo: "https://github.com/redhat-performance/badfish.git"
         dest: "{{ ansible_user_dir }}/badfish"
 
+    - name: check python3 version
+      shell: python3 --version
+      register: python3_version
+      ignore_errors: true
+
+    - name: Fail if no python3 on controller
+      fail:
+        msg: Python3 is needed on the system for jetpack
+      when: python3_version.stderr != ""
+
     - name: Install python3 pyyaml
       pip:
         name: pyyaml
-        executable: pip-3.6
+        executable: pip-3
       become: true      
      
     - name: install ipmitool
@@ -23,7 +33,6 @@
         name: ipmitool
         state: present
       become: true
-
          
     - name: set foreman password
       set_fact:
