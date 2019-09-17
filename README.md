@@ -41,14 +41,7 @@ Below are the sequence of steps these playbooks run before deploying overcloud
    b) overcloud plugin to install overcloud
 
 # Usage
-
-1) User has to either provide instackenv file by setting below ansible variable  
-instackenv_file: "~/instackenv.json"  
-or provide cloud details i.e cloud name and lab type to download the instackenv file.  
-cloud_name: "cloud05"  
-lab_type: "alias"  
-**Note:** undercloud host should be added in the instackenv as first node if the user is manually adding this file.
-
+1) Set required vars in group_vars/all.yml
 2) run the playbook  
 ansible-playbook main.yml  
 **Note:** user shouldn't provide any inventory file as playbooks will internally prepare the inventory.
