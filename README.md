@@ -1,8 +1,8 @@
 # Description
 
-This tool will install OSP using infrared on scale/alias lab machines.
+This tool will install OpenStack using infrared on a set of homegnous servers.
 User can run playbooks in this tool inside their laptop or a ansible jump host.
-Once the user gets allocation mail from lab team, he has to set below bare minimum variables from the mail
+Once the user gets notified that their allocation is ready for use, they have to set below bare minimum variables.
 ```
 cloud_name: cloud05
 lab_type: scale
