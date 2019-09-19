@@ -7,6 +7,11 @@
         - "{{ undercloud_hostname }}"
         - "{{ hammer_host }}"
 
+    - name: Ensure sshpass is present
+      package:
+         name: sshpass
+         state: present
+
     - name: clone badfish
       git:
         repo: "https://github.com/redhat-performance/badfish.git"
