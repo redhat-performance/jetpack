@@ -11,7 +11,7 @@
   register: bulk_status
 
 # Extract introspected nodes to yaml
-- name: set fact for introspected nodes 
+- name: set fact for introspected nodes
   set_fact:
       introspected_nodes: '{{ bulk_status.stdout | from_yaml }}'
 
