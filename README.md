@@ -14,7 +14,7 @@ ansible_ssh_pass: default password of servers
 # Requirements
 
 Ansible >= 2.8
-Python 3.5+ 
+Python 3.6+ 
 Passwordless sudo for user running the playbook on localhost (host where the playbooks are being run from)  
 A host for hammer cli operations referenced by the variable *hammer_host*
 
