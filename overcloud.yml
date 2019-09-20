@@ -4,7 +4,7 @@
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
   tasks:
       - name: Enable overcloud deployment with extra user defined templates
-        block: 
+        block:
           - name: Check if the templates exist on the undercloud
             stat:
               path: "{{ item }}"
@@ -27,16 +27,17 @@
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
       - name: Set compute count fact
         set_fact:
-            compute_count: "{{ compute_count|default(instackenv_content.nodes|length - (controller_count|int + 1)) }}" 
+            compute_count: "{{ compute_count|default(instackenv_content.nodes|length - (controller_count|int + 1)) }}"
 
       - name: get nodes
         shell: |
             source ~/stackrc
             openstack baremetal node list -f value -c UUID
         register: nodes_uuids
+        changed_when: false
         delegate_to: "{{ groups.undercloud|first }}"
 
-      - name: check registered nodes with requested node count 
+      - name: check registered nodes with requested node count
         debug:
            msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
         when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
@@ -65,5 +66,5 @@
             source .venv/bin/activate
             infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend vlan --public-network false &> overcloud_deploy.log
         args:
-            chdir: "{{ infrared_dir }}" 
+            chdir: "{{ infrared_dir }}"
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )

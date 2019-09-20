@@ -10,3 +10,4 @@
           infrared tripleo-undercloud -vv --version {{ osp_release }} --images-task rpm --config-options DEFAULT.local_interface={{ ctlplane_interface }} --config-options ctlplane-subnet.dhcp_start={{ dhcp_start }} --config-options ctlplane-subnet.dhcp_end={{ dhcp_end }} --config-options ctlplane-subnet.inspection_iprange={{ inspection_iprange }} &> undercloud_install.log
         args:
             chdir: "{{ infrared_dir }}"
+        changed_when: false

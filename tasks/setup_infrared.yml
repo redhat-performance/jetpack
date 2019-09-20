@@ -1,6 +1,6 @@
---- 
+---
 - name: Install dependencies
-  package: 
+  package:
     name: "{{ item }}"
     state: installed
   loop:
@@ -8,7 +8,7 @@
       - gcc
       - libffi-devel
       - python-virtualenv
-      - libselinux-python 
+      - libselinux-python
   become: true
 
 - name: clone infrared
@@ -22,11 +22,12 @@
       virtualenv .venv && source .venv/bin/activate
       pip install --upgrade pip
       pip install --upgrade setuptools
-      pip install .            
+      pip install .
       infrared plugin add all
       infrared workspace create {{ workspace_name }}
       infrared workspace checkout {{ workspace_name }}
   args:
     chdir: "{{ infrared_dir }}"
+  changed_when: false
   vars:
-      workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-')}}"
+      workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-') }}"

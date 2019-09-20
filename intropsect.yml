@@ -1,12 +1,13 @@
 ---
 - hosts: localhost
   tasks:
-      - name: run tripleo-overcloud introspection
+      - name: run tripleo-overcloud introspectioni
         shell: |
             source .venv/bin/activate
             infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ undercloud_instackenv_path }} --deployment-files {{ nic_configs }} --introspect yes &> overcloud_introspect.log
         args:
             chdir: "{{ infrared_dir }}"
+        changed_when: false
         ignore_errors: true
 
 - hosts: undercloud

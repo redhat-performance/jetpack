@@ -7,16 +7,17 @@
        {% else %}
        openstack baremetal introspection list -f yaml
        {% endif %}
+  changed_when: false
   register: bulk_status
-  tags:
-      - skip_ansible_lint
 
 # Extract introspected nodes to yaml
-- set_fact:
+- name: set fact for introspected nodes 
+  set_fact:
       introspected_nodes: '{{ bulk_status.stdout | from_yaml }}'
 
 # Construct list of UUID's of nodes failing introspection
-- set_fact:
+- name: set fact for introspection failed UUIDs
+  set_fact:
       failed_nodes_uuids: "{{ (failed_nodes_uuids | default([]) ) + [ item[uuid_field_name] ] }}"
   with_items: "{{ introspected_nodes | default([]) }}"
   vars:
@@ -25,12 +26,15 @@
       - finished_condition:  "{{ item.get('Error') | ternary( True, (osp_version|int < 13) | ternary(item.get('Finished') == false, item.get('Finished at') is none )) }}"
   when:
       - finished_condition
+  tags:
+      - skip_ansible_lint
 
 - name: delete failed nodes
   shell: |
       source ~/stackrc
       openstack baremetal node delete {{ item }}
   with_items: "{{ failed_nodes_uuids }}"
+  changed_when: false
   ignore_errors: true
 
 - name: get all nodes
@@ -38,15 +42,16 @@
       source ~/stackrc
       openstack baremetal node list -f value -c UUID
   register: total_nodes
+  changed_when: false
 
 - name: set provision state of all nodes to available
   shell: |
+      set -o pipefail
       source ~/stackrc;
       export PROV_STATE=$(ironic node-show {{ item }} | grep ' provision_state ');
       if [[ $PROV_STATE != *"available"* ]]; then
           ironic node-set-provision-state {{ item }} provide;
       fi
   with_items: "{{ total_nodes.stdout_lines | default([]) }}"
-  tags:
-      - skip_ansible_lint
+  changed_when: false
 

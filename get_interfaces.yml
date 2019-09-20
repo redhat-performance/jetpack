@@ -31,6 +31,7 @@
       - name: bring up ifaces
         command: ip link set {{ item }} up
         with_items: "{{ nics }}"
+        changed_when: false
 
       - name: wait for 20 seconds for interface up
         wait_for:
@@ -41,6 +42,7 @@
         command: ip link show dev {{ item }}
         with_items: "{{ nics }}"
         register: detect_iface
+        changed_when: false
 
       - name: working interfaces
         set_fact:
@@ -49,10 +51,13 @@
         with_items: "{{ detect_iface.results }}"
 
       - name: show addresses
-        shell: "ip -4 address show {{ item }} | grep inet | awk '{ print $2}'"
+        shell: |
+          set -o pipefail
+          ip -4 address show {{ item }} | grep inet | awk '{ print $2}'
         with_items: "{{ ifaces }}"
         register: addr_show
- 
+        changed_when: false
+
       - name: set public interface
         set_fact:
           public_interface: "{{ item.item }}"
@@ -64,9 +69,12 @@
           ifaces: "{{ ifaces | difference([public_interface]) }}"
 
       - name: show macs
-        shell: 'ip addr show {{ item }} | grep -Po "link/ether \K[\da-f:]+"'
+        shell: |
+          set -o pipefail
+          ip addr show {{ item }} | grep -Po "link/ether \K[\da-f:]+"
         with_items: "{{ ifaces }}"
         register: macs_show
+        changed_when: false
 
       - name: set ctlplane interface
         vars:
@@ -82,7 +90,7 @@
 
       - name: check hypervisors has three or more nics
         fail:
-            msg: "hypervisor has less nics" 
+            msg: "hypervisor has less nics"
         when: ifaces|length < 3
 
 - hosts: localhost
@@ -91,7 +99,7 @@
       interfaces: "{{ hostvars[undercloud_host]['ifaces'] }}"
       virt: "{{ (interfaces|length == 3)|ternary('virt', 'virt_4nics') }}"
   tasks:
-      - name: set some vars 
+      - name: set some vars
         set_fact:
           ifaces: "{{ interfaces }}"
           ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
@@ -109,7 +117,7 @@
               src: "{{ virt }}"
               dest: "{{ ansible_user_dir }}/"
 
-          - name: replace nic names              
+          - name: replace nic names
             replace:
               path: "{{ item.src }}"
               regexp: "nic1"
@@ -122,4 +130,4 @@
             loop: "{{ ifaces }}"
             loop_control:
               index_var: iface_index
-        when: nic_configs_stat.stat.exists == False
+        when: not nic_configs_stat.stat.exists

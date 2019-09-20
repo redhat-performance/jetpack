@@ -4,23 +4,23 @@
     - always
 
 - import_playbook: setup_undercloud.yml
-  tags: 
+  tags:
     - setup_undercloud
-  
+
 - import_playbook: get_interfaces.yml
   tags:
-    - always 
+    - always
 
 - import_playbook: undercloud.yml
-  tags: 
+  tags:
     - undercloud
 
 - import_playbook: intropsect.yml
-  tags: 
+  tags:
     - introspect
 
 - import_playbook: tag.yml
-  tags: 
+  tags:
     - tag
 
 - import_playbook: overcloud.yml
@@ -31,4 +31,4 @@
   tags:
     - cleanup
     - never
-
+#

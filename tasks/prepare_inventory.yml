@@ -1,4 +1,4 @@
----      
+---
 - name: add localhost to inventory file
   add_host:
       name: "localhost"

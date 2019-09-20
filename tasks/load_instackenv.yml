@@ -45,4 +45,4 @@
       - name: replace instackenv_content with original data
         set_fact:
           instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
-  when: undercloud_instackenv_stat.stat.exists == False
+  when: not undercloud_instackenv_stat.stat.exists

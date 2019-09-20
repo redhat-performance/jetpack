@@ -1,5 +1,5 @@
 ---
-- name: replace nic names              
+- name: replace nic names
   replace:
       path: "{{ item.src }}"
       regexp: "nic{{ iface_index|int + 2 }}"
