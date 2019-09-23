@@ -59,63 +59,102 @@
       set_fact:
         chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
 
-    - name: RHEL 8 install for OSP 15 and above
+    - name: Check if /etc/redhat-release exists
+      stat:
+       path: /etc/redhat-release
+      register: rhel_release_stat
+      delegate_to: "{{ undercloud_hostname }}"
+
+    - name: Get RHEL version
+      become: true
+      slurp:
+        src: /etc/redhat-release
+      register: file_content
+      when: rhel_release_stat.stat.exists
+      delegate_to: "{{ undercloud_hostname }}"
+
+    - name: set version fact
+      set_fact:
+        version: "{{ file_content.content | b64decode }}"
+
+    - name: set rhel version
+      set_fact:
+        rhel_version: "{{ version.split()[-2] }}"
+
+    - name: RHEL 8 install if needed
+      shell: hammer -u  {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem 'RHEL 8' --overwrite 1
+      delegate_to: "{{ hammer_host }}"
+      register: rhel8_install
+      when: osp_release | int > 14 and  rhel_version is version('8.0', '<')
+
+    - name: RHEL 7 install if needed
+      shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem 'RHEL 7' --overwrite 1
+      delegate_to: "{{ hammer_host }}"
+      register: rhel7_install
+      when: osp_release | int < 15 and  rhel_version is  version ('8.0', '>=')
+
+    - name: Reboot if OS install needed
       block:
-          - name: Set foreman RHEL 8 build
-            shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem 'RHEL 8' --overwrite 1
-            delegate_to: "{{ hammer_host }}"
 
-          - name: set undercloud to PXE boot (Supermicro)
-            shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
-            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
+        - name: set undercloud to PXE boot (Supermicro)
+          shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
 
-          - name: power cycle undercloud (Supermicro)
-            shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
-            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
+        - name: power cycle undercloud (Supermicro)
+          shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
 
-          - name: set undercloud to PXE boot off Foreman (Dell)
-            shell: ./badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
-            args:
-              chdir: "{{ ansible_user_dir }}/badfish"
-            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+        - name: set undercloud to PXE boot off Foreman (Dell)
+          shell: ./badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
+          args:
+            chdir: "{{ ansible_user_dir }}/badfish"
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
 
-          - name: power cycle undercloud
-            shell: ./badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
-            args:
-              chdir: "{{ ansible_user_dir }}/badfish"
-            when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+        - name: power cycle undercloud (Dell)
+          shell: ./badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
+          args:
+            chdir: "{{ ansible_user_dir }}/badfish"
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
 
-          - name: wait for 420 seconds before checking for undercloud
-            wait_for:
-                timeout: 420
+        - name: wait for 420 seconds before checking for undercloud
+          wait_for:
+            timeout: 420
 
-          - name: waiting for the undercloud to be available
-            wait_for:
-              port: 22
-              host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
-              search_regex: OpenSSH
-              timeout: 30
-            register: uc_reachable
-            delegate_to: localhost
-            retries: 100
-            until: uc_reachable|succeeded
+        - name: waiting for the undercloud to be available
+          wait_for:
+            port: 22
+            host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
+            search_regex: OpenSSH
+            timeout: 30
+          register: uc_reachable
+          delegate_to: localhost
+          retries: 100
+          until: uc_reachable|succeeded
 
-          - name: add keys to new undercloud
-            include_tasks: tasks/copykeys.yml
-            vars:
-              hostname: "{{ undercloud_hostname }}"
+        - name: add keys to new undercloud
+          include_tasks: tasks/copykeys.yml
+          vars:
+            hostname: "{{ undercloud_hostname }}"
+      when: rhel7_install is not skipped or rhel8_install is not skipped
 
-          - name: add undercloud_host to inventory file
-            add_host:
-             name: "{{ undercloud_hostname }}"
-             groups: "baremetal,undercloud,tester"
-             ansible_host: "{{ undercloud_hostname }}"
-             ansible_user: "{{ ansible_ssh_user }}"
-             ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
-             ansible_python_interpreter: /usr/libexec/platform-python
+    - name: add undercloud_host to inventory file (RHEL 8)
+      add_host:
+        name: "{{ undercloud_hostname }}"
+        groups: "baremetal,undercloud,tester"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_user: "{{ ansible_ssh_user }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_python_interpreter: /usr/libexec/platform-python
+      when: rhel8_install is not skipped
 
-      when: osp_release|int > 14
-
+    - name: add undercloud_host to inventory file (RHEL 7)
+      add_host:
+        name: "{{ undercloud_hostname }}"
+        groups: "baremetal,undercloud,tester"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_user: "{{ ansible_ssh_user }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+      when: rhel7_install is not skipped
 
 - hosts: undercloud
   tasks:
