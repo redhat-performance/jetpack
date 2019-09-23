@@ -1,10 +1,26 @@
----      
+---
 - name: add localhost to inventory file
   add_host:
-      name: "localhost"
-      groups: "local"
-      ansible_connection: "local"
+    name: "localhost"
+    groups: "local"
+    ansible_connection: "local"
 
+- name: Ping undercloud and set python version for RHEL 8
+  ping:
+  register: ping_output
+  delegate_to: "{{ undercloud_hostname }}"
+  ignore_errors: true
+
+- name: Add undercloud_host after setting python interpereter (RHEL 8)
+  add_host:
+    name: "{{ undercloud_hostname }}"
+    groups: "baremetal,undercloud,tester"
+    ansible_host: "{{ undercloud_hostname }}"
+    ansible_user: "{{ ansible_ssh_user }}"
+    ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+    ansible_python_interpreter: /usr/libexec/platform-python
+  when: "'interpreter' in ping_output.msg"
+ 
 - name: add undercloud_host to inventory file
   add_host:
       name: "{{ undercloud_hostname }}"
@@ -12,15 +28,17 @@
       ansible_host: "{{ undercloud_hostname }}"
       ansible_user: "{{ ansible_ssh_user }}"
       ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+  when: ping_output.rc == 0
 
-- block:
-      - name: generate inventory file
-        template:
-            dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
-            src: inventory.j2
-      - name: update inventory file symlink
-        file:
-            dest: "{{ infrared_hosts_file }}"
-            state: link
-            src: "{{ inventory_file_name }}"
+- name: Generate inventory file
+  block:
+    - name: generate inventory file
+      template:
+        dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
+        src: inventory.j2
+    - name: update inventory file symlink
+      file:
+        dest: "{{ infrared_hosts_file }}"
+        state: link
+        src: "{{ inventory_file_name }}"
   when: hosts_file_exist is not defined
