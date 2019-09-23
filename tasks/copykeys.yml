@@ -1,7 +1,6 @@
 ---
 - name: copy jump host key
   shell: |
-    set -o pipefail
     echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ hostname }}
   register: ssh_result
   changed_when: false
@@ -9,7 +8,6 @@
 
 - name: remove key and add again
   shell: |
-    set -o pipefail
     ssh-keygen -R {{ undercloud_hostname }}
     echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ hostname }}
   changed_when: false

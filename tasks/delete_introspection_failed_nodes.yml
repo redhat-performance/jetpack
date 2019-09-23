@@ -46,7 +46,6 @@
 
 - name: set provision state of all nodes to available
   shell: |
-      set -o pipefail
       source ~/stackrc;
       export PROV_STATE=$(ironic node-show {{ item }} | grep ' provision_state ');
       if [[ $PROV_STATE != *"available"* ]]; then

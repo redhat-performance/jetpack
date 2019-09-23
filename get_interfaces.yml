@@ -52,7 +52,6 @@
 
       - name: show addresses
         shell: |
-          set -o pipefail
           ip -4 address show {{ item }} | grep inet | awk '{ print $2}'
         with_items: "{{ ifaces }}"
         register: addr_show
@@ -70,7 +69,6 @@
 
       - name: show macs
         shell: |
-          set -o pipefail
           ip addr show {{ item }} | grep -Po "link/ether \K[\da-f:]+"
         with_items: "{{ ifaces }}"
         register: macs_show
