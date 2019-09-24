@@ -47,7 +47,6 @@
         name: "{{ item }}"
       loop:
         - python-netaddr
-        - python3-netaddr
       become: true
 
     - name: Install badfish requirements
