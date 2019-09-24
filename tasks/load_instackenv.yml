@@ -27,22 +27,17 @@
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
 
-- name: check undercloud_instackenv exists
-  stat:
-      path: "~/undercloud_instackenv.json"
-  register: undercloud_instackenv_stat
+- name: set undercloud_instackenv content
+  set_fact:
+      instackenv_content: |
+          {% set a=instackenv_content.pop('nodes') %}
+          {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
 
-- block:
-      - name: set undercloud_instackenv content
-        set_fact:
-          instackenv_content: |
-            {% set a=instackenv_content.pop('nodes') %}
-            {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
-      - name: create undercloud_instackenv.json file
-        copy:
-          dest: "{{ undercloud_instackenv_path }}"
-          content: "{{ instackenv_content }}"
-      - name: replace instackenv_content with original data
-        set_fact:
-          instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
-  when: not undercloud_instackenv_stat.stat.exists
+- name: create undercloud_instackenv.json file
+  copy:
+      dest: "{{ undercloud_instackenv_path }}"
+      content: "{{ instackenv_content }}"
+
+- name: replace instackenv_content with original data
+  set_fact:
+      instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"

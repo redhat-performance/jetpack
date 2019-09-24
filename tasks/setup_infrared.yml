@@ -15,6 +15,7 @@
   git:
       repo: "https://github.com/redhat-openstack/infrared"
       dest: "{{ infrared_dir }}"
+      force: yes
 
 - name: Add all plugins
   shell: |

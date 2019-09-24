@@ -103,29 +103,22 @@
           ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
           nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
 
-      - name: check nic-configs path
-        stat:
-            path: "{{ nic_configs }}"
-        register: nic_configs_stat
+      - name: Ensure deployment folder nested structure exists
+        copy:
+            src: "{{ virt }}"
+            dest: "{{ ansible_user_dir }}/"
+            force: yes
 
-      - name: NIC config generation
-        block:
-          - name: Ensure deployment folder nested structure exists
-            copy:
-              src: "{{ virt }}"
-              dest: "{{ ansible_user_dir }}/"
+      - name: replace nic names
+        replace:
+            path: "{{ item.src }}"
+            regexp: "nic1"
+            replace: "{{ ctlplane_interface }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
 
-          - name: replace nic names
-            replace:
-              path: "{{ item.src }}"
-              regexp: "nic1"
-              replace: "{{ ctlplane_interface }}"
-            with_filetree: '{{ nic_configs }}'
-            when: item.state == 'file'
-
-          - name: Replace other nic names with interface names
-            include_tasks: tasks/replace_nic_names.yml
-            loop: "{{ ifaces }}"
-            loop_control:
-              index_var: iface_index
-        when: not nic_configs_stat.stat.exists
+      - name: Replace other nic names with interface names
+        include_tasks: tasks/replace_nic_names.yml
+        loop: "{{ ifaces }}"
+        loop_control:
+            index_var: iface_index
