@@ -37,3 +37,10 @@ scale:
       - r630
       - r730xd
       - r930
+# undercloud.conf ctlplane-subnet section config options
+cidr: 192.168.24.0/24
+gateway: 192.168.24.1
+dhcp_start: 192.168.24.5
+dhcp_end: 192.168.24.105
+inspection_iprange: 192.168.24.110,192.168.24.250
+

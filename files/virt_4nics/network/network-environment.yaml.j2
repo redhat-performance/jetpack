@@ -12,8 +12,8 @@
 # environment files we should think about using it here to automatically
 # include network-isolation.yaml.
 resource_registry:
-  OS::TripleO::Compute::Net::SoftwareConfig: three-nics-vlans/{{ nics_subfolder }}/compute.yaml
-  OS::TripleO::Controller::Net::SoftwareConfig: three-nics-vlans/{{ nics_subfolder }}/controller.yaml
+  OS::TripleO::Compute::Net::SoftwareConfig: four-nics-vlans/{{ nics_subfolder }}/compute.yaml
+  OS::TripleO::Controller::Net::SoftwareConfig: four-nics-vlans/{{ nics_subfolder }}/controller.yaml
 
 parameter_defaults:
 {% if not install.network.render.templates|default(False) %}
@@ -34,14 +34,14 @@ parameter_defaults:
     TenantAllocationPools: [{'start': '172.17.2.10', 'end': '172.17.2.149'}]
     TenantNetworkVlanID: 50
 {% endif %}
-    DnsServers: ['192.168.24.1']
-    EC2MetadataIp: 192.168.24.1
+    DnsServers: ['gateway']
+    EC2MetadataIp: gateway
 {% if install.splitstack|default(False) %}
     ControlPlaneDefaultRoute: {{ ansible_host|default(ansible_ssh_host) }}
 {% else %}
-    ControlPlaneDefaultRoute: 192.168.24.1
+    ControlPlaneDefaultRoute: gateway
 {% endif %}
-    ControlPlaneSubnetCidr: "24"
+    ControlPlaneSubnetCidr: "subnet_mask"
 {% if install.network.dvr %}
     NeutronExternalNetworkBridge: "br-ex"
 {% else %}

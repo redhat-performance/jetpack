@@ -81,17 +81,18 @@ resources:
         os_net_config:
           network_config:
                         -
-{% if install.cleaning.network %}
                           type: ovs_bridge
-                          name: br-baremetal
+                          name: br-ex
                           members:
                           - type: interface
                             name: nic1
                             primary: true
-{% else %}
-                          type: interface
-                          name: nic1
-{% endif %}
+                            -
+                              type: vlan
+                              vlan_id: {get_param: ExternalNetworkVlanID}
+                              addresses:
+                              -
+                                ip_netmask: {get_param: ExternalIpSubnet}
                           use_dhcp: false
                           addresses:
                             -
@@ -131,27 +132,21 @@ resources:
                               addresses:
                               -
                                 ip_netmask: {get_param: StorageMgmtIpSubnet}
+                        -
+                          type: ovs_bridge
+                          name: br-tenant
+                          use_dhcp: false
+                          members:
+                            -
+                              type: interface
+                              name: nic3
+                              primary: true
                             -
                               type: vlan
                               vlan_id: {get_param: TenantNetworkVlanID}
                               addresses:
                               -
                                 ip_netmask: {get_param: TenantIpSubnet}
-                        -
-                          type: ovs_bridge
-                          # This will default to br-ex, anything else requires specific
-                          # brige mapping entries for it to be used.
-                          name: {get_input: bridge_name}
-                          use_dhcp: false
-                          addresses:
-                            -
-                                ip_netmask: {get_param: ExternalIpSubnet}
-                          members:
-                            -
-                              type: interface
-                              name: nic3
-                              # force the MAC address of the bridge to this interface
-                              primary: true
 
 outputs:
   OS::stack_id:

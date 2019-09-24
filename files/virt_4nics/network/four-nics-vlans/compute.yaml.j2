@@ -175,17 +175,13 @@ resources:
                    $network_config:
                        network_config:
                         -
-{% if install.ironic and install.version|default(undercloud_version)|openstack_release > 14 %}
                           type: ovs_bridge
-                          name: br-baremetal
+                          name: br-ex
                           members:
-                          - type: interface
-                            name: nic1
-                            primary: true
-{% else %}
-                          type: interface
-                          name: nic1
-{% endif %}
+                            -
+                              type: interface
+                              name: nic1
+                              primary: true
                           use_dhcp: false
                           addresses:
                             -

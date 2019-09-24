@@ -82,10 +82,6 @@
         when: item.stdout == ctlplane_mac|lower
         with_items: "{{ macs_show.results }}"
 
-      - name: set eligible interfaces
-        set_fact:
-          ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
-
       - name: check hypervisors has three or more nics
         fail:
             msg: "hypervisor has less nics"
@@ -108,6 +104,24 @@
             src: "{{ virt }}"
             dest: "{{ ansible_user_dir }}/"
             force: yes
+
+      - name: replace EC2MetadataIp
+        replace:
+            path: "{{ item.src }}"
+            regexp: "gateway"
+            replace: "{{ gateway }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace ControlPlaneSubnetCidr
+        vars:
+            subnet_mask: "{{ cidr |  ipaddr('prefix') }}"
+        replace:
+            path: "{{ item.src }}"
+            regexp: "subnet_mask"
+            replace: "{{ subnet_mask }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
 
       - name: replace nic names
         replace:

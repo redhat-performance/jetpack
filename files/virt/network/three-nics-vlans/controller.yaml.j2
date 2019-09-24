@@ -187,14 +187,6 @@ resources:
                    $network_config:
                        network_config:
                         -
-{% if install.cleaning.network %}
-                          type: ovs_bridge
-                          name: br-baremetal
-                          members:
-                          - type: interface
-                            name: nic1
-                            primary: true
-{% else %}
                           type: ovs_bridge
                           name: br-ex
                           members:
@@ -210,7 +202,6 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: ExternalIpSubnet
-{% endif %}
                           use_dhcp: false
                           addresses:
                             -
@@ -257,6 +248,15 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: StorageMgmtIpSubnet
+                        -
+                          type: ovs_bridge
+                          name: br-tenant
+                          use_dhcp: false
+                          members:
+                            -
+                              type: interface
+                              name: nic3
+                              primary: true
                             -
                               type: vlan
                               vlan_id:
