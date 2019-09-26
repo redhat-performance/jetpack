@@ -47,9 +47,9 @@
 - name: set provision state of all nodes to available
   shell: |
       source ~/stackrc;
-      export PROV_STATE=$(ironic node-show {{ item }} | grep ' provision_state ');
+      export PROV_STATE=$(openstack baremetal node show {{ item }} -c provision_state -f value);
       if [[ $PROV_STATE != *"available"* ]]; then
-          ironic node-set-provision-state {{ item }} provide;
+          openstack baremetal node provide {{ item }};
       fi
   with_items: "{{ total_nodes.stdout_lines | default([]) }}"
   changed_when: false
