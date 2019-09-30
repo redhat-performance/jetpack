@@ -42,14 +42,3 @@ parameter_defaults:
     ControlPlaneDefaultRoute: gateway
 {% endif %}
     ControlPlaneSubnetCidr: "subnet_mask"
-{% if install.network.dvr %}
-    NeutronExternalNetworkBridge: "br-ex"
-{% else %}
-    NeutronExternalNetworkBridge: ""
-{% endif %}
-{% if install.version|openstack_release > 14 and not install.network.dvr and not install.network.ovs %}
-    NeutronBridgeMappings: ""
-{% else %}
-    NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
-{% endif %}
-    NeutronNetworkVLANRanges: "tenant:1000:2000"
