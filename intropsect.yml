@@ -1,6 +1,10 @@
 ---
 - hosts: localhost
   tasks:
+      - name: add undercloud_host to inventory file
+        add_host:
+            name: "{{ undercloud_hostname }}"
+            ansible_user: "stack"
       - name: run tripleo-overcloud introspection
         shell: |
             source .venv/bin/activate

@@ -3,6 +3,10 @@
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
   tasks:
+      - name: add undercloud_host to inventory file
+        add_host:
+            name: "{{ undercloud_hostname }}"
+            ansible_user: "stack"
       - name: Enable overcloud deployment with extra user defined templates
         block:
           - name: Check if the templates exist on the undercloud
