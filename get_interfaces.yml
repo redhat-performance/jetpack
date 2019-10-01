@@ -131,8 +131,8 @@
         with_filetree: '{{ nic_configs }}'
         when: item.state == 'file'
 
-      - name: set eligible interfaces   
-        set_fact:       
+      - name: set eligible interfaces
+        set_fact:
           ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
 
       - name: Replace other nic names with interface names
