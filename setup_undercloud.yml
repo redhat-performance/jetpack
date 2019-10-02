@@ -163,10 +163,6 @@
       - name: Install repos on undercloud
         shell: |
           ./clean-interfaces.sh --nuke
-          curl -o rhos-release-latest.noarch.rpm http://download-node-02.eng.bos.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm
-          yum install -y rhos-release-latest.noarch.rpm
-          rhos-release {{ osp_release }}-director -p {{ osp_puddle }}
-          yum update -y
         args:
           chdir: "{{ ansible_user_dir }}"
         changed_when: false

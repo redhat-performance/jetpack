@@ -5,6 +5,7 @@
           source {{ infrared_dir }}/.venv/bin/activate
           infrared tripleo-undercloud -vv \
           --version {{ osp_release }} \
+          --build {{ osp_puddle }} \
           --images-task rpm \
           --config-options DEFAULT.local_interface={{ ctlplane_interface }} \
           --config-options DEFAULT.clean_nodes=true \
