@@ -1,4 +1,6 @@
 - hosts: localhost
+  vars:
+      badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
   tasks:
     - include_tasks: tasks/copykeys.yml
       vars:
@@ -9,17 +11,13 @@
         repo: "https://github.com/redhat-performance/badfish.git"
         dest: "{{ ansible_user_dir }}/badfish"
 
-    - name: Install python3 pyyaml
-      pip:
-        name: pyyaml
-        executable: pip-3
-      become: true
+    - name: Create badfish virtualenv
+      command: virtualenv {{ badfish_venv }} creates={{ badfish_venv }}
 
     - name: Install badfish requirements
       pip:
         requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
-        executable: pip-3
-      become: true
+        virtualenv: "{{ badfish_venv }}"
 
     - name: set foreman password
       set_fact:
@@ -71,13 +69,21 @@
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
 
         - name: set undercloud to PXE boot off Foreman (Dell)
-          shell: ./badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
+          shell: |
+              source {{ badfish_venv }}/bin/activate
+              python badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
           args:
             chdir: "{{ ansible_user_dir }}/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+          retries: 5
+          delay: 3
+          register: result
+          until: result.rc == 0
 
         - name: power cycle undercloud (Dell)
-          shell: ./badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
+          shell: |
+              source {{ badfish_venv }}/bin/activate
+              python badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
           args:
             chdir: "{{ ansible_user_dir }}/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
@@ -97,30 +103,12 @@
           retries: 100
           until: uc_reachable|succeeded
 
-        - name: add keys to new undercloud
-          include_tasks: tasks/copykeys.yml
+        - name: prepare inventory
+          include_tasks: tasks/prepare_inventory.yml
           vars:
-            hostname: "{{ undercloud_hostname }}"
+              infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
+              inventory_file_name: "hosts-updated"
       when: rhel7_install is not skipped or rhel8_install is not skipped
-
-    - name: add undercloud_host to inventory file (RHEL 8)
-      add_host:
-        name: "{{ undercloud_hostname }}"
-        groups: "baremetal,undercloud,tester"
-        ansible_host: "{{ undercloud_hostname }}"
-        ansible_user: "{{ ansible_ssh_user }}"
-        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
-        ansible_python_interpreter: /usr/libexec/platform-python
-      when: rhel8_install is not skipped
-
-    - name: add undercloud_host to inventory file (RHEL 7)
-      add_host:
-        name: "{{ undercloud_hostname }}"
-        groups: "baremetal,undercloud,tester"
-        ansible_host: "{{ undercloud_hostname }}"
-        ansible_user: "{{ ansible_ssh_user }}"
-        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
-      when: rhel7_install is not skipped
 
 - hosts: undercloud
   tasks:
