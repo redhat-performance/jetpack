@@ -9,7 +9,7 @@
       - libffi-devel
       - python-virtualenv
       - libselinux-python
-      - python30-virtualenv
+      - python3-virtualenv
       - python3-libselinux
   become: true
   failed_when: false
