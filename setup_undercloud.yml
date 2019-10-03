@@ -2,54 +2,18 @@
   tasks:
     - include_tasks: tasks/copykeys.yml
       vars:
-        hostname: "{{ item }}"
-      loop:
-        - "{{ undercloud_hostname }}"
-        - "{{ hammer_host }}"
-
-    - name: Install sshpass
-      package:
-        name: sshpass
-        state: present
-      become: true
+        hostname: "{{ hammer_host }}"
 
     - name: clone badfish
       git:
         repo: "https://github.com/redhat-performance/badfish.git"
         dest: "{{ ansible_user_dir }}/badfish"
 
-    - name: check python3 version
-      shell: python3 --version
-      register: python3_version
-      changed_when: false
-      ignore_errors: true
-
-    - name: Install python3
-      package:
-        name: python3
-        state: present
-      when: python3_version.stderr | length > 0
-
     - name: Install python3 pyyaml
       pip:
         name: pyyaml
         executable: pip-3
       become: true
-
-    - name: install ipmitool
-      package:
-        name: ipmitool
-        state: present
-      become: true
-
-    - name: isntall python-netaddr
-      package:
-        name: "{{ item }}"
-      loop:
-        - python-netaddr
-        - python3-netaddr
-      become: true
-      failed_when: false
 
     - name: Install badfish requirements
       pip:

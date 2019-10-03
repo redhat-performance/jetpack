@@ -1,5 +1,8 @@
 - hosts: localhost
   tasks:
+      - name: install packages
+        include_tasks: tasks/install_packages.yml
+
       - name: load instackenv file
         include_tasks: tasks/load_instackenv.yml
 

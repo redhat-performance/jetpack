@@ -1,0 +1,20 @@
+---
+- name: Install dependencies
+  package:
+    name: "{{ item }}"
+    state: installed
+  loop:
+      - git
+      - gcc
+      - libffi-devel
+      - python-virtualenv
+      - libselinux-python
+      - python-netaddr
+      - sshpass
+      - ipmitool
+      - python3
+      - python3-virtualenv
+      - python3-libselinux
+      - python3-netaddr
+  become: true
+  failed_when: false
