@@ -38,6 +38,11 @@
             delay: 20
             timeout: 0
 
+      - name: get default route
+        shell: |
+            ip r | grep default
+        register: default_route
+
       - name: detect ifaces
         command: ip link show dev {{ item }}
         with_items: "{{ nics }}"
@@ -60,7 +65,7 @@
       - name: set public interface
         set_fact:
           public_interface: "{{ item.item }}"
-        when: item.stdout | ipsubnet('10.0.0.0/8')
+        when: item.item in default_route.stdout
         with_items: "{{ addr_show.results }}"
 
       - name: set eligible interfaces
