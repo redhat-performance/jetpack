@@ -12,7 +12,7 @@
           --version {{ osp_release }} \
           --build {{ osp_puddle }} \
           --images-task rpm \
-          --config-file {{ undercloud_conf }} &> undercloud_install.log
+          --config-file {{ undercloud_conf }} &> {{ log_directory }}/undercloud_install.log
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
