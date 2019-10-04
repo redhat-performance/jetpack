@@ -27,6 +27,10 @@
   tags:
     - overcloud
 
+- import_playbook: browbeat.yml
+  tags:
+    - browbeat
+
 - import_playbook: cleanup.yml
   tags:
     - cleanup
