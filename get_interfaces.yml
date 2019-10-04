@@ -104,6 +104,18 @@
           ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
           nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
 
+      - name: remove ctlplane interface from eligible interfaces
+        set_fact:
+          ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
+
+      - name: get external network interface
+        set_fact:
+            external_interface: "{{ (virt == 'virt_4nics') | ternary(ifaces[0], ctlplane_interface) }}"
+
+      - name: remove external interface from  eligible interfaces
+        set_fact:
+          ifaces: "{{ ifaces | difference([external_interface]) }}"
+
       - name: Ensure deployment folder nested structure exists
         copy:
             src: "{{ virt }}"
@@ -131,14 +143,18 @@
       - name: replace control plance interface
         replace:
             path: "{{ item.src }}"
-            regexp: "nic1"
+            regexp: "ctlplane_interface"
             replace: "{{ ctlplane_interface }}"
         with_filetree: '{{ nic_configs }}'
         when: item.state == 'file'
 
-      - name: set eligible interfaces
-        set_fact:
-          ifaces: "{{ ifaces | difference([ctlplane_interface]) }}"
+      - name: replace External network interface
+        replace:
+            path: "{{ item.src }}"
+            regexp: "external_interface"
+            replace: "{{ external_interface }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
 
       - name: Replace other nic names with interface names
         include_tasks: tasks/replace_nic_names.yml
