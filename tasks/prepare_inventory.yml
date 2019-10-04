@@ -11,7 +11,7 @@
 
 - name: get python interpreter
   shell: |
-      ssh {{ ansible_ssh_user }}@{{ undercloud_hostname}} /usr/bin/python --version
+      ssh {{ ansible_ssh_user }}@{{ undercloud_hostname }} /usr/bin/python --version
   register: python_version
   ignore_errors: true
 
