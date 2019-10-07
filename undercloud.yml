@@ -1,5 +1,10 @@
 - hosts: localhost
   tasks:
+      - name: Setup undercloud.conf
+        template:
+            src: undercloud.conf.j2
+            dest: "{{ undercloud_conf }}"
+
       - name: run tripleo-undercloud
         shell: |
           source {{ infrared_dir }}/.venv/bin/activate
@@ -7,12 +12,7 @@
           --version {{ osp_release }} \
           --build {{ osp_puddle }} \
           --images-task rpm \
-          --config-options DEFAULT.local_interface={{ ctlplane_interface }} \
-          --config-options DEFAULT.clean_nodes=true \
-          --config-options ctlplane-subnet.cidr={{ cidr }} \
-          --config-options ctlplane-subnet.gateway={{ gateway }} \
-          --config-options ctlplane-subnet.dhcp_start={{ dhcp_start }} \
-          --config-options ctlplane-subnet.dhcp_end={{ dhcp_end }} --config-options ctlplane-subnet.inspection_iprange={{ inspection_iprange }} &> undercloud_install.log
+          --config-file {{ undercloud_conf }} &> undercloud_install.log
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false

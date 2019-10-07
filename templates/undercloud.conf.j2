@@ -1,0 +1,19 @@
+[DEFAULT]
+local_interface = {{ ctlplane_interface }}
+local_ip = {{ gateway }}/{{ subnet_mask }}
+undercloud_ntp_servers = clock.redhat.com,clock2.redhat.com
+{% if clean_debug %}
+clean_nodes = True
+{% endif %}
+
+{% if osp_release <= 12 %}
+network_cidr = {{ cidr }}
+network_gateway = {{ gateway }}
+{% else %}
+[ctlplane-subnet]
+cidr = {{ cidr }}
+gateway = {{ gateway }}
+{% endif %}
+dhcp_start = {{ dhcp_start }}
+dhcp_end = {{ dhcp_end }}
+inspection_iprange = {{ inspection_iprange }}
