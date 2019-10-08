@@ -72,3 +72,13 @@
         args:
             chdir: "{{ infrared_dir }}"
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
+
+      - name: create vlan interface on external interface
+        vars:
+            vlan_interface: "{{ external_interface }}.{{ external_network_vlan_id }}"
+        shell: |
+            ip link add link {{ external_interface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
+            ip link set dev {{ vlan_interface }} up
+            ip a a {{ external_gateway }} brd {{ external_network_broadcast }} dev {{ vlan_interface }}
+        delegate_to: "{{ undercloud_hostname }}"
+        become: true

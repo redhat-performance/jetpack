@@ -43,4 +43,10 @@ gateway: 192.168.24.1
 dhcp_start: 192.168.24.5
 dhcp_end: 192.168.24.105
 inspection_iprange: 192.168.24.110,192.168.24.250
+# external network params for adding add external network to
+# undercloud to access overcloud resources
+external_gateway: 10.0.0.1/16
+external_network_broadcast: 10.0.255.255
+external_network_vlan_id: 10
+ 
 
