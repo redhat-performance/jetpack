@@ -130,9 +130,14 @@
         with_filetree: '{{ nic_configs }}'
         when: item.state == 'file'
 
+      - name: get subnet mask
+        shell: |
+            echo {{ cidr }} | cut -d '/' -f2
+        register: prefix
+
       - name: replace ControlPlaneSubnetCidr
         vars:
-            subnet_mask: "{{ cidr |  ipaddr('prefix') }}"
+            subnet_mask: "{{ prefix.stdout }}"
         replace:
             path: "{{ item.src }}"
             regexp: "subnet_mask"
