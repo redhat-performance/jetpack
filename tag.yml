@@ -6,14 +6,14 @@
             ansible_user: "stack"
       - name: copy instack file to /home/stack/instackenv.json for infrared tagging
         copy:
-            src: "{{ overcloud_instackenv_path }}"
+            src: "{{ undercloud_instackenv_path }}"
             dest: "/home/stack/instackenv.json"
         delegate_to: "{{ groups.undercloud|first }}"
 
       - name: run tripleo-overcloud tagging
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }} --deployment-files {{ nic_configs }} --introspect no --tagging yes &> overcloud_tagging.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging yes &> overcloud_tagging.log
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
