@@ -1,0 +1,80 @@
+---
+- name: Setup "{{ cloud_name }}"
+  hosts: undercloud
+  tasks:
+    - name: Create flavors
+      vars:
+        ansible_python_interpreter: "/var/tmp/venv_shade/bin/python"
+      os_nova_flavor:
+       cloud: "{{ cloud_name }}"
+       state: "{{ item.state }}"
+       name: "{{ item.name }}"
+       ram: "{{ item.ram }}"
+       vcpus: "{{ item.vcpus }}"
+       disk: "{{ item.disk }}"
+      with_items:
+        -  { state: 'present', name: 'm1.xtiny' , ram: '64' , vcpus: '1' , disk: '1'}
+        -  { state: 'present', name: 'm1.tiny-centos' , ram: '192' , vcpus: '1' , disk: '8'}
+        -  { state: 'present', name: 'm1.tiny' , ram: '512' , vcpus: '1' , disk: '1'}
+        -  { state: 'present', name: 'm1.small' , ram: '2048' , vcpus: '1' , disk: '20'}
+        -  { state: 'present', name: 'm1.medium' , ram: '4096' , vcpus: '2' , disk: '40'}
+        -  { state: 'present', name: 'm1.large' , ram: '8192' , vcpus: '4' , disk: '80'}
+        -  { state: 'present', name: 'm1.xlarge' , ram: '16384' , vcpus: '8' , disk: '160'}
+      delegate_to: "{{ groups.shade | first }}"
+    - name: Update quotas
+      include: ./tasks/quotas.yml
+    - name: Create admin security group
+      vars:
+        ansible_python_interpreter: "/var/tmp/venv_shade/bin/python"
+      os_security_group:
+        cloud: "{{ cloud_name }}"
+        state: present
+        name: admin
+      delegate_to: "{{ groups.shade | first }}"
+    - name: Allow any ICMP
+      vars:
+        ansible_python_interpreter: "/var/tmp/venv_shade/bin/python"
+      os_security_group_rule:
+        cloud: "{{ cloud_name }}"
+        security_group: admin
+        protocol: icmp
+        remote_ip_prefix: 0.0.0.0/0
+      delegate_to: "{{ groups.shade | first }}"
+    - name: Allow any SSH connection
+      vars:
+        ansible_python_interpreter: "/var/tmp/venv_shade/bin/python"
+      os_security_group_rule:
+        cloud: "{{ cloud_name }}"
+        security_group: admin
+        protocol: tcp
+        port_range_min: 22
+        port_range_max: 22
+        remote_ip_prefix: 0.0.0.0/0
+      delegate_to: "{{ groups.shade | first }}"
+    - name: Create keypair
+      vars:
+        ansible_python_interpreter: "/var/tmp/venv_shade/bin/python"
+      os_keypair:
+          cloud: "{{ cloud_name }}"
+          state: present
+          name:  "{{ key_name }}"
+          public_key_file: "/home/stack/.ssh/authorized_keys"
+      delegate_to: "{{ groups.shade | first }}"
+    - name: Download and create images
+      include: ./tasks/upload_images.yaml
+      with_items:
+        - { url: 'http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img',
+            dest: '/tmp/cirros' ,
+            imagename: 'cirros'}
+        - { url: 'http://download-node-02.eng.bos.redhat.com/brewroot/packages/rhel-guest-image/7.6/555/images/rhel-guest-image-7.6-555.x86_64.qcow2',
+            dest: '/tmp/rhel7-7.6',
+            imagename: 'rhel7-7.6'}
+        - { url: 'http://download-node-02.eng.bos.redhat.com/brewroot/packages/rhel-guest-image/7.7/359/images/rhel-guest-image-7.7-359.x86_64.qcow2',
+            dest: '/tmp/rhel7-7.7',
+            imagename: 'rhel7-7.7'}
+        - { url: 'http://download-node-02.eng.bos.redhat.com/brewroot/packages/rhel-guest-image/8.0/1845/images/rhel-guest-image-8.0-1845.x86_64.qcow2',
+            dest: '/tmp/rhel8',
+            imagename: 'rhel8'}
+        - { url: 'http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud-1907.qcow2',
+            dest: '/tmp/centos7',
+            imagename: 'centos7'}

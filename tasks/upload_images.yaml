@@ -1,0 +1,14 @@
+---
+- name: Download  {{ item.imagename }} images
+  get_url: url={{ item.url }} dest={{ item.dest }}
+
+- name: Upload {{ item.imagename }} to openstack
+  vars:
+    ansible_python_interpreter: "/var/tmp/venv_shade/bin/python"
+  os_image:
+    cloud: overcloud
+    name: '{{ item.imagename }}'
+    state: present
+    is_public: yes
+    filename: '/tmp/{{ item.imagename }}'
+  delegate_to: "{{ groups.shade | first }}"

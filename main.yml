@@ -35,4 +35,7 @@
   tags:
     - cleanup
     - never
-#
+
+- import_playbook: post-deploy.yml
+  tags:
+    - overcloud-setup

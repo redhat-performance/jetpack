@@ -50,3 +50,5 @@ external_gateway: 10.0.0.1/16
 external_network_broadcast: 10.0.255.255
 external_network_vlan_id: 10
 clean_debug: False
+cloud_name: overcloud
+key_name: jetpack-key
