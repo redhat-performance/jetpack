@@ -3,6 +3,7 @@ infrared_dir: "{{ ansible_user_dir }}/infrared"
 infrared_workspaces_dir: "{{ ansible_user_dir }}/.infrared/.workspaces"
 infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
 instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
+undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
 cloud_name: cloud00
 lab_name: scale
 ansible_ssh_user: root
@@ -48,5 +49,4 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 external_gateway: 10.0.0.1/16
 external_network_broadcast: 10.0.255.255
 external_network_vlan_id: 10
- 
-
+clean_debug: False

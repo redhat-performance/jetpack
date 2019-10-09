@@ -24,3 +24,7 @@
         file:
             path: "{{ ansible_user_dir }}/virt_4nics"
             state: absent
+      - name: Remove undercloud.conf
+        file:
+            path: "{{ ansible_user_dir }}/undercloud.conf"
+            state: absent
