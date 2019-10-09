@@ -12,9 +12,9 @@
         file:
             path: "{{ instackenv_file }}"
             state: absent
-      - name: remove undercloud_instackenv.json
+      - name: remove overcloud_instackenv.json
         file:
-            path: "~/undercloud_instackenv.json"
+            path: "~/overcloud_instackenv.json"
             state: absent
       - name: remove nic-configs virt
         file:

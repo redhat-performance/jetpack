@@ -25,7 +25,7 @@ chmod 0440 /etc/sudoers.d/username
 
 Below are the sequence of steps these playbooks run before deploying overcloud
 1) Clone and setup infrared environment
-2) Download instackenv file from scalelab (playbboks assume that undercloud is the first node in this instackenv file)
+2) Download instackenv file from scalelab (playbooks assume that undercloud is the first node in this instackenv file)
 3) Prepare internal variables from this file i.e
    undercloud_host: first node in instackenv
    ctlplane_interface: will get the interface name from the mac provided in instackenv
@@ -34,8 +34,8 @@ Below are the sequence of steps these playbooks run before deploying overcloud
    We use 'virt' if we have 3 eligible free interfaces ( prepared from stemp 4)
    or 'virt_4nics' if more than 3 interfaces.
    Interface names in these default template files are replaced with physical nic names which we got from step 4 above.
-6) Prepare undercloud_instackenv.json which will be used for tripleo undercloud install from instackenv file download from the scalelab.
-   Tasks will remove undercloud node from the download file and generate new undercloud_instackenv.json file.
+6) Prepare overcloud_instackenv.json which will be used for describing overcloud baremetal nodes from instackenv file downloaded  from the scalelab.
+   Tasks will remove undercloud node from the downloaded instackenv file and generate new overcloud_instackenv.json file.
 7) Run infrared plugins
    a) undercloud to install the undercloud
    b) overcloud plugin to install overcloud
