@@ -31,7 +31,11 @@
           chdir: "{{ browbeat_dir }}/ansible"
     - name: install browbeat
       shell: |
-          cd /home/stack/browbeat/ansible
           ansible-playbook -i hosts install/browbeat.yml
       args:
           chdir: "{{ browbeat_dir }}/ansible"
+    - name: Activate virtualenv to run tests
+      shell: |
+           source .browbeat-venv/bin/activate
+      args:
+          chdir: "{{ browbeat_dir }}"
