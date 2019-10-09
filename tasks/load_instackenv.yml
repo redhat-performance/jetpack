@@ -23,19 +23,19 @@
   set_fact:
     instackenv_content: "{{ instackenv_content }}"
     undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
-    undercloud_instackenv_path: "~/undercloud_instackenv.json"
+    overcloud_instackenv_path: "~/overcloud_instackenv.json"
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
 
-- name: set undercloud_instackenv content
+- name: set overcloud_instackenv content
   set_fact:
       instackenv_content: |
           {% set a=instackenv_content.pop('nodes') %}
           {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
 
-- name: create undercloud_instackenv.json file
+- name: create overcloud_instackenv.json file
   copy:
-      dest: "{{ undercloud_instackenv_path }}"
+      dest: "{{ overcloud_instackenv_path }}"
       content: "{{ instackenv_content }}"
 
 - name: replace instackenv_content with original data

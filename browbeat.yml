@@ -26,7 +26,7 @@
     - name: generate hosts file
       shell: |
           source /home/stack/stackrc
-          ./generate_tripleo_hostfile.sh -l 
+          ./generate_tripleo_hostfile.sh -l
       args:
           chdir: "{{ browbeat_dir }}/ansible"
     - name: install browbeat
