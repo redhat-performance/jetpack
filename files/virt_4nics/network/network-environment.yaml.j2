@@ -18,7 +18,7 @@ resource_registry:
 parameter_defaults:
 {% if not install.network.render.templates|default(False) %}
     ExternalNetCidr: external_net_cidr
-    ExternalAllocationPools: [{'start': 'external_allocation_pools_start', 'end': 'external_allocation_pools_start'}]
+    ExternalAllocationPools: [{'start': 'external_allocation_pools_start', 'end': 'external_allocation_pools_end'}]
     ExternalInterfaceDefaultRoute: external_interface_default_route
     ExternalNetworkVlanID: external_network_vlan_id
     InternalApiNetCidr: internal_api_net_cidr
