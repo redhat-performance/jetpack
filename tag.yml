@@ -6,7 +6,7 @@
             ansible_user: "stack"
       - name: copy instack file to /home/stack/instackenv.json for infrared tagging
         copy:
-            src: "{{ undercloud_instackenv_path }}"
+            src: "{{ overcloud_instackenv_path }}"
             dest: "/home/stack/instackenv.json"
         delegate_to: "{{ groups.undercloud|first }}"
 
