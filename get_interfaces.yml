@@ -131,6 +131,174 @@
         with_filetree: '{{ nic_configs }}'
         when: item.state == 'file'
 
+      - name: replace external vlan id
+        replace:
+            path: "{{ item.src }}"
+            regexp: "external_network_vlan_id"
+            replace: "{{ external_network_vlan_id }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace external netcidr
+        replace:
+           path: "{{ item.src }}"
+           regexp: "external_net_cidr"
+           replace: "{{ external_net_cidr }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace external allocation pool start
+        replace:
+            path: "{{ item.src }}"
+            regexp: "external_allocation_pools_start"
+            replace: "{{ external_allocation_pools_start }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace external allocation pool end
+        replace:
+            path: "{{ item.src }}"
+            regexp: "external_allocation_pools_end"
+            replace: "{{ external_allocation_pools_end }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace external interface default route
+        replace:
+            path: "{{ item.src }}"
+            regexp: "external_interface_default_route"
+            replace: "{{ external_interface_default_route }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace internal api net cidr
+        replace:
+            path: "{{ item.src }}"
+            regexp: "internal_api_net_cidr"
+            replace: "{{ internal_api_net_cidr }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace internal api allocation pools start
+        replace:
+           path: "{{ item.src }}"
+           regexp: "internal_api_allocation_pools_start"
+           replace: "{{ internal_api_allocation_pools_start }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace internal api allocation pools end
+        replace:
+            path: "{{ item.src }}"
+            regexp: "internal_api_allocation_pools_end"
+            replace: "{{ internal_api_allocation_pools_end }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace internal api network vlan id
+        replace:
+            path: "{{ item.src }}"
+            regexp: "internal_api_network_vlan_id"
+            replace: "{{ internal_api_network_vlan_id }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage net cidr
+        replace:
+            path: "{{ item.src }}"
+            regexp: "storage_net_cidr"
+            replace: "{{ storage_net_cidr }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage allocation pools start
+        replace:
+            path: "{{ item.src }}"
+            regexp: "storage_allocation_pools_start"
+            replace: "{{ storage_allocation_pools_start }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage allocation pools end
+        replace:
+           path: "{{ item.src }}"
+           regexp: "storage_allocation_pools_end"
+           replace: "{{ storage_allocation_pools_end }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage network vlan id
+        replace:
+            path: "{{ item.src }}"
+            regexp: "storage_network_vlan_id"
+            replace: "{{ storage_network_vlan_id }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage mgmt net cidr
+        replace:
+            path: "{{ item.src }}"
+            regexp: "storage_mgmt_net_cidr"
+            replace: "{{ storage_mgmt_net_cidr }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage mgmt allocation pools start
+        replace:
+            path: "{{ item.src }}"
+            regexp: "storage_mgmt_allocation_pools_start"
+            replace: "{{ storage_mgmt_allocation_pools_start }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage mgmt allocation pools end
+        replace:
+            path: "{{ item.src }}"
+            regexp: "storage_mgmt_allocation_pools_end"
+            replace: "{{ storage_mgmt_allocation_pools_end }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace storage mgmt network vlan id
+        replace:
+           path: "{{ item.src }}"
+           regexp: "storage_mgmt_network_vlan_id"
+           replace: "{{ storage_mgmt_network_vlan_id }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace tenant net cidr
+        replace:
+            path: "{{ item.src }}"
+            regexp: "tenant_net_cidr"
+            replace: "{{ tenant_net_cidr }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace tenant allocation pools start
+        replace:
+            path: "{{ item.src }}"
+            regexp: "tenant_allocation_pools_start"
+            replace: "{{ tenant_allocation_pools_start }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace tenant allocation pools end
+        replace:
+            path: "{{ item.src }}"
+            regexp: "tenant_allocation_pools_end"
+            replace: "{{ tenant_allocation_pools_end }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
+      - name: replace tenant network vlan id
+        replace:
+            path: "{{ item.src }}"
+            regexp: "tenant_network_vlan_id"
+            replace: "{{ tenant_network_vlan_id }}"
+        with_filetree: '{{ nic_configs }}'
+        when: item.state == 'file'
+
       - name: get subnet mask
         shell: |
             echo {{ cidr }} | cut -d '/' -f2
