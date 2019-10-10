@@ -17,22 +17,22 @@ resource_registry:
 
 parameter_defaults:
 {% if not install.network.render.templates|default(False) %}
-    ExternalNetCidr: '10.0.0.0/24'
-    ExternalAllocationPools: [{'start': '10.0.0.101', 'end': '10.0.0.149'}]
-    ExternalInterfaceDefaultRoute: '10.0.0.1'
-    ExternalNetworkVlanID: 10
-    InternalApiNetCidr: '172.17.1.0/24'
-    InternalApiAllocationPools: [{'start': '172.17.1.10', 'end': '172.17.1.149'}]
-    InternalApiNetworkVlanID: 20
-    StorageNetCidr: '172.17.3.0/24'
-    StorageAllocationPools: [{'start': '172.17.3.10', 'end': '172.17.3.149'}]
-    StorageNetworkVlanID: 30
-    StorageMgmtNetCidr: '172.17.4.0/24'
-    StorageMgmtAllocationPools: [{'start': '172.17.4.10', 'end': '172.17.4.149'}]
-    StorageMgmtNetworkVlanID: 40
-    TenantNetCidr: '172.17.2.0/24'
-    TenantAllocationPools: [{'start': '172.17.2.10', 'end': '172.17.2.149'}]
-    TenantNetworkVlanID: 50
+    ExternalNetCidr: external_net_cidr
+    ExternalAllocationPools: [{'start': 'external_allocation_pools_start', 'end': 'external_allocation_pools_start'}]
+    ExternalInterfaceDefaultRoute: external_interface_default_route
+    ExternalNetworkVlanID: external_network_vlan_id
+    InternalApiNetCidr: internal_api_net_cidr
+    InternalApiAllocationPools: [{'start': 'internal_api_allocation_pools_start', 'end': 'internal_api_allocation_pools_end'}]
+    InternalApiNetworkVlanID: internal_api_network_vlan_id
+    StorageNetCidr: storage_net_cidr
+    StorageAllocationPools: [{'start': 'storage_allocation_pools_start', 'end': 'storage_allocation_pools_end'}]
+    StorageNetworkVlanID: storage_network_vlan_id
+    StorageMgmtNetCidr: storage_mgmt_net_cidr
+    StorageMgmtAllocationPools: [{'start': 'storage_mgmt_allocation_pools_start', 'end': 'storage_mgmt_allocation_pools_end'}]
+    StorageMgmtNetworkVlanID: storage_mgmt_network_vlan_id
+    TenantNetCidr: tenant_net_cidr
+    TenantAllocationPools: [{'start': 'tenant_allocation_pools_start', 'end': 'tenant_allocation_pools_end'}]
+    TenantNetworkVlanID: tenant_network_vlan_id
 {% endif %}
     DnsServers: ['gateway']
     EC2MetadataIp: gateway

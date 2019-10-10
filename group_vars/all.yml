@@ -44,9 +44,33 @@ gateway: 192.168.24.1
 dhcp_start: 192.168.24.5
 dhcp_end: 192.168.24.105
 inspection_iprange: 192.168.24.110,192.168.24.250
-# external network params for adding add external network to
+# external network params for adding external network to
 # undercloud to access overcloud resources
 external_gateway: 10.0.0.1/16
 external_network_broadcast: 10.0.255.255
-external_network_vlan_id: 10
+external_network_vlan_id: 300
 clean_debug: False
+#adding changes 
+external_net_cidr: 10.0.0.0/24
+external_allocation_pools_start: 10.0.0.101
+external_allocation_pools_end: 10.0.0.149
+external_interface_default_route: 10.0.0.1
+#internal
+internal_api_net_cidr: 172.17.1.0/24
+internal_api_allocation_pools_start: 172.17.1.10
+internal_api_allocation_pools_end: 172.17.1.149
+internal_api_network_vlan_id: 301
+#storage
+storage_net_cidr: 172.17.3.0/24
+storage_allocation_pools_start: 172.17.3.10
+storage_allocation_pools_end: 172.17.3.149
+storage_network_vlan_id: 302
+storage_mgmt_net_cidr: 172.17.4.0/24
+storage_mgmt_allocation_pools_start: 172.17.4.10
+storage_mgmt_allocation_pools_end: 172.17.4.149
+storage_mgmt_network_vlan_id: 303
+#tenant
+tenant_net_cidr: 172.17.2.0/24
+tenant_allocation_pools_start: 172.17.2.10
+tenant_allocation_pools_end: 172.17.2.150
+tenant_network_vlan_id: 304
