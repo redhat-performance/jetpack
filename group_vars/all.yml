@@ -44,6 +44,7 @@ gateway: 192.168.24.1
 dhcp_start: 192.168.24.5
 dhcp_end: 192.168.24.105
 inspection_iprange: 192.168.24.110,192.168.24.250
+subnet_mask: 24
 # external network params for adding external network to
 # undercloud to access overcloud resources
 external_gateway: 10.0.0.1/16
