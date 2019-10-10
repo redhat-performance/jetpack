@@ -83,7 +83,7 @@
         delegate_to: "{{ undercloud_hostname }}"
         become: true
 
-      - name: masquarade on public interface
+      - name: masquerade on public interface
         shell: |
             iptables -t nat -A POSTROUTING -o {{ public_interface }} -j MASQUERADE
         delegate_to: "{{ undercloud_hostname }}"
