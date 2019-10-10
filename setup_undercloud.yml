@@ -127,7 +127,7 @@
       - name: Reboot machine
         reboot:
             pre_reboot_delay: 5
-            
+
       - name: wait for undercloud to go down
         command: ping -c 1 {{ hostvars['localhost']['undercloud_hostname'] }}
         register: node_down
