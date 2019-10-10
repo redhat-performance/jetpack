@@ -304,9 +304,11 @@
             echo {{ cidr }} | cut -d '/' -f2
         register: prefix
 
-      - name: replace ControlPlaneSubnetCidr
-        vars:
+      - name: set subnet mask
+        set_fact:
             subnet_mask: "{{ prefix.stdout }}"
+
+      - name: replace ControlPlaneSubnetCidr
         replace:
             path: "{{ item.src }}"
             regexp: "subnet_mask"
