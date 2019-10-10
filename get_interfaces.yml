@@ -102,6 +102,7 @@
         set_fact:
           ifaces: "{{ interfaces }}"
           ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
+          public_interface: "{{ hostvars[undercloud_host]['public_interface'] }}"
           nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
 
       - name: remove ctlplane interface from eligible interfaces
