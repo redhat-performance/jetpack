@@ -14,3 +14,8 @@
         vars:
             infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
             inventory_file_name: "hosts-updated"
+
+      - name: create a directory to store logs
+        file:
+          path: "{{ log_directory }}"
+          state: directory
