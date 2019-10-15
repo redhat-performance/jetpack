@@ -1,4 +1,4 @@
-# Description
+# Jetpack
 
 This tool will install OpenStack using infrared on a set of homegnous servers.
 User can run playbooks in this tool inside their laptop or a ansible jump host.
