@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  tasks:
+    - name: read from hosts file
+      shell: |
+        ansible-inventory -i ~/.infrared/.workspaces/active/hosts --list 
+      changed_when: false
+      register: dynamic_inv
+
+    - name : set facts
+      set_fact:
+        inv: "{{ dynamic_inv.stdout | from_yaml }}"
+
+    - name: add undercloud_host to in-memory inventory file
+      add_host:
+        name: "undercloud"
+        groups: "{{ item }}"
+        ansible_host: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
+        ansible_user: "{{ inv._meta.hostvars[item]['ansible_user'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
+      when: item == 'undercloud'
+      loop: "{{ inv.all.children }}"
+
+    - name: add localhost to in-memory inventory file
+      add_host:
+        name: "localhost"
+        groups: "{{ item }}"
+        ansible_host: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
+        ansible_user: "{{ inv._meta.hostvars[item]['ansible_user'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
+      when: item == 'localhost'
+      loop: "{{ inv.all.children }}"
+
+    - name: add controller
+      add_host:
+        name: "{{ item }}"
+        ansible_host: "{{ item }}"
+        ansible_user: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
+      loop: "{{ inv.controller.hosts }}"
+
+    - name: add compute
+      add_host:
+        name: "{{ item }}"
+        ansible_host: "{{ item }}"
+        ansible_user: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
+      loop: "{{ inv.compute.hosts }}"
