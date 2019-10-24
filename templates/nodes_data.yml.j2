@@ -1,0 +1,10 @@
+---
+parameter_defaults:
+  ControllerCount: {{ controller_count }}
+{% for node_type in machine_types %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type] }}
+{% endfor %}
+
+{% for node_type in machine_types %}
+  OvercloudCompute{{ node_type }}Flavor: compute{{ node_type }}
+{% endfor %}
