@@ -8,8 +8,8 @@
 
 - name: remove key and add again
   shell: |
-    ssh-keygen -R {{ undercloud_hostname }}
-    echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ hostname }}
+    ssh-keygen -q -b 2048 -t rsa -N "" -C "creating SSH" -f {{ ansible_ssh_key }}
+    echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id -i {{ ansible_ssh_key }} -o 'StrictHostKeyChecking no' -f {{ ansible_ssh_user }}@{{ hostname }}
   changed_when: false
   when: ssh_result.stderr_lines|length > 0
 
