@@ -125,8 +125,11 @@
           state: enforcing
 
       - name: Reboot machine
-        reboot:
-            pre_reboot_delay: 5
+        shell: "nohup sh -c '( sleep 5 ; shutdown -r now )' &"
+        async: 0
+        poll: 0
+        changed_when: false
+        ignore_errors: true
 
       - name: wait for undercloud to go down
         command: ping -c 1 {{ hostvars['localhost']['undercloud_hostname'] }}
