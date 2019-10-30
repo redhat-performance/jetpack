@@ -5,6 +5,11 @@ undercloud_ntp_servers = clock.redhat.com,clock2.redhat.com
 {% if clean_debug %}
 clean_nodes = True
 {% endif %}
+{% if osp_release > 13 %}
+container_images_file=/home/stack/containers-prepare-parameter.yaml
+container_insecure_registries={{ registry_mirror }},{{ insecure_registries }}
+undercloud_timezone = UTC
+{% endif %}
 
 {% if osp_release <= 12 %}
 network_cidr = {{ cidr }}
