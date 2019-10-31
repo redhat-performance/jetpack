@@ -1,0 +1,106 @@
+---
+- hosts: localhost
+  tasks:
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        ssh_user: "root"
+
+    - name: get python interpreter
+      shell: |
+        ssh root@{{ undercloud_hostname }} /usr/bin/python --version
+      register: python_version
+      ignore_errors: true
+
+    - name: python interpreter
+      set_fact:
+        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
+
+    - name: add undercloud_host to inventory file
+      add_host:
+        name: "undercloud"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "root"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+- hosts: undercloud
+  vars:
+    user: "stack"
+    hostname: "{{ hostvars['localhost']['undercloud_hostname'] }}"
+  gather_facts: yes
+  tasks:
+    - name: Clean network interfaces
+      shell: |
+        /root/clean-interfaces.sh --nuke
+      changed_when: false
+
+    - name: Ensure SELinux is set to enforcing mode
+      selinux:
+        policy: targeted
+        state: enforcing
+
+    - name: Reboot machine
+      shell: "nohup sh -c '( sleep 5 ; shutdown -r now )' &"
+      async: 0
+      poll: 0
+      changed_when: false
+      ignore_errors: true
+
+    - name: wait for undercloud to go down
+      command: ping -c 1 {{ hostvars['localhost']['undercloud_hostname'] }}
+      register: node_down
+      until: node_down.rc != 0
+      retries: 100
+      delay: 3
+      ignore_errors: true
+      changed_when: false
+      delegate_to: localhost
+
+    - name: wait for 180 seconds before checking for undercloud
+      wait_for:
+        timeout: 180
+      delegate_to: localhost
+
+    - name: waiting for the undercloud to be available
+      wait_for:
+        port: 22
+        host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
+        search_regex: OpenSSH
+        timeout: 30
+      register: uc_reachable
+      delegate_to: localhost
+      retries: 100
+      until: uc_reachable|succeeded
+
+    - name: add stack user
+      user:
+        name: "{{ user }}"
+        password: "{{ ansible_ssh_pass }}"
+        create_home: yes
+        home: "/home/{{ user }}"
+
+    - name: copy public key
+      copy:
+        src: "~/.ssh/id_rsa.pub"
+        dest: "/root/ssh_keyfile"
+
+    - name: Add authorized keys
+      authorized_key:
+        user: "{{ user }}"
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+    - name: Add to sudoers
+      lineinfile:
+        dest: "/etc/sudoers"
+        line: "{{ user }} ALL=(root) NOPASSWD:ALL"
+
+    - name: Check if ssh keys exists
+      stat:
+        path: "/home/{{ user }}/.ssh/id_rsa"
+      register: ssh_keys_result
+
+    - name: create ssh key pair
+      shell: |
+        ssh-keygen -q -t rsa -f /home/{{ user }}/.ssh/id_rsa -C "" -N ""
+      when: ssh_keys_result.stat.exists == False 

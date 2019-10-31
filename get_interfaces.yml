@@ -29,7 +29,7 @@
         with_items: "{{ find_nics.files }}"
 
       - name: bring up ifaces
-        command: ip link set {{ item }} up
+        command: sudo ip link set {{ item }} up
         with_items: "{{ nics }}"
         changed_when: false
 

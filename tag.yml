@@ -1,10 +1,6 @@
 - hosts: localhost
   gather_facts: yes
   tasks:
-      - name: add undercloud_host to inventory file
-        add_host:
-            name: "{{ undercloud_hostname }}"
-            ansible_user: "stack"
       - name: copy instack file to /home/stack/instackenv.json for infrared tagging
         copy:
             src: "{{ overcloud_instackenv_path }}"
@@ -12,6 +8,7 @@
         delegate_to: "{{ groups.undercloud|first }}"
         vars:
             ansible_python_interpreter: "{{ python_interpreter }}"
+            ansible_user: "stack"
 
       - name: run tripleo-overcloud tagging
         shell: |
