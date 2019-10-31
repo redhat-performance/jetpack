@@ -1,10 +1,15 @@
 - hosts: localhost
+  vars:
+    container_params: ""
   tasks:
       - name: Setup undercloud.conf
         template:
             src: undercloud.conf.j2
             dest: "{{ undercloud_conf }}"
-
+      - name: Set container params
+        set_fact:
+          container_params: "--registry-mirror {{ registry_mirror }} --registry-namespace {{ registry_namespace }}"
+        when: osp_release > 13
       - name: run tripleo-undercloud
         shell: |
           source {{ infrared_dir }}/.venv/bin/activate
@@ -12,7 +17,7 @@
           --version {{ osp_release }} \
           --build {{ osp_puddle }} \
           --images-task rpm \
-          --config-file {{ undercloud_conf }} &> undercloud_install.log
+          --config-file {{ undercloud_conf }} {{ container_params }} &> undercloud_install.log
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
