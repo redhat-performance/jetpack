@@ -1,5 +1,6 @@
 ---
 - hosts: localhost
+  gather_facts: yes
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
   tasks:
@@ -15,6 +16,8 @@
             register: env_files
             loop: "{{ extra_templates }}"
             delegate_to: "{{ undercloud_hostname }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
 
           - name: Copy files to undercloud if they do not exist
             copy:
@@ -40,6 +43,8 @@
         register: nodes_uuids
         changed_when: false
         delegate_to: "{{ groups.undercloud|first }}"
+        vars:
+          ansible_python_interpreter: "{{ python_interpreter }}"
 
       - name: check registered nodes with requested node count
         debug:
@@ -76,6 +81,7 @@
       - name: create vlan interface on external interface
         vars:
             vlan_interface: "{{ external_interface }}.{{ external_network_vlan_id }}"
+            ansible_python_interpreter: "{{ python_interpreter }}"
         shell: |
             ip link add link {{ external_interface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
             ip link set dev {{ external_interface }} up
@@ -85,6 +91,8 @@
         become: true
 
       - name: masquerade on public interface
+        vars:
+            ansible_python_interpreter: "{{ python_interpreter }}"
         shell: |
             iptables -t nat -A POSTROUTING -o {{ public_interface }} -j MASQUERADE
         delegate_to: "{{ undercloud_hostname }}"

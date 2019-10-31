@@ -1,4 +1,5 @@
 - hosts: localhost
+  gather_facts: yes
   vars:
       badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
   tasks:
@@ -28,6 +29,8 @@
        path: /etc/redhat-release
       register: rhel_release_stat
       delegate_to: "{{ undercloud_hostname }}"
+      vars:
+        ansible_python_interpreter: "{{ python_interpreter }}"
 
     - name: Get RHEL version
       become: true
@@ -36,6 +39,8 @@
       register: file_content
       when: rhel_release_stat.stat.exists
       delegate_to: "{{ undercloud_hostname }}"
+      vars:
+        ansible_python_interpreter: "{{ python_interpreter }}"
 
     - name: set version fact
       set_fact:
@@ -111,6 +116,7 @@
       when: rhel7_install is not skipped or rhel8_install is not skipped
 
 - hosts: undercloud
+  gather_facts: yes
   tasks:
       - name: Install repos on undercloud
         shell: |
