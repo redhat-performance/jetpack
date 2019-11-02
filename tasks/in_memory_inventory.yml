@@ -11,42 +11,91 @@
       set_fact:
         inv: "{{ dynamic_inv.stdout | from_yaml }}"
 
-    - name: add undercloud_host to in-memory inventory file
+    - name: add hosts in undercloud group
       add_host:
-        name: "undercloud"
-        groups: "{{ item }}"
-        ansible_host: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
-        ansible_user: "{{ inv._meta.hostvars[item]['ansible_user'] }}"
-        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
-        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
-      when: item == 'undercloud'
-      loop: "{{ inv.all.children }}"
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+        ansible_host: "{{ item[1] }}"
+        ansible_user: "{{ inv._meta.hostvars[item[1]]['ansible_host'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item[1]]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item[1]]['ansible_python_interpreter'] }}"
+      when: item[0] == "undercloud"
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.undercloud.hosts }}"
 
-    - name: add localhost to in-memory inventory file
+    - name: add hosts in baremetal group
       add_host:
-        name: "localhost"
-        groups: "{{ item }}"
-        ansible_host: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
-        ansible_user: "{{ inv._meta.hostvars[item]['ansible_user'] }}"
-        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
-        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
-      when: item == 'localhost'
-      loop: "{{ inv.all.children }}"
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+      when: item[0] == "baremetal"
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.undercloud.hosts }}"
 
-    - name: add controller
+    - name: add hosts in tester group
       add_host:
-        name: "{{ item }}"
-        ansible_host: "{{ item }}"
-        ansible_user: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
-        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
-        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
-      loop: "{{ inv.controller.hosts }}"
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+      when: item[0] == "tester"
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.undercloud.hosts }}"
 
-    - name: add compute
+    - name: add hosts in shade group
       add_host:
-        name: "{{ item }}"
-        ansible_host: "{{ item }}"
-        ansible_user: "{{ inv._meta.hostvars[item]['ansible_host'] }}"
-        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item]['ansible_ssh_private_key_file'] }}"
-        ansible_python_interpreter: "{{ inv._meta.hostvars[item]['ansible_python_interpreter'] }}"
-      loop: "{{ inv.compute.hosts }}"
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+      when: item[0] == "shade"
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.undercloud.hosts }}"
+
+    - name: add hosts in local
+      add_host:
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+        ansible_connection: "{{ inv._meta.hostvars[item[1]]['ansible_connection'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item[1]]['ansible_python_interpreter'] }}"
+      when: item[0] == 'local'
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.local.hosts }}"
+
+
+    - name: add hosts in controller group
+      add_host:
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+        ansible_host: "{{ item[1] }}"
+        ansible_user: "{{ inv._meta.hostvars[item[1]]['ansible_host'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item[1]]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item[1]]['ansible_python_interpreter'] }}"
+      when: item[0] == "controller"
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.controller.hosts }}"
+
+    - name: add hosts in compute group
+      add_host:
+        name: "{{ item[1] }}"
+        groups: "{{ item[0] }}"
+        ansible_host: "{{ item[1] }}"
+        ansible_user: "{{ inv._meta.hostvars[item[1]]['ansible_host'] }}"
+        ansible_ssh_private_key_file: "{{ inv._meta.hostvars[item[1]]['ansible_ssh_private_key_file'] }}"
+        ansible_python_interpreter: "{{ inv._meta.hostvars[item[1]]['ansible_python_interpreter'] }}"
+      when: item[0] == "compute"
+      with_nested:
+        - "{{ inv.all.children }}"
+        - "{{ inv.compute.hosts }}"
+
+    - name: generate inventory file
+      template:
+        dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
+        src: inventory.j2
+    - name: update inventory file symlink
+      file:
+        dest: "{{ infrared_hosts_file }}"
+        state: link
+        src: "{{ inventory_file_name }}"
+
