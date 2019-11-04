@@ -5,7 +5,7 @@
 
 - import_playbook: setup_undercloud.yml
   tags:
-    - setup_undercloud
+    - always
 
 - import_playbook: get_interfaces.yml
   tags:
@@ -35,4 +35,3 @@
   tags:
     - cleanup
     - never
-#

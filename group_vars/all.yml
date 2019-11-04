@@ -39,6 +39,10 @@ scale:
       - r630
       - r730xd
       - r930
+# containers params
+registry_mirror: redhat.com
+registry_namespace: redhat
+insecure_registries: redhat.com
 # undercloud.conf ctlplane-subnet section config options
 cidr: 192.168.24.0/24
 gateway: 192.168.24.1

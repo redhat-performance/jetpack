@@ -146,9 +146,9 @@ resources:
                           name: br-ex
                           use_dhcp: false
                           members:
-                          - type: interface
-                            name: external_interface
-                            primary: true
+                            - type: interface
+                              name: external_interface
+                              primary: true
                             -
                               type: vlan
                               vlan_id: {get_param: ExternalNetworkVlanID}

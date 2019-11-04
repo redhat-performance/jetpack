@@ -9,13 +9,13 @@
       - name: setup infrared
         include_tasks: tasks/setup_infrared.yml
 
-      - name: prepare inventory
-        include_tasks: tasks/prepare_inventory.yml
-        vars:
-            infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
-            inventory_file_name: "hosts-updated"
-
-      - name: create a directory to store logs
+      - name: add localhost to inventory file
+        add_host:
+          name: "localhost"
+          groups: "local"
+          ansible_connection: "local"
+ 
+       - name: create a directory to store logs
         file:
           path: "{{ log_directory }}"
           state: directory
