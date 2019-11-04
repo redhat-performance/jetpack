@@ -1,64 +1,47 @@
 - hosts: localhost
+  gather_facts: yes
   vars:
       badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
+      chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
   tasks:
-    - include_tasks: tasks/copykeys.yml
-      vars:
-        hostname: "{{ hammer_host }}"
-
-    - name: clone badfish
-      git:
-        repo: "https://github.com/redhat-performance/badfish.git"
-        dest: "{{ ansible_user_dir }}/badfish"
-
-    - name: Create badfish virtualenv
-      command: virtualenv {{ badfish_venv }} creates={{ badfish_venv }}
-
-    - name: Install badfish requirements
-      pip:
-        requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
-        virtualenv: "{{ badfish_venv }}"
-
-    - name: set foreman password
-      set_fact:
-        chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
-
-    - name: Check if /etc/redhat-release exists
-      stat:
-       path: /etc/redhat-release
-      register: rhel_release_stat
-      delegate_to: "{{ undercloud_hostname }}"
-
-    - name: Get RHEL version
-      become: true
-      slurp:
-        src: /etc/redhat-release
-      register: file_content
-      when: rhel_release_stat.stat.exists
-      delegate_to: "{{ undercloud_hostname }}"
-
-    - name: set version fact
-      set_fact:
-        version: "{{ file_content.content | b64decode }}"
+    - name: check os installed
+      shell: |
+        sshpass -p 100yard- ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ undercloud_hostname }} 'cat /etc/redhat-release'
+      register: rhel_release
 
     - name: set rhel version
       set_fact:
-        rhel_version: "{{ version.split()[-2] }}"
+        rhel_version: "{{ rhel_release.stdout.split()[-2] }}"
 
-    - name: RHEL 8 install if needed
-      shell: hammer -u  {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem 'RHEL 8' --overwrite 1
-      delegate_to: "{{ hammer_host }}"
-      register: rhel8_install
-      when: osp_release | int > 14 and  rhel_version is version('8.0', '<')
-
-    - name: RHEL 7 install if needed
-      shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem 'RHEL 7' --overwrite 1
-      delegate_to: "{{ hammer_host }}"
-      register: rhel7_install
-      when: osp_release | int < 15 and  rhel_version is  version ('8.0', '>=')
+    - name: set os_install
+      set_fact:
+        os_install: "{{ (((osp_release|int > 14) and (rhel_version is version('8.0', '<')))|ternary('RHEL 8', ((osp_release|int < 15) and (rhel_version is version ('8.0', '>=')))|ternary('RHEL 7', false))) }}"
 
     - name: Reboot if OS install needed
       block:
+        - include_tasks: tasks/copykeys.yml
+          vars:
+            hostname: "{{ hammer_host }}"
+            ssh_user: "root"
+
+        - name: clone badfish
+          git:
+            repo: "https://github.com/redhat-performance/badfish.git"
+            dest: "{{ ansible_user_dir }}/badfish"
+
+        - name: Create badfish virtualenv
+          command: virtualenv {{ badfish_venv }} creates={{ badfish_venv }}
+
+        - name: Install badfish requirements
+          pip:
+            requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
+            virtualenv: "{{ badfish_venv }}"
+
+        - name: update host to install new os
+          shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --overwrite 1
+          delegate_to: "{{ hammer_host }}"
+          vars:
+            ansible_user: root
 
         - name: set undercloud to PXE boot (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
@@ -102,57 +85,23 @@
           delegate_to: localhost
           retries: 100
           until: uc_reachable|succeeded
+      when: (os_install is defined) and (os_install != false)
 
-        - name: prepare inventory
-          include_tasks: tasks/prepare_inventory.yml
-          vars:
-              infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
-              inventory_file_name: "hosts-updated"
-      when: rhel7_install is not skipped or rhel8_install is not skipped
+    - name: Check if stack user exists
+      shell: |
+        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'echo success'
+      register: test_user
+      ignore_errors: true
+      changed_when: false
 
-- hosts: undercloud
-  tasks:
-      - name: Install repos on undercloud
-        shell: |
-          ./clean-interfaces.sh --nuke
-        args:
-          chdir: "{{ ansible_user_dir }}"
-        changed_when: false
+    - name: check if stack user need to be created in undercloud
+      set_fact:
+        create_user: True
+      when: test_user.stdout != "success"
 
-      - name: Ensure SELinux is set to enforcing mode
-        selinux:
-          policy: targeted
-          state: enforcing
 
-      - name: Reboot machine
-        shell: "nohup sh -c '( sleep 5 ; shutdown -r now )' &"
-        async: 0
-        poll: 0
-        changed_when: false
-        ignore_errors: true
+- import_playbook: prepare_undercloud.yml
+  when: hostvars['localhost']['create_user'] is defined
 
-      - name: wait for undercloud to go down
-        command: ping -c 1 {{ hostvars['localhost']['undercloud_hostname'] }}
-        register: node_down
-        until: node_down.rc != 0
-        retries: 100
-        delay: 3
-        ignore_errors: true
-        changed_when: false
-        delegate_to: localhost
 
-      - name: wait for 180 seconds before checking for undercloud
-        wait_for:
-            timeout: 180
-        delegate_to: localhost
-
-      - name: waiting for the undercloud to be available
-        wait_for:
-            port: 22
-            host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
-            search_regex: OpenSSH
-            timeout: 30
-        register: uc_reachable
-        delegate_to: localhost
-        retries: 100
-        until: uc_reachable|succeeded
+- import_playbook: add_undercloud_to_inventory.yml

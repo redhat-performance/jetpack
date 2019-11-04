@@ -1,10 +1,3 @@
-- hosts: localhost
-  tasks:
-      - name: add undercloud_host to inventory file
-        add_host:
-            name: "{{ groups.undercloud|first }}"
-            ansible_user: "stack"
-
 - hosts: undercloud
   become: yes
   become_user: stack
