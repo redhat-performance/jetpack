@@ -6,7 +6,7 @@
   tasks:
     - name: check os installed
       shell: |
-        sshpass -p 100yard- ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ undercloud_hostname }} 'cat /etc/redhat-release'
+        sshpass -p {{ ansible_ssh_pass }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ undercloud_hostname }} 'cat /etc/redhat-release'
       register: rhel_release
 
     - name: set rhel version
