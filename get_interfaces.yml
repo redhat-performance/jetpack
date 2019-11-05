@@ -29,7 +29,10 @@
         with_items: "{{ find_nics.files }}"
 
       - name: bring up ifaces
-        command: sudo ip link set {{ item }} up
+        command: ip link set {{ item }} up
+        become: true
+        become_method: sudo
+        become-user: "{{ ansible_ssh_user }}"
         with_items: "{{ nics }}"
         changed_when: false
 
