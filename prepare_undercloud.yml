@@ -103,4 +103,4 @@
     - name: create ssh key pair
       shell: |
         ssh-keygen -q -t rsa -f /home/{{ user }}/.ssh/id_rsa -C "" -N ""
-      when: ssh_keys_result.stat.exists == False 
+      when: ssh_keys_result.stat.exists == False

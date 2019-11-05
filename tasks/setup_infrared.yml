@@ -8,7 +8,8 @@
 - name: Add all plugins
   shell: |
       git fetch "https://review.gerrithub.io/redhat-openstack/infrared" refs/changes/76/463576/2 && git checkout FETCH_HEAD
-      virtualenv .venv && source .venv/bin/activate
+      pip3 install virtualenv
+      virtualenv -p python3 .venv && source .venv/bin/activate
       pip install --upgrade pip
       pip install --upgrade setuptools
       pip install .
