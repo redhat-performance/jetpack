@@ -1,4 +1,9 @@
 ---
+- name: remove infrared
+  file:
+      state: absent
+      path: "{{ ansible_user_dir }}/infrared"
+
 - name: clone infrared
   git:
       repo: "https://github.com/redhat-openstack/infrared"

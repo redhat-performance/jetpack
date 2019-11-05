@@ -180,20 +180,55 @@ resources:
     properties:
       group: script
       config:
-          str_replace:
+        list_join:
+        - ''
+        - - |
+            #!/bin/bash
+            function network_config_hook {
+              function get_python() {
+                command -v python3 || command -v python2 || command -v python || exit 1
+              }
+            $(get_python) -c "
+            import json
+            import yaml
+
+
+            with open('/etc/os-net-config/mapping.yaml') as yaml_file:
+              mapping = yaml.load(yaml_file)
+
+            net_config = {'network_config': [] }
+            with open('/etc/os-net-config/config.json') as json_file:
+              data = json.load(json_file)
+            for config in data['network_config']:
+              if config['type'] == 'ovs_bridge':
+                for member in config['members']:
+                  if member['type'] == 'interface':
+                    nic_mapping = member['nic_mapping']
+                    break
+              elif config['type'] == 'interface':
+                nic_mapping = config['nic_mapping']
+              for k,v in nic_mapping.items():
+                if (('interface_mapping' in mapping) and (nic_mapping[k] in mapping['interface_mapping'])):
+                  nic_mapping[v] = mapping['interface_mapping'][nic_mapping[k]]
+              net_config['network_config'].append(config)
+
+            with open('/etc/os-net-config/config.json', 'w') as outfile:
+              json.dump(net_config, outfile)
+            "
+            }
+
+          -
+            str_replace:
               template:
                   get_file: {{ install.heat.templates.basedir }}/network/scripts/run-os-net-config.sh
               params:
                    $network_config:
                        network_config:
                         -
-                          type: ovs_bridge
-                          name: br-ctlplane
-                          members:
-                            -
-                              type: interface
-                              name: ctlplane_interface
-                              primary: true
+                          type: interface
+                          name: ctlplane_interface
+                          nic_mapping:
+                            ctlplane_interface: ctlplane_interface
                           use_dhcp: false
                           addresses:
                             -
@@ -215,7 +250,8 @@ resources:
                             -
                               type: interface
                               name: nic2
-                              primary: true
+                              nic_mapping:
+                                nic2: nic2
                             -
                               type: vlan
                               vlan_id:
@@ -248,7 +284,8 @@ resources:
                             -
                               type: interface
                               name: nic3
-                              primary: true
+                              nic_mapping:
+                                nic3: nic3
                             -
                               type: vlan
                               vlan_id:
@@ -265,7 +302,8 @@ resources:
                             -
                               type: interface
                               name: external_interface
-                              primary: true
+                              nic_mapping:
+                                external_interface: external_interface
                             -
                               type: vlan
                               vlan_id:

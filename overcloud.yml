@@ -1,4 +1,32 @@
 ---
+- hosts: undercloud
+  gather_facts: yes
+  tasks:
+      # RHBZ 1756492
+      - name: exclude ceph images
+        lineinfile:
+          path: /home/stack/containers-prepare-parameter.yaml
+          insertafter: "- push_destination: true"
+          line: '    excludes:'
+        when: osp_release > 13
+      - name: exclude ceph images
+        lineinfile:
+          path: /home/stack/containers-prepare-parameter.yaml
+          insertafter: "    excludes:"
+          line: '    - ceph'
+        when: osp_release > 13
+      - name: get tht version
+        shell: |
+          grep  "heat_template_version" /usr/share/openstack-tripleo-heat-templates/overcloud.j2.yaml | cut -d ':' -f2
+        register: tht_version
+      - name: set heat_template_version
+        set_fact:
+          heat_template_version: "{{ tht_version.stdout }}"
+      - name: generate os-net-config-mappings.yaml  
+        template:
+          src: "os-net-config-mappings.yaml.j2"
+          dest: "/home/stack/os-net-config-mappings.yaml"
+
 - hosts: localhost
   gather_facts: yes
   vars:
@@ -14,13 +42,18 @@
             delegate_to: "{{ undercloud_hostname }}"
             vars:
               ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
 
           - name: Copy files to undercloud if they do not exist
             copy:
               src: "{{ item.item }}"
-              dest: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+              dest: "/home/stack/"
             loop: "{{ env_files.results }}"
             when: not item.stat.exists
+            delegate_to: "{{ undercloud_hostname }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
 
           - name: Template out extra overcloud-templates file
             template:
@@ -41,6 +74,7 @@
         delegate_to: "{{ groups.undercloud|first }}"
         vars:
           ansible_python_interpreter: "{{ python_interpreter }}"
+          ansible_user: "stack"
 
       - name: check registered nodes with requested node count
         debug:
@@ -57,11 +91,13 @@
         fail:
             msg: "Failing as compute count is less than 1"
         when: compute_count|int < 1
-
+      - name: set network-backend option
+        set_fact:
+          network_backend: "{{ (osp_release|int > 14)|ternary('geneve', 'vxlan') }}"
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend vxlan --public-network false &> overcloud_deploy.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend {{ network_backend }} --public-network false &> overcloud_deploy.log
         args:
             chdir: "{{ infrared_dir }}"
         when: extra_templates is not defined and parameter_defaults is not defined
@@ -69,27 +105,43 @@
       - name: run tripleo-overcloud deploy with extra templates
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend vlan --public-network false &> overcloud_deploy.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend {{ network_backend }} --public-network false &> overcloud_deploy.log
         args:
             chdir: "{{ infrared_dir }}"
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
 
+- hosts: undercloud
+  gather_facts: yes
+  vars:
+       external_interface: "{{ hostvars['localhost']['external_interface'] }}"
+  tasks:
+      - name: get ext_interface
+        shell: |
+          for i in /sys/class/net/*
+          do
+            udevcontent=`udevadm info -p $i --query property`
+            if [[ $udevcontent =~ {{ external_interface }} ]]
+            then
+              ext_interface=`echo $i | cut -d '/' -f 5`
+              break
+            fi
+          done
+          echo $ext_interface
+        register: ext_interface
+      - name: set ext_iface
+        set_fact:
+          ext_iface: "{{ ext_interface.stdout }}"
       - name: create vlan interface on external interface
         vars:
-            vlan_interface: "{{ external_interface }}.{{ external_network_vlan_id }}"
-            ansible_python_interpreter: "{{ python_interpreter }}"
+            vlan_interface: "{{ ext_iface }}.{{ external_network_vlan_id }}"
         shell: |
-            ip link add link {{ external_interface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
-            ip link set dev {{ external_interface }} up
+            ip link add link {{ ext_iface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
+            ip link set dev {{ ext_iface }} up
             ip link set dev {{ vlan_interface }} up
             ip a a {{ external_gateway }} brd {{ external_network_broadcast }} dev {{ vlan_interface }}
-        delegate_to: "{{ undercloud_hostname }}"
         become: true
 
       - name: masquerade on public interface
-        vars:
-            ansible_python_interpreter: "{{ python_interpreter }}"
         shell: |
             iptables -t nat -A POSTROUTING -o {{ public_interface }} -j MASQUERADE
-        delegate_to: "{{ undercloud_hostname }}"
         become: true

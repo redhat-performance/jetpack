@@ -6,7 +6,6 @@ instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
 undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
 cloud_name: cloud00
 lab_name: scale
-ansible_ssh_user: root
 ansible_ssh_pass: password
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
@@ -21,23 +20,29 @@ alias:
   lab_url: "http://quads.alias.bos.scalelab.redhat.com"
   machine_types:
     dell:
-      - r740xd
+      740xd: [enp25s0f0, enp25s0f1, enp140s0f0, enp140s0f1]
+    supermicro:
+      6029r: [enp94s0f0, enp94s0f1, enp95s0f0, enp95s0f1]
+      6048p: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
 scale:
 # lab specific vars
   lab_url: "http://quads.rdu2.scalelab.redhat.com"
   machine_types:
     supermicro:
-      - 1029p
-      - 1029u
-      - 6048r
-      - 5039ms
-      - 6049p
-      - 6048p
+      1029p: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
+      1029u: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+      6048r: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
+      5039ms: [enp1s0f0, enp1s0f1, enp2s0f1]
+      6049p: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+      6048p: []
     dell:
-      - r620
-      - r630
-      - r730xd
-      - r930
+      r620: [enp66s0f2, enp66s0f3, enp1s0f0, enp1s0f1]
+      r630: [enp1s0f0, enp1s0f1, enp1s0f2, enp1s0f3]
+      r730xd: [enp1s0f0, enp1s0f1, enp130s0f0, enp130s0f1]
+      r930: [enp1s0f0, enp1s0f1, enp10s0f0, enp10s0f1]
+extra_templates:
+  - firstboot.yaml
+
 # containers params
 registry_mirror: redhat.com
 registry_namespace: redhat
