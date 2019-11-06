@@ -5,18 +5,33 @@
       dest: "{{ infrared_dir }}"
       force: yes
 
-- name: Add all plugins
+- name: infrared setup
   shell: |
       virtualenv .venv && source .venv/bin/activate
       pip install --upgrade pip
       pip install --upgrade setuptools
       pip install .
       rm -rf {{ ansible_user_dir }}/.infrared
-      infrared plugin add all
-      infrared workspace create {{ workspace_name }}
-      infrared workspace checkout {{ workspace_name }}
   args:
     chdir: "{{ infrared_dir }}"
   changed_when: false
+
+- name: add infrared plugins
+  shell: source .venv/bin/activate && infrared plugin add all
+  args:
+    chdir: "{{ infrared_dir }}"
+  register: plugin_add
+  until: plugin_add.rc == 0
+  retries: 10
+  delay: 2
+  ignore_errors: true
+
+- name: Create infrared workspace
+  shell: |
+    source .venv/bin/activate
+    infrared workspace create {{ workspace_name }}
+    infrared workspace checkout {{ workspace_name }}
+  args:
+    chdir: "{{ infrared_dir }}"
   vars:
       workspace_name: "{{ 'workspace_' + ansible_date_time.date + '_' + ansible_date_time.time|string|replace(':','-') }}"
