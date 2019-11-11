@@ -4,6 +4,7 @@ infrared_workspaces_dir: "{{ ansible_user_dir }}/.infrared/.workspaces"
 infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
 instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
 undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
+log_directory: "{{ ansible_user_dir }}/jetpack/log_dir"
 cloud_name: cloud00
 lab_name: scale
 ansible_ssh_user: root

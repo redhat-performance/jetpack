@@ -61,7 +61,7 @@
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend vxlan --public-network false &> overcloud_deploy.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend vxlan --public-network false > {{ log_directory }}/overcloud_deploy.log 2&>1
         args:
             chdir: "{{ infrared_dir }}"
         when: extra_templates is not defined and parameter_defaults is not defined
@@ -69,7 +69,7 @@
       - name: run tripleo-overcloud deploy with extra templates
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend vlan --public-network false &> overcloud_deploy.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend vlan --public-network false > {{ log_directory }}/overcloud_deploy.log 2&>1
         args:
             chdir: "{{ infrared_dir }}"
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
