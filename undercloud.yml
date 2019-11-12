@@ -2,6 +2,28 @@
   vars:
     container_params: ""
   tasks:
+      - name: get undrecloud_local_interface
+        shell: |
+          for i in /sys/class/net/*
+          do
+            udevcontent=`udevadm info -p $i --query property`
+            if [[ $udevcontent =~ {{ ctlplane_interface }} ]]
+            then
+              undercloud_local_interface=`echo $i | cut -d '/' -f 5`
+              break
+            fi
+          done
+          echo $undercloud_local_interface
+        register: local_interface
+        delegate_to: "{{ undercloud_hostname }}"
+        vars:
+          ansible_python_interpreter: "{{ python_interpreter }}"
+          ansible_user: "stack"
+        become: true
+ 
+      - name: set undrecloud_local_interface
+        set_fact:
+          undrecloud_local_interface: "{{ local_interface.stdout }}"
       - name: Setup undercloud.conf
         template:
             src: undercloud.conf.j2

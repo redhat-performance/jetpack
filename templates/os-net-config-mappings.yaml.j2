@@ -1,0 +1,64 @@
+heat_template_version: {{ heat_template_version }}
+
+description: >
+  Configure os-net-config mappings for specific nodes
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: OsNetConfigMappings}
+
+  OsNetConfigMappings:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      group: script
+      config: |
+            #!/bin/sh
+            ifaces=$(ls /sys/class/net/ | tr '\n' ',')
+            mkdir -p /etc/os-net-config
+
+            # needed to handle where python lives
+            function get_python() {
+              command -v python3 || command -v python2 || command -v python || exit 1
+            }
+
+            # Create an os-net-config mapping file, note this defaults to
+            # /etc/os-net-config/mapping.yaml, so we use that name despite
+            # rendering the result as json
+            $(get_python) -c "
+            import json
+            import sys
+            import copy
+            from subprocess import PIPE, Popen
+            import yaml
+
+            def write_mapping_file(interface_mapping):
+              with open('/etc/os-net-config/mapping.yaml', 'w') as f:
+                yaml.safe_dump(interface_mapping, f,  default_flow_style=False)
+
+            def set_mapping(entry, iface):
+              alias = entry.split('=')[1]
+              if alias != iface:
+                net_name_path[alias] = iface
+
+            ifaces='$ifaces'.split(',')
+
+            net_name_path = {}
+            for iface in ifaces:
+              net_iface = '/sys/class/net/{}'.format(iface)
+              ps = Popen([ 'udevadm', 'info', '-p', net_iface, '--query', 'property'],
+                         stdout=PIPE, universal_newlines=True)
+              out, err = ps.communicate()
+              for entry in out.split('\n'):
+                if 'ID_NET_NAME_PATH' in entry:
+                  set_mapping(entry, iface)
+
+            lc_interface_mapping = {'interface_mapping': net_name_path}
+            write_mapping_file(lc_interface_mapping)
+            "
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}

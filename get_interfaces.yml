@@ -30,9 +30,9 @@
 
       - name: bring up ifaces
         command: ip link set {{ item }} up
-        become: true
         with_items: "{{ nics }}"
         changed_when: false
+        become: true
 
       - name: wait for 20 seconds for interface up
         wait_for:
@@ -43,12 +43,14 @@
         shell: |
             ip r | grep default
         register: default_route
+        become: true
 
       - name: detect ifaces
         command: ip link show dev {{ item }}
         with_items: "{{ nics }}"
         register: detect_iface
         changed_when: false
+        become: true
 
       - name: working interfaces
         set_fact:
@@ -62,6 +64,7 @@
         with_items: "{{ ifaces }}"
         register: addr_show
         changed_when: false
+        become: true
 
       - name: set public interface
         set_fact:
@@ -79,6 +82,7 @@
         with_items: "{{ ifaces }}"
         register: macs_show
         changed_when: false
+        become: true
 
       - name: set ctlplane interface
         vars:
@@ -98,11 +102,30 @@
       undercloud_host: "{{ groups.undercloud|first }}"
       interfaces: "{{ hostvars[undercloud_host]['ifaces'] }}"
       virt: "{{ (interfaces|length == 3)|ternary('virt', 'virt_4nics') }}"
+      machine_type: "{{ (lab_name == 'scale')| ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
   tasks:
+      - name: set interfaces
+        set_fact:
+          ifaces: "{{ item.value }}"
+        with_dict: "{{ scale.machine_types.supermicro }}"
+        when: item.key == machine_type and machine_type in scale.machine_types.supermicro
+
+      - name: set interfaces
+        set_fact:
+          ifaces: "{{ item.value }}"
+        with_dict: "{{ scale.machine_types.dell }}"
+        when: item.key == machine_type and machine_type in scale.machine_types.dell
+
+      - name: set interfaces
+        set_fact:
+          ifaces: "{{ item.value }}"
+        with_dict: "{{ alias.machine_types.dell }}"
+        when: item.key == machine_type and machine_type in alias.machine_types.dell
+
       - name: set some vars
         set_fact:
-          ifaces: "{{ interfaces }}"
-          ctlplane_interface: "{{ hostvars[undercloud_host]['ctlplane_interface'] }}"
+          ifaces: "{{ ifaces|default(interfaces) }}"
+          ctlplane_interface: "{{ ifaces[1]|default(hostvars[undercloud_host]['ctlplane_interface']) }}"
           public_interface: "{{ hostvars[undercloud_host]['public_interface'] }}"
           nic_configs: "{{ ansible_user_dir }}/{{ virt }}"
 

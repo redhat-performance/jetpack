@@ -4,14 +4,29 @@
       badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
       chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
   tasks:
-    - name: check os installed
+    - name: check if os installed as root user
       shell: |
         sshpass -p {{ ansible_ssh_pass }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ undercloud_hostname }} 'cat /etc/redhat-release'
       register: rhel_release
+      ignore_errors: true
 
     - name: set rhel version
       set_fact:
         rhel_version: "{{ rhel_release.stdout.split()[-2] }}"
+      ignore_errors: true
+      when: rhel_release.stdout != ""
+ 
+    - name: Check if os is installed as stack user
+      shell: |
+        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'cat /etc/redhat-release'
+      register: rhel_release
+      ignore_errors: true
+      when: rhel_version is not defined
+
+    - name: set rhel version
+      set_fact:
+        rhel_version: "{{ rhel_release.stdout.split()[-2] }}"
+      when: rhel_version is not defined
 
     - name: set os_install
       set_fact:
