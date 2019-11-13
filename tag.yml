@@ -13,7 +13,7 @@
       - name: run tripleo-overcloud tagging
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging yes &> overcloud_tagging.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging yes > {{ log_directory }}/overcloud_tagging.log 2&>1
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false

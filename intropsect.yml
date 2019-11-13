@@ -4,7 +4,7 @@
       - name: run tripleo-overcloud introspection
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ overcloud_instackenv_path }} --deployment-files {{ nic_configs }} --introspect yes &> overcloud_introspect.log
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ overcloud_instackenv_path }} --deployment-files {{ nic_configs }} --introspect yes > {{ log_directory }}/overcloud_introspect.log 2&>1
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false

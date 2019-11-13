@@ -14,3 +14,8 @@
           name: "localhost"
           groups: "local"
           ansible_connection: "local"
+
+      - name: create a directory to store logs
+        file:
+          path: "{{ log_directory }}"
+          state: directory
