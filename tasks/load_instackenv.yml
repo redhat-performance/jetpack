@@ -3,13 +3,18 @@
   set_fact:
     instackenv_file: "{{ instackenv_file|default('~/instackenv.json', true) }}"
 
+- name: check instackenv file available
+  stat:
+      path: "{{ instackenv_file }}"
+  register: st
+
 - name: Download instackenv.json
   get_url:
       url: "{{ alias.lab_url }}/cloud/{{ cloud_name }}_instackenv.json"
       dest: "{{ instackenv_file }}"
       mode: '0644'
       force: yes
-  when: lab_name == "alias"
+  when: st.stat.exists == False and lab_name == "alias"
 
 - name: Download instackenv.json
   get_url:
@@ -17,7 +22,7 @@
       dest: "{{ instackenv_file }}"
       mode: '0644'
       force: yes
-  when: lab_name == "scale"
+  when: st.stat.exists == False and lab_name == "scale"
 
 - name: set facts
   set_fact:
