@@ -57,6 +57,7 @@
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
+            ansible_python_interpreter: /usr/bin/python
 
         - name: set undercloud to PXE boot (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
