@@ -4,4 +4,4 @@ python:
 install:
   - pip install -r tests/requirements.txt
 script:
-  - ansible-lint main.yml -x 204,301,303,305,306,401,601 
+  - ansible-lint main.yml -x 204,301,303,305,306,401,601,602
