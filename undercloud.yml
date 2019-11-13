@@ -2,7 +2,7 @@
   vars:
     container_params: ""
   tasks:
-      - name: get undrecloud_local_interface
+      - name: get undercloud_local_interface
         shell: |
           for i in /sys/class/net/*
           do
@@ -20,8 +20,8 @@
           ansible_python_interpreter: "{{ python_interpreter }}"
           ansible_user: "stack"
         become: true
- 
-      - name: set undrecloud_local_interface
+
+      - name: set undercloud_local_interface
         set_fact:
           undrecloud_local_interface: "{{ local_interface.stdout }}"
       - name: Setup undercloud.conf

@@ -15,7 +15,7 @@
         rhel_version: "{{ rhel_release.stdout.split()[-2] }}"
       ignore_errors: true
       when: rhel_release.stdout != ""
- 
+
     - name: Check if os is installed as stack user
       shell: |
         ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'cat /etc/redhat-release'
