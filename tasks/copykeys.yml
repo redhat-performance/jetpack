@@ -8,7 +8,7 @@
 
 - name: remove key and add again
   shell: |
-    ssh-keygen -R {{ undercloud_hostname }}
+    ssh-keygen -R {{ hostname }}
     echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id  -o 'StrictHostKeyChecking no' -f {{ ssh_user }}@{{ hostname }}
   changed_when: false
   when: ssh_result.stderr_lines|length > 0
