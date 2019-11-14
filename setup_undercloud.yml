@@ -52,12 +52,22 @@
             requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
             virtualenv: "{{ badfish_venv }}"
 
+        - name: get python interpreter for hammer host
+          shell: |
+            ssh root@{{ hammer_host }} /usr/bin/python --version
+          register: hammer_python_version
+          ignore_errors: true
+
+        - name: set python interpreter for hammer host
+          set_fact:
+            hammer_python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/bin/python3', '/usr/bin/python') }}"
+
         - name: update host to install new os
           shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --overwrite 1
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
-            ansible_python_interpreter: /usr/bin/python
+            ansible_python_interpreter: "{{ hammer_python_interpreter }}"
 
         - name: set undercloud to PXE boot (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
