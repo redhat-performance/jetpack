@@ -52,15 +52,10 @@
             requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
             virtualenv: "{{ badfish_venv }}"
 
-        - name: get python interpreter for hammer host
-          shell: |
-            ssh root@{{ hammer_host }} /usr/bin/python --version
-          register: hammer_python_version
-          ignore_errors: true
-
-        - name: set python interpreter for hammer host
-          set_fact:
-            hammer_python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/bin/python3', '/usr/bin/python') }}"
+        - include_tasks: tasks/copykeys.yml
+          vars:
+            hostname: "{{ hammer_host }}"
+            ssh_user: "root"
 
         - name: update host to install new os
           shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --overwrite 1

@@ -4,14 +4,10 @@
     infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
     inventory_file_name: "hosts-updated"
   tasks:
-    - name: get python interpreter
-      shell: |
-        ssh stack@{{ undercloud_hostname }} /usr/bin/python --version
-      register: python_version
-      ignore_errors: true
-    - name: python interpreter
-      set_fact:
-        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        ssh_user: "stack"
     - name: add undercloud_host to inventory file
       add_host:
         name: "undercloud"

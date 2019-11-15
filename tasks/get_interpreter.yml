@@ -1,0 +1,10 @@
+---
+- name: detect python interpreter
+  shell: |
+    ssh {{ user }}@{{ hostname }} /usr/bin/python --version
+  register: python_version
+  ignore_errors: true
+
+- name: python interpreter
+  set_fact:
+    python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"

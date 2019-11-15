@@ -6,11 +6,10 @@
         hostname: "{{ undercloud_hostname }}"
         ssh_user: "root"
 
-    - name: get python interpreter
-      shell: |
-        ssh root@{{ undercloud_hostname }} /usr/bin/python --version
-      register: python_version
-      ignore_errors: true
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "root"
 
     - name: python interpreter
       set_fact:
