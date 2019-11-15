@@ -7,7 +7,7 @@
     - include_tasks: tasks/get_interpreter.yml
       vars:
         hostname: "{{ undercloud_hostname }}"
-        ssh_user: "stack"
+        user: "stack"
     - name: add undercloud_host to inventory file
       add_host:
         name: "undercloud"
