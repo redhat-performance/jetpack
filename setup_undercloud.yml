@@ -107,7 +107,7 @@
           register: uc_reachable
           delegate_to: localhost
           retries: 100
-          until: uc_reachable|succeeded
+          until: uc_reachable is succeeded
       when: (os_install is defined) and (os_install != false)
 
     - name: Check if stack user exists

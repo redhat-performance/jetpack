@@ -70,7 +70,7 @@
       register: uc_reachable
       delegate_to: localhost
       retries: 100
-      until: uc_reachable|succeeded
+      until: uc_reachable is succeeded
 
     - name: add stack user
       user:
