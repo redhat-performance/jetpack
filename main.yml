@@ -1,5 +1,5 @@
 ---
-- import_playbook: load_facts.yml
+- import_playbook: bootstrap.yml
   tags:
     - always
 
