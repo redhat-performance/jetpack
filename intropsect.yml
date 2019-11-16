@@ -8,6 +8,8 @@
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
+        async: 2400
+        poll: 60
         ignore_errors: true
 
 - hosts: undercloud
