@@ -24,8 +24,13 @@
           name: "localhost"
           groups: "local"
           ansible_connection: "local"
+      - name: Check if log directory exists
+        stat:
+          path: "{{ log_directory }}"
+        register: log_path
 
       - name: create a directory to store logs
         file:
           path: "{{ log_directory }}"
           state: directory
+        when: not (log_path.stat.isdir is defined and log_path.stat.isdir)
