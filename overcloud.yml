@@ -142,39 +142,3 @@
         args:
             chdir: "{{ infrared_dir }}"
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
-
-- hosts: undercloud
-  gather_facts: yes
-  vars:
-       external_interface: "{{ hostvars['localhost']['external_interface'] }}"
-  tasks:
-      - name: get ext_interface
-        shell: |
-          for i in /sys/class/net/*
-          do
-            udevcontent=`udevadm info -p $i --query property`
-            if [[ $udevcontent =~ {{ external_interface }} ]]
-            then
-              ext_interface=`echo $i | cut -d '/' -f 5`
-              break
-            fi
-          done
-          echo $ext_interface
-        register: ext_interface
-      - name: set ext_iface
-        set_fact:
-          ext_iface: "{{ ext_interface.stdout }}"
-      - name: create vlan interface on external interface
-        vars:
-            vlan_interface: "{{ ext_iface }}.{{ external_network_vlan_id }}"
-        shell: |
-            ip link add link {{ ext_iface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
-            ip link set dev {{ ext_iface }} up
-            ip link set dev {{ vlan_interface }} up
-            ip a a {{ external_gateway }} brd {{ external_network_broadcast }} dev {{ vlan_interface }}
-        become: true
-
-      - name: masquerade on public interface
-        shell: |
-            iptables -t nat -A POSTROUTING -o {{ public_interface }} -j MASQUERADE
-        become: true

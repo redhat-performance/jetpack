@@ -23,6 +23,10 @@
   tags:
     - tag
 
+- import_playbook: external.yml
+  tags:
+    - external
+
 - import_playbook: overcloud.yml
   tags:
     - overcloud
