@@ -1,8 +1,9 @@
 # Jetpack
 
-This tool will install OpenStack using infrared on a set of homegnous servers.
-User can run playbooks in this tool inside their laptop or a ansible jump host.
-Once the user gets notified that their allocation is ready for use, they have to set below bare minimum variables.
+JetPack is the easiest way to deploy Director/Tripleo on baremetal. 
+JetPack will install OpenStack using infrared on a set of homegnous servers. User can run JetPack from their laptop or an ansible jump host.
+Once the user's baremetal node allocation is ready to use, they need to set below bare minimum variables.
+
 ```
 cloud_name: cloud05
 lab_type: scale
@@ -11,21 +12,30 @@ hammer_host: <FQDN/IP of host with hammer cli>
 ansible_ssh_pass: default password of servers
 
 ```
+
+For OSP releases > 13, the below variables also need to be set in [all.yml](group_vars/all.yml)
+```
+registry_mirror: <register_mirror>
+registry_namespace: <namespace>
+insecure_registries: <insecure_registry>
+```
+
 # Requirements
 
 Ansible >= 2.8
 Python 3.6+ 
-Passwordless sudo for user running the playbook on localhost (host where the playbooks are being run from)  
-A host for hammer cli operations referenced by the variable *hammer_host*
+A host for running hammer cli/ipmitool/badfish operations referenced by the variable *hammer_host*
+Passwordless sudo for user running the playbook on the ansible control node (host where the playbooks are being run from)
+Passwordless sudo can be setup as below:
 
 ```
 echo "username ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/username
 chmod 0440 /etc/sudoers.d/username
 ```
 
-Below are the sequence of steps these playbooks run before deploying overcloud
+Below is the sequence of steps these playbooks run before deploying overcloud
 1) Clone and setup infrared environment
-2) Download instackenv file from scalelab (playbooks assume that undercloud is the first node in this instackenv file)
+2) Download instackenv file from the lab url (playbooks assume that undercloud is the first node in this instackenv file)
 3) Prepare internal variables from this file i.e
    undercloud_host: first node in instackenv
    ctlplane_interface: will get the interface name from the mac provided in instackenv
@@ -37,8 +47,8 @@ Below are the sequence of steps these playbooks run before deploying overcloud
 6) Prepare overcloud_instackenv.json which will be used for describing overcloud baremetal nodes from instackenv file downloaded  from the scalelab.
    Tasks will remove undercloud node from the downloaded instackenv file and generate new overcloud_instackenv.json file.
 7) Run infrared plugins
-   a) undercloud to install the undercloud
-   b) overcloud plugin to install overcloud
+   a) tripleo-undercloud to install the undercloud
+   b) tripleo-overcloud plugin to install overcloud
 
 # Usage
 1) Set required vars in group_vars/all.yml
