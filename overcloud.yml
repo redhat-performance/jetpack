@@ -60,6 +60,26 @@
               src: overcloud-templates.yml.j2
               dest: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
 
+          - name: load vars from extra.yml
+            include_vars:
+              file: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+
+          - name: slurp heat templates content
+            slurp:
+              src: "{{ item }}"
+            loop: "{{ tripleo_heat_templates }}"
+            register: slurp_content
+            delegate_to: "{{ undercloud_hostname }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
+
+          - name: set vxlan fact
+            set_fact:
+              vxlan: true
+            when: (item.content | b64decode ) | search('vxlan')
+            with_items: "{{ slurp_content.results }}"
+
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
       - name: Set compute count fact
         set_fact:
@@ -91,9 +111,22 @@
         fail:
             msg: "Failing as compute count is less than 1"
         when: compute_count|int < 1
+
       - name: set network-backend option
         set_fact:
-          network_backend: "{{ (osp_release|int > 14)|ternary('geneve', 'vxlan') }}"
+          network_backend: "{{ (osp_release|int > 14)|ternary((vxlan | default(false)) | ternary('vxlan', 'geneve'), 'vxlan') }}"
+
+      - name: Fix up containers-prepare-parameter.yaml for OSP 16 ML2/OVS
+        replace:
+          path: /home/stack/containers-prepare-parameter.yaml
+          regexp: 'ovn'
+          replace: 'null'
+        when: osp_release|int > 14 and network_backend == 'vxlan'
+        delegate_to: "{{ undercloud_hostname }}"
+        vars:
+          ansible_python_interpreter: "{{ python_interpreter }}"
+          ansible_user: "stack"
+
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
