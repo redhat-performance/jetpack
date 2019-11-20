@@ -34,6 +34,13 @@
         /root/clean-interfaces.sh --nuke
       changed_when: false
 
+    - name: Remvoe existing epel
+      shell:
+        rm -f /etc/yum.repos.d/epel*
+        rm -rf /var/cache/yum/*
+        yum clean all
+      ignore_errors: true
+
     - name: Ensure SELinux is set to enforcing mode
       selinux:
         policy: targeted
