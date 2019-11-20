@@ -27,5 +27,5 @@
         src: "{{ inventory_file_name }}"
     - name: copy keys
       copy:
-        src: "~/.ssh/id_rsa.pub"
+        src: "{{ ansible_user_dir }}/.ssh/id_rsa.pub"
         dest: "{{ infrared_hosts_dir }}/id_rsa_undercloud.pub"

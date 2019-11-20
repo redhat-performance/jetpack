@@ -17,7 +17,7 @@
 
     - name: Check if os is installed as stack user
       shell: |
-        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'cat /etc/redhat-release'
+        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i {{ ansible_user_dir }}/.ssh/id_rsa stack@{{ undercloud_hostname }} 'cat /etc/redhat-release'
       register: rhel_release
       ignore_errors: true
       when: rhel_version is not defined
@@ -112,7 +112,7 @@
 
     - name: Check if stack user exists
       shell: |
-        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'echo success'
+        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i {{ ansible_user_dir }}/.ssh/id_rsa stack@{{ undercloud_hostname }} 'echo success'
       register: test_user
       ignore_errors: true
       changed_when: false

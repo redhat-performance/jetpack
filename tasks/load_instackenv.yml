@@ -1,7 +1,7 @@
 ---
 - name: set fact for instack file
   set_fact:
-    instackenv_file: "{{ instackenv_file|default('~/instackenv.json', true) }}"
+    instackenv_file: "{{ instackenv_file|default('{{ ansible_user_dir }}/instackenv.json', true) }}"
 
 - name: check instackenv file available
   stat:
@@ -28,7 +28,7 @@
   set_fact:
     instackenv_content: "{{ instackenv_content }}"
     undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
-    overcloud_instackenv_path: "~/overcloud_instackenv.json"
+    overcloud_instackenv_path: "{{ ansible_user_dir }}/overcloud_instackenv.json"
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
 

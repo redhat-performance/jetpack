@@ -14,7 +14,7 @@
             state: absent
       - name: remove overcloud_instackenv.json
         file:
-            path: "~/overcloud_instackenv.json"
+            path: "{{ ansible_user_dir }}/overcloud_instackenv.json"
             state: absent
       - name: remove nic-configs virt
         file:
