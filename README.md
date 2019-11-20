@@ -22,10 +22,11 @@ insecure_registries: <insecure_registry>
 
 # Requirements
 
-Ansible >= 2.8
-Python 3.6+ 
-A host for running hammer cli/ipmitool/badfish operations referenced by the variable *hammer_host*
-Passwordless sudo for user running the playbook on the ansible control node (host where the playbooks are being run from)
+* Ansible >= 2.8
+* Python 3.6+ 
+* A host for running hammer cli/ipmitool/badfish operations referenced by the variable *hammer_host*
+* Passwordless sudo for user running the playbook on the ansible control node (host where the playbooks are being run from)
+
 Passwordless sudo can be setup as below:
 
 ```
