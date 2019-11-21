@@ -1,6 +1,7 @@
 - hosts: localhost
   gather_facts: yes
   vars:
+      badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
       chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
   tasks:
     - name: check if os installed as root user
@@ -38,6 +39,19 @@
             hostname: "{{ hammer_host }}"
             ssh_user: "root"
 
+        - name: clone badfish
+          git:
+            repo: "https://github.com/redhat-performance/badfish.git"
+            dest: "{{ ansible_user_dir }}/badfish"
+
+        - name: Create badfish virtualenv
+          command: virtualenv {{ badfish_venv }} creates={{ badfish_venv }}
+
+        - name: Install badfish requirements
+          pip:
+            requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
+            virtualenv: "{{ badfish_venv }}"
+
         - include_tasks: tasks/get_interpreter.yml
           vars:
             hostname: "{{ hammer_host }}"
@@ -68,31 +82,23 @@
 
         - name: set undercloud to PXE boot off Foreman (Dell)
           shell: |
-              source .venv/bin/activate
+              source {{ badfish_venv }}/bin/activate
               python badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
           args:
-            chdir: "/root/jetpack/badfish"
+            chdir: "{{ ansible_user_dir }}/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
           retries: 5
           delay: 3
           register: result
           until: result.rc == 0
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
 
         - name: power cycle undercloud (Dell)
           shell: |
-              source .venv/bin/activate
+              source {{ badfish_venv }}/bin/activate
               python badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
           args:
-            chdir: "/root/jetpack/badfish"
+            chdir: "{{ ansible_user_dir }}/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
 
         - name: wait for 420 seconds before checking for undercloud
           wait_for:
