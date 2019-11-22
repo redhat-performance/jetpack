@@ -77,7 +77,7 @@
           - name: set vxlan fact
             set_fact:
               vxlan: true
-            when: (item.content | b64decode ) | search('vxlan')
+            when: '"vxlan" in (item.content | b64decode )'
             with_items: "{{ slurp_content.results }}"
 
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )

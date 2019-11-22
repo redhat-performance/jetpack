@@ -30,6 +30,7 @@
             ip link set dev {{ vlan_interface }} up
             ip a a {{ external_gateway }} brd {{ external_network_broadcast }} dev {{ vlan_interface }}
         become: true
+        ignore_errors: true
 
       - name: masquerade on public interface
         shell: |
