@@ -135,7 +135,7 @@
 
       - name: get external network interface
         set_fact:
-            external_interface: "{{ (virt == 'virt_4nics') | ternary(ifaces[0], ctlplane_interface) }}"
+            external_interface: "{{ ifaces[0] }}"
 
       - name: remove external interface from  eligible interfaces
         set_fact:

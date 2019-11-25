@@ -82,17 +82,11 @@ resources:
           network_config:
                         -
                           type: ovs_bridge
-                          name: br-ex
+                          name: br-ctlplance
                           members:
                           - type: interface
                             name: ctlplane_interface
                             primary: true
-                            -
-                              type: vlan
-                              vlan_id: {get_param: ExternalNetworkVlanID}
-                              addresses:
-                              -
-                                ip_netmask: {get_param: ExternalIpSubnet}
                           use_dhcp: false
                           addresses:
                             -
@@ -147,6 +141,20 @@ resources:
                               addresses:
                               -
                                 ip_netmask: {get_param: TenantIpSubnet}
+                        -
+                          type: ovs_bridge
+                          name: br-ex
+                          use_dhcp: false
+                          members:
+                            - type: interface
+                              name: external_interface
+                              primary: true
+                            -
+                              type: vlan
+                              vlan_id: {get_param: ExternalNetworkVlanID}
+                              addresses:
+                              -
+                                ip_netmask: {get_param: ExternalIpSubnet}
 
 outputs:
   OS::stack_id:
