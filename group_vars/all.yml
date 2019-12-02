@@ -97,3 +97,6 @@ tenant_net_cidr: 172.17.2.0/24
 tenant_allocation_pools_start: 172.17.2.10
 tenant_allocation_pools_end: 172.17.2.150
 tenant_network_vlan_id: 304
+#This allows the user to force re provision undercloud
+#default is false - not forced
+force_reprovision: false
