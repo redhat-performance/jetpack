@@ -32,8 +32,14 @@
         become: true
         ignore_errors: true
 
+      - name: get default route
+        shell: |
+            ip r | grep default | cut -d ' ' -f5
+        register: default_route
+        become: true
+
       - name: masquerade on public interface
         shell: |
-            iptables -t nat -A POSTROUTING -o {{ public_interface }} -j MASQUERADE
+            iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
         become: true
 
