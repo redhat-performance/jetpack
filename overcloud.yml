@@ -26,6 +26,12 @@
         template:
           src: "os-net-config-mappings.yaml.j2"
           dest: "/home/stack/os-net-config-mappings.yaml"
+      - name: Set boot order
+        shell: |
+          source ~/stackrc
+          openstack baremetal node list -c UUID -f value | \
+          xargs -I{} openstack baremetal node set {} --property root_device='{"name": "{{ root_disk }}"}'
+        when: set_boot_order == true
 
 - hosts: localhost
   gather_facts: yes
