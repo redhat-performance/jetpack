@@ -1,0 +1,97 @@
+---
+- hosts: localhost
+  vars:
+      undercloud_host: "{{ groups.undercloud|first }}"
+      machine_type: "{{ (lab_name in ['scale', 'alias'])| ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
+  tasks:
+      - name: get subnet mask
+        shell: |
+            echo {{ cidr }} | cut -d '/' -f2
+        register: prefix
+
+      - name: set subnet mask
+        set_fact:
+            subnet_mask: "{{ prefix.stdout }}"
+
+      - name: set some vars
+        set_fact:
+          ifaces: "{{ interfaces|default([]) }}"
+
+      - block:
+        - name: set interfaces
+          set_fact:
+            ifaces: "{{ item.value.interfaces }}"
+          with_dict: "{{ scale.machine_types.supermicro }}"
+          when: item.key == machine_type and machine_type in scale.machine_types.supermicro
+
+        - name: set interfaces
+          set_fact:
+            ifaces: "{{ item.value.interfaces }}"
+          with_dict: "{{ scale.machine_types.dell }}"
+          when: item.key == machine_type and machine_type in scale.machine_types.dell
+
+        - name: set interfaces
+          set_fact:
+            ifaces: "{{ item.value.interfaces }}"
+          with_dict: "{{ alias.machine_types.dell }}"
+          when: item.key == machine_type and machine_type in alias.machine_types.dell
+        when: lab_name in ['scale', 'alias']
+
+      - name: interfaces is empty
+        fail:
+            msg: other lab types should specify interfaces
+        when: ifaces|length == 0
+
+      # br-isolated will be always first interface, followed by br-ctlplane,
+      # br-tenant and br-external. br-external and br-ctlplane will be shared if
+      # no separate nic avaialble for external interface.
+      - name: set control and external interfaces
+        set_fact:
+           ctlplane_interface: "{{ (ifaces|length > 1) | ternary(ifaces[1], ifaces[0]) }}"
+           external_interface: "{{ (ifaces|length > 3) | ternary(ifaces[3], ifaces[0]) }}"
+
+      - name: set external interface
+        set_fact:
+          external_interface: "{{ (ifaces|length > 3) | ternary(ifaces[3], ctlplane_interface) }}"
+
+      - name: set tenant interface
+        set_fact:
+          tenant_interface: "{{ ifaces[2] }}"
+        when: ifaces|length > 2
+
+      - name: set isolated interface
+        set_fact:
+          isolated_interface: "{{ ifaces[0] }}"
+        when: ifaces|length > 1
+
+      - name: set nic configs
+        set_fact:
+          nic_configs: "{{ ansible_user_dir }}/virt"
+
+      - name: create nic-configs directory structure in infrared format
+        file:
+          path: "{{ ansible_user_dir }}/virt/network/vlans/legacy"
+          state: directory
+
+      # infrared uses nic configs under 'legacy' directory for osp release version 10
+      - name: set nic-config path
+        set_fact:
+          nic_config_path: "{{ ansible_user_dir }}/virt/network/vlans{{ ((osp_release|int > 10) | ternary('', '/legacy')) }}"
+
+      - name: prepare network-environment.yaml.j2
+        template:
+            src: "network-environment.yaml.j2"
+            dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
+            force: yes
+      
+      - name: prepare controller.yaml.j2
+        template:
+            src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', 'osp10_controller.yaml.j2') }}"
+            dest: "{{ nic_config_path }}/controller.yaml.j2"
+            force: yes
+
+      - name: prepare compute.yaml.j2
+        template:
+            src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', 'osp10_compute.yaml.j2') }}"
+            dest: "{{ nic_config_path }}/compute.yaml.j2"
+            force: yes

@@ -82,12 +82,29 @@ resources:
           network_config:
                         -
                           type: ovs_bridge
+                          name: br-ex
+                          use_dhcp: false
+                          members:
+                            -
+                              type: interface
+                              name: {{ external_interface }}
+                              primary: true
+                            -
+                              type: vlan
+                              vlan_id: {get_param: ExternalNetworkVlanID}
+                              addresses:
+                              -
+                                ip_netmask: {get_param: ExternalIpSubnet}
+{% if external_interface != ctlplane_interface %}
+                        -
+                          type: ovs_bridge
                           name: br-ctlplance
                           members:
                           - type: interface
-                            name: ctlplane_interface
+                            name: {{ ctlplane_interface }}
                             primary: true
                           use_dhcp: false
+{% endif %}
                           addresses:
                             -
                               ip_netmask:
@@ -99,6 +116,7 @@ resources:
                             -
                               ip_netmask: 169.254.169.254/32
                               next_hop: {get_param: EC2MetadataIp}
+{% if ifaces|length > 1 %}
                         -
                           type: ovs_bridge
                           name: br-isolated
@@ -106,8 +124,9 @@ resources:
                           members:
                             -
                               type: interface
-                              name: nic2
+                              name: {{ isolated_interface }}
                               primary: true
+{% endif %}
                             -
                               type: vlan
                               vlan_id: {get_param: InternalApiNetworkVlanID}
@@ -126,6 +145,7 @@ resources:
                               addresses:
                               -
                                 ip_netmask: {get_param: StorageMgmtIpSubnet}
+{% if ifaces|length > 2 %}
                         -
                           type: ovs_bridge
                           name: br-tenant
@@ -133,28 +153,15 @@ resources:
                           members:
                             -
                               type: interface
-                              name: nic3
+                              name: {{ tenant_interface }} 
                               primary: true
+{% endif %}
                             -
                               type: vlan
                               vlan_id: {get_param: TenantNetworkVlanID}
                               addresses:
                               -
                                 ip_netmask: {get_param: TenantIpSubnet}
-                        -
-                          type: ovs_bridge
-                          name: br-ex
-                          use_dhcp: false
-                          members:
-                            - type: interface
-                              name: external_interface
-                              primary: true
-                            -
-                              type: vlan
-                              vlan_id: {get_param: ExternalNetworkVlanID}
-                              addresses:
-                              -
-                                ip_netmask: {get_param: ExternalIpSubnet}
 
 outputs:
   OS::stack_id:

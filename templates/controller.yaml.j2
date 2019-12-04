@@ -71,7 +71,8 @@ parameters:
   EC2MetadataIp: # Override this via parameter_defaults
     description: The IP address of the EC2 metadata server.
     type: string
-{% if install.version|openstack_release >= 15 %}
+{%raw%}{% if install.version|openstack_release >= 15 %}{%endraw%}
+
   ControlPlaneStaticRoutes:
     default: []
     description: >
@@ -122,8 +123,10 @@ parameters:
       guaranteed to pass through the data path of the segments in the
       Management network.
     type: number
-{% endif %}
-{% if install.version|openstack_release >= 14 %}
+{%raw%}{% endif %}{%endraw%}
+
+{%raw%}{% if install.version|openstack_release >= 14 %}{%endraw%}
+
   StorageInterfaceRoutes:
     default: []
     description: >
@@ -172,7 +175,8 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
-{% endif %}
+{%raw%}{% endif %}{%endraw%}
+
 
 resources:
   OsNetConfigImpl:
@@ -200,16 +204,22 @@ resources:
             with open('/etc/os-net-config/config.json') as json_file:
               data = json.load(json_file)
             for config in data['network_config']:
+              interface = {}
               if config['type'] == 'ovs_bridge':
                 for member in config['members']:
                   if member['type'] == 'interface':
-                    nic_mapping = member['nic_mapping']
+                    interface = member
                     break
               elif config['type'] == 'interface':
-                nic_mapping = config['nic_mapping']
+                interface = config
+              if not interface:
+                continue
+              nic_mapping = interface.get('nic_mapping')
               for k,v in nic_mapping.items():
                 if (('interface_mapping' in mapping) and (nic_mapping[k] in mapping['interface_mapping'])):
                   nic_mapping[v] = mapping['interface_mapping'][nic_mapping[k]]
+              if nic_mapping[v] == nic_mapping[k]:
+                interface.pop('nic_mapping')  
               net_config['network_config'].append(config)
 
             with open('/etc/os-net-config/config.json', 'w') as outfile:
@@ -220,16 +230,15 @@ resources:
           -
             str_replace:
               template:
-                  get_file: {{ install.heat.templates.basedir }}/network/scripts/run-os-net-config.sh
+                  get_file: {%raw%}{{ install.heat.templates.basedir }}{%endraw%}/network/scripts/run-os-net-config.sh
               params:
                    $network_config:
                        network_config:
                         -
-                          type: interface
-                          name: ctlplane_interface
-                          nic_mapping:
-                            ctlplane_interface: ctlplane_interface
+                          type: ovs_bridge
+                          name: br-ex
                           use_dhcp: false
+{% if external_interface == ctlplane_interface %}
                           addresses:
                             -
                               ip_netmask:
@@ -242,6 +251,46 @@ resources:
                               ip_netmask: 169.254.169.254/32
                               next_hop:
                                   get_param: EC2MetadataIp
+{% endif %}
+                          members:
+                            -
+                              type: interface
+                              name: {{ external_interface }}
+                              nic_mapping:
+                                {{ external_interface }}: {{ external_interface }}
+                            -
+                              type: vlan
+                              vlan_id:
+                                  get_param: ExternalNetworkVlanID
+                              addresses:
+                              -
+                                ip_netmask:
+                                    get_param: ExternalIpSubnet
+{% if external_interface != ctlplane_interface %}
+                        -
+                          type: ovs_bridge
+                          name: br-ctlplane
+                          use_dhcp: false
+                          members:
+                            -
+                              type: interface
+                              name: {{ ctlplane_interface }}
+                              nic_mapping:
+                                {{ ctlplane_interface }}: {{ ctlplane_interface }}
+                          addresses:
+                            -
+                              ip_netmask:
+                                list_join:
+                                  - '/'
+                                  - - get_param: ControlPlaneIp
+                                    - get_param: ControlPlaneSubnetCidr
+                          routes:
+                            -
+                              ip_netmask: 169.254.169.254/32
+                              next_hop:
+                                  get_param: EC2MetadataIp
+{% endif %}
+{% if ifaces|length > 1 %}
                         -
                           type: ovs_bridge
                           name: br-isolated
@@ -249,9 +298,10 @@ resources:
                           members:
                             -
                               type: interface
-                              name: nic2
+                              name: {{ isolated_interface }}
                               nic_mapping:
-                                nic2: nic2
+                                {{ isolated_interface }}: {{ isolated_interface }}
+{% endif %}
                             -
                               type: vlan
                               vlan_id:
@@ -276,6 +326,7 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: StorageMgmtIpSubnet
+{% if ifaces|length > 2 %}
                         -
                           type: ovs_bridge
                           name: br-tenant
@@ -283,9 +334,10 @@ resources:
                           members:
                             -
                               type: interface
-                              name: nic3
+                              name: {{ tenant_interface }}
                               nic_mapping:
-                                nic3: nic3
+                                {{ tenant_interface }}: {{ tenant_interface }}
+{% endif %}
                             -
                               type: vlan
                               vlan_id:
@@ -294,24 +346,6 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: TenantIpSubnet
-                        -
-                          type: ovs_bridge
-                          name: br-ex
-                          use_dhcp: false
-                          members:
-                            -
-                              type: interface
-                              name: external_interface
-                              nic_mapping:
-                                external_interface: external_interface
-                            -
-                              type: vlan
-                              vlan_id:
-                                  get_param: ExternalNetworkVlanID
-                              addresses:
-                              -
-                                ip_netmask:
-                                    get_param: ExternalIpSubnet
 
 outputs:
   OS::stack_id:

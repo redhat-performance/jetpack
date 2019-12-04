@@ -7,7 +7,7 @@
   tags:
     - always
 
-- import_playbook: get_interfaces.yml
+- import_playbook: prepare_nic_configs.yml
   tags:
     - always
 

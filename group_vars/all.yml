@@ -54,6 +54,15 @@ scale:
         interfaces: [enp1s0f0, enp1s0f1, enp130s0f0, enp130s0f1]
       r930:
         interfaces: [enp1s0f0, enp1s0f1, enp10s0f0, enp10s0f1]
+
+# Other lab machines have to define their interfaces through below
+# 'interfaces' variable. prepare_nic_configs.yml will use that
+# instead of deriving from
+# scale/alias.machine_types.supermicro/dell...interfaces
+# note: If you are using scale lab or alias lab, don't enable below
+# 'interfaces' parameter.
+#interfaces: []
+
 extra_templates:
   - firstboot.yaml
 
