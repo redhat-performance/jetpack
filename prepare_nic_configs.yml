@@ -83,7 +83,7 @@
             src: "network-environment.yaml.j2"
             dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
             force: yes
-      
+
       - name: prepare controller.yaml.j2
         template:
             src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', 'osp10_controller.yaml.j2') }}"
