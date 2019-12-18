@@ -23,7 +23,7 @@
 
       - name: set undercloud_local_interface
         set_fact:
-          undrecloud_local_interface: "{{ local_interface.stdout }}"
+          undercloud_local_interface: "{{ local_interface.stdout }}"
       - name: Setup undercloud.conf
         template:
             src: undercloud.conf.j2
