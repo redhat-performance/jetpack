@@ -6,6 +6,16 @@
 - import_playbook: setup_undercloud.yml
   tags:
     - always
+  when: virtual_uc != true
+
+- import_playbook: virtual_undercloud.yml
+  tags:
+    - always
+  when: virtual_uc == true
+
+- import_playbook: add_undercloud_to_inventory.yml
+  tags:
+    - always
 
 - import_playbook: prepare_nic_configs.yml
   tags:

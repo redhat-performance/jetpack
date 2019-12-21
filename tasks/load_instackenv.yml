@@ -24,25 +24,38 @@
       force: yes
   when: st.stat.exists == False and lab_name == "scale"
 
-- name: set facts
+- name: read instack env file
   set_fact:
     instackenv_content: "{{ instackenv_content }}"
-    undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
     overcloud_instackenv_path: "~/overcloud_instackenv.json"
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
 
-- name: set overcloud_instackenv content
-  set_fact:
-      instackenv_content: |
-          {% set a=instackenv_content.pop('nodes') %}
-          {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
+- name: set undercloud and overcloud info
+  block:
+    - name: set undercloud hostname
+      set_fact:
+        undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+
+    - name: set overcloud_instackenv content
+      set_fact:
+          oc_instackenv_content: |
+              {% set a=instackenv_content.pop('nodes') %}
+              {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
+  when: virtual_uc != true
+
+- name: set undercloud and overcloud info
+  block:
+    - name: set undercloud hostname
+      set_fact:
+        undercloud_hostname: "{{ undercloud_host }}"
+
+    - name: set overcloud_instackenv content
+      set_fact:
+          oc_instackenv_content: "{{ instackenv_content }}"
+  when: virtual_uc == true
 
 - name: create overcloud_instackenv.json file
   copy:
       dest: "{{ overcloud_instackenv_path }}"
-      content: "{{ instackenv_content }}"
-
-- name: replace instackenv_content with original data
-  set_fact:
-      instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
+      content: "{{ oc_instackenv_content }}"

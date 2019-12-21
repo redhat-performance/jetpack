@@ -5,22 +5,31 @@
   vars:
        external_interface: "{{ hostvars['localhost']['external_interface'] }}"
   tasks:
-      - name: get ext_interface
-        shell: |
-          for i in /sys/class/net/*
-          do
-            udevcontent=`udevadm info -p $i --query property`
-            if [[ $udevcontent =~ {{ external_interface }} ]]
-            then
-              ext_interface=`echo $i | cut -d '/' -f 5`
-              break
-            fi
-          done
-          echo $ext_interface
-        register: ext_interface
+      - name: set ext_interface for baremetal
+        block:
+          - name: get ext_interface
+            shell: |
+              for i in /sys/class/net/*
+              do
+                udevcontent=`udevadm info -p $i --query property`
+                if [[ $udevcontent =~ {{ external_interface }} ]]
+                then
+                  ext_interface=`echo $i | cut -d '/' -f 5`
+                  break
+                fi
+              done
+              echo $ext_interface
+            register: ext_interface
+          - name: set ext_iface
+            set_fact:
+              ext_iface: "{{ ext_interface.stdout }}"
+        when: virtual_uc != true
+
       - name: set ext_iface
         set_fact:
-          ext_iface: "{{ ext_interface.stdout }}"
+          ext_iface: "{{ vm_external_interface }}"
+        when: virtual_uc == true
+
       - name: create vlan interface on external interface
         vars:
             vlan_interface: "{{ ext_iface }}.{{ external_network_vlan_id }}"

@@ -29,8 +29,6 @@
 
 - hosts: localhost
   gather_facts: yes
-  vars:
-      instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
   tasks:
       - name: Enable overcloud deployment with extra user defined templates
         block:
@@ -83,7 +81,7 @@
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
       - name: Set compute count fact
         set_fact:
-            compute_count: "{{ compute_count|default(instackenv_content.nodes|length - (controller_count|int + 1)) }}"
+            compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int)) }}"
 
       - name: get nodes
         shell: |

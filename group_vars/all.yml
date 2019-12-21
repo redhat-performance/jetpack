@@ -109,3 +109,10 @@ tenant_network_vlan_id: 304
 #This allows the user to force re provision undercloud
 #default is false - not forced
 force_reprovision: false
+#This enables user to have a undercloud in VM
+#NOTE: now the vm is created in the ansible host, so
+#do not enable this while running from your desktop
+virtual_uc: true
+undercloud_host: 172.16.0.2
+vm_external_interface: eth0
+undercloud_local_interface: eth0

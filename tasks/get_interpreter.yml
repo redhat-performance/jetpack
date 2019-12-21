@@ -1,7 +1,7 @@
 ---
 - name: detect python interpreter
   shell: |
-    ssh {{ user }}@{{ hostname }} /usr/bin/python --version
+    ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile /dev/null' {{ user }}@{{ hostname }} /usr/bin/python --version
   register: python_version
   ignore_errors: true
 

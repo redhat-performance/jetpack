@@ -142,6 +142,3 @@
 
 - import_playbook: prepare_undercloud.yml
   when: hostvars['localhost']['create_user'] is defined
-
-
-- import_playbook: add_undercloud_to_inventory.yml
