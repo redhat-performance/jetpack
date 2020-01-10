@@ -1,0 +1,116 @@
+---
+- hosts: localhost
+  tasks:
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "localhost"
+        ssh_user: "root"
+
+    - name: copy topology node
+      template:
+        src: virtual_uc_topology.yml.j2
+        dest: "{{ ansible_user_dir }}/.infrared/plugins/virsh/defaults/topology/nodes/virtual_uc_topology.yml"
+
+    - name: copy topology network
+      template:
+        src: virtual_uc_network.yml.j2
+        dest: "{{ ansible_user_dir }}/.infrared/plugins/virsh/defaults/topology/network/virtual_uc_network.yml"
+
+    - name: clean previous vm
+      shell: |
+         source {{ infrared_dir }}/.venv/bin/activate
+         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True --cleanup True
+      retries: 3
+      ignore_errors: yes
+
+    - name: create undercloud vm
+      shell: |
+         source {{ infrared_dir }}/.venv/bin/activate
+         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True -v 2>&1 | tee log_virsh1
+
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "cloud-user"
+
+    - name: python interpreter
+      set_fact:
+        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
+
+    - name: add undercloud_host to inventory file
+      add_host:
+        name: "undercloud"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "cloud-user"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+- hosts: undercloud
+  vars:
+    user: "stack"
+  gather_facts: yes
+  tasks:
+    # infrared taking the dns server from the vm's /etc/resolv.conf,
+    # so disabling the dns in network manager and copying the host's resolv.conf to vm
+    - name: make sure line 'dns=none' is set in /etc/NetworkManager/NetworkManager.conf
+      ini_file:
+        path: /etc/NetworkManager/NetworkManager.conf
+        state: present
+        no_extra_spaces: yes
+        section: main
+        option: dns
+        value: none
+        owner: root
+        group: root
+        mode: 0644
+        backup: yes
+      become: yes
+
+    - name: copy the resolv.conf
+      copy:
+        src: "/etc/resolv.conf"
+        dest: "/etc/resolv.conf"
+      become: yes
+
+    - name: reload NetworkManger
+      service:
+        name: NetworkManager
+        state: reloaded
+      become: yes
+
+    - name: add stack user
+      user:
+        name: "{{ user }}"
+        home: "/home/{{ user }}"
+      become: yes
+
+    - name: copy public key
+      copy:
+        src: "~/.ssh/id_rsa.pub"
+        dest: "/root/ssh_keyfile"
+      become: yes
+
+    - name: Add authorized keys
+      authorized_key:
+        user: "{{ user }}"
+        key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+      become: yes
+
+    - name: Add to sudoers
+      lineinfile:
+        dest: "/etc/sudoers"
+        line: "{{ user }} ALL=(root) NOPASSWD:ALL"
+      become: yes
+
+    - name: Check if ssh keys exists
+      stat:
+        path: "/home/{{ user }}/.ssh/id_rsa"
+      register: ssh_keys_result
+      become: yes
+
+    - name: create ssh key pair
+      shell: |
+        ssh-keygen -q -t rsa -f /home/{{ user }}/.ssh/id_rsa -C "" -N ""
+      when: ssh_keys_result.stat.exists == False
+      become: yes
+

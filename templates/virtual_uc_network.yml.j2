@@ -1,0 +1,38 @@
+# The following structure used for multi hypervisor deployments,
+# where undercloud, Controllers and Computes are virtual but created
+# on mutiple hypervisors. 3 networks are bridged outside of the local
+# hypervisor hosts, but not having external connectivity. VMs will have
+# external connectivity through management network (using NAT on
+# local hypervisor).
+# the hybrid deployments,
+# * br-ctlplane - used for provisioning
+# * management - external connectivity
+# * br-vlan - used for OSPd internal services (internal/tenent api)
+# * external - tenants external connectivity
+---
+networks:
+    net1:
+        name: br-ctlplane
+        forward: bridge
+        nic: {{ interfaces[0] }}
+    net2:
+        external_connectivity: yes
+        name: "management"
+        ip_address: "172.16.0.1"
+        netmask: "255.255.255.0"
+        forward: nat
+        dhcp:
+            range:
+                start: "{{ undercloud_host }}"
+                end: "{{ undercloud_host }}"
+            subnet_cidr: "172.16.0.0/24"
+            subnet_gateway: "172.16.0.1"
+
+nodes:
+    undercloud:
+        interfaces:
+            - network: "br-ctlplane"
+              bridged: yes
+            - network: "management"
+        external_network:
+            network: "management"
