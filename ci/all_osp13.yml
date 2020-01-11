@@ -1,0 +1,118 @@
+---
+infrared_dir: "{{ ansible_user_dir }}/infrared"
+infrared_workspaces_dir: "{{ ansible_user_dir }}/.infrared/.workspaces"
+infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
+instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
+undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
+log_directory: "{{ ansible_user_dir }}/jetpack/logs"
+cloud_name: cloud00
+lab_name: beaker
+ansible_ssh_pass: 100yard-
+ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
+osp_release: 13
+osp_puddle: passed_phase2
+controller_count: 1
+# No need to set compute_count. This will be set to all remaining nodes, which is calclulated in overcloud.yml
+compute_count: 1
+set_boot_order: false
+hammer_host: hwstore.example.com
+alias:
+#lab specific vars
+  lab_url: "http://quads.alias.bos.scalelab.redhat.com"
+  machine_types:
+    dell:
+      740xd: 
+        interfaces: [enp25s0f0, enp25s0f1, enp140s0f0, enp140s0f1]
+    supermicro:
+      6029r:
+        interfaces: [enp94s0f0, enp94s0f1, enp95s0f0, enp95s0f1]
+      6048p:
+        interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
+scale:
+# lab specific vars
+  lab_url: "http://quads.rdu2.scalelab.redhat.com"
+  machine_types:
+    supermicro:
+      1029p: 
+        interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
+      1029u:
+        interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+      6048r:
+        interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
+      5039ms:
+        interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+      6049p:
+        interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+      6048p:
+        interfaces:  []
+    dell:
+      r620: 
+        interfaces: [enp66s0f2, enp66s0f3, enp1s0f0, enp1s0f1]
+      r630: 
+        interfaces: [enp1s0f0, enp1s0f1, enp1s0f2, enp1s0f3]
+      r730xd:
+        interfaces: [enp1s0f0, enp1s0f1, enp130s0f0, enp130s0f1]
+      r930:
+        interfaces: [enp1s0f0, enp1s0f1, enp10s0f0, enp10s0f1]
+
+# Other lab machines have to define their interfaces through below
+# 'interfaces' variable. prepare_nic_configs.yml will use that
+# instead of deriving from
+# scale/alias.machine_types.supermicro/dell...interfaces
+# note: If you are using scale lab or alias lab, don't enable below
+# 'interfaces' parameter.
+interfaces: [enp1s0f1]
+
+extra_templates:
+  - firstboot.yaml
+
+# containers params
+registry_mirror: redhat.com
+registry_namespace: redhat
+insecure_registries: redhat.com
+# undercloud.conf ctlplane-subnet section config options
+cidr: 192.168.24.0/24
+gateway: 192.168.24.1
+dhcp_start: 192.168.24.5
+dhcp_end: 192.168.24.105
+inspection_iprange: 192.168.24.110,192.168.24.250
+# external network params for adding external network to
+# undercloud to access overcloud resources
+external_gateway: 172.17.5.1/24
+external_network_broadcast: 172.17.5.255
+external_network_vlan_id: 300
+clean_debug: False
+#adding changes 
+external_net_cidr: 172.17.5.0/24
+external_allocation_pools_start: 172.17.5.50
+external_allocation_pools_end: 172.17.5.150
+external_interface_default_route: 172.17.5.1
+#internal
+internal_api_net_cidr: 172.17.1.0/24
+internal_api_allocation_pools_start: 172.17.1.10
+internal_api_allocation_pools_end: 172.17.1.149
+internal_api_network_vlan_id: 301
+#storage
+storage_net_cidr: 172.17.3.0/24
+storage_allocation_pools_start: 172.17.3.10
+storage_allocation_pools_end: 172.17.3.149
+storage_network_vlan_id: 302
+storage_mgmt_net_cidr: 172.17.4.0/24
+storage_mgmt_allocation_pools_start: 172.17.4.10
+storage_mgmt_allocation_pools_end: 172.17.4.149
+storage_mgmt_network_vlan_id: 303
+#tenant
+tenant_net_cidr: 172.17.2.0/24
+tenant_allocation_pools_start: 172.17.2.10
+tenant_allocation_pools_end: 172.17.2.150
+tenant_network_vlan_id: 304
+#This allows the user to force re provision undercloud
+#default is false - not forced
+force_reprovision: false
+#This enables user to have a undercloud in VM
+#NOTE: now the vm is created in the ansible host, so
+#do not enable this while running from your desktop
+virtual_uc: true
+undercloud_host: 172.16.0.2
+vm_external_interface: eth0
+undercloud_local_interface: eth0
