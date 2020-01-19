@@ -24,6 +24,7 @@
           name: "localhost"
           groups: "local"
           ansible_connection: "local"
+
       - name: Check if log directory exists
         stat:
           path: "{{ log_directory }}"
