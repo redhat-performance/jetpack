@@ -51,6 +51,9 @@ Below is the sequence of steps these playbooks run before deploying overcloud
    a) tripleo-undercloud to install the undercloud
    b) tripleo-overcloud plugin to install overcloud
 
+# Documentation
+https://docs.google.com/document/d/1qtmjUNoKvKvVFA0QYoK7OD1tC_Q5L-qkjMoSsNSrtWI/edit?usp=sharing
+
 # Usage
 1) Set required vars in group_vars/all.yml
 2) run the playbook  
