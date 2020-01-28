@@ -14,7 +14,7 @@ networks:
     net1:
         name: br-ctlplane
         forward: bridge
-        nic: {{ interfaces[0] }}
+        nic: {{ virtual_uc_ctlplane_interface }}
     net2:
         external_connectivity: yes
         name: "management"
