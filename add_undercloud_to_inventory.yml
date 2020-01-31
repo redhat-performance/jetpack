@@ -16,6 +16,24 @@
         ansible_user: "stack"
         ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
         ansible_python_interpreter: "{{ python_interpreter }}"
+
+    - name: add localhost to inventory file
+      add_host:
+        name: "localhost"
+        groups: "local"
+        ansible_user: "root"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+    - name: add freeipa_host to inventory file
+      add_host:
+        name: "freeipa"
+        groups: "freeipa"
+        ansible_host: "{{ freeipa_hostname }}"
+        ansible_user: "root"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+      when: tls_everywhere == true
+
     - name: generate inventory file
       template:
         dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"

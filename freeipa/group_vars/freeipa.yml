@@ -1,0 +1,39 @@
+freeipa_node: "{{ groups['freeipa'][0] }}"
+freeipa_network_protocol: "{{ (install|default({})).get('network', {}).get('protocol', 'ipv4') }}"
+freeipa_node_ipaddress: "{{ hostvars[freeipa_node].ansible_freeipa_local_interface.ipv4.address }}"
+freeipa_node_ipv4_address: "{{ hostvars[freeipa_node].ansible_freeipa_local_interface.ipv4.address }}"
+freeipa_setup_script: https://raw.githubusercontent.com/openstack/tripleo-heat-templates/master/ci/scripts/freeipa_setup.sh
+freeipa_working_dir: /tmp
+freeipa_admin_password: 12345678
+freeipa_hosts_secret: redhat
+freeipa_directory_manager_password: redhat_01
+freeipa_cloud_domain: redhat.local
+freeipa_extra_args: "--no-dnssec-validation"
+freeipa_hostname: freeipa.redhat.local
+freeipa_realm: REDHAT.LOCAL
+freeipa_undercloud_hostname: undercloud.redhat.local
+
+
+freeipa_rhel7_epel_repo_url: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+freeipa_rhel7_additional_repos:
+  - rhelosp-rhel-7.6-server-opt
+freeipa_rhel8_dnf_modules:
+  - "idm:DL1/server"
+  - "389-ds"
+  - "pki-deps"
+
+freeipa_undercloud_node: "{{ groups['undercloud'][0] }}"
+freeipa_undercloud_rc: "~/stackrc"
+freeipa_undercloud_ipaddress: "{{ hostvars['undercloud']['ansible_env'].SSH_CONNECTION.split(' ')[2] }}"
+freeipa_overcloud_deploy_script: "~/overcloud_deploy.sh"
+freeipa_overcloud_stack: "{{ (install|default({})).get('overcloud', {}).get('stack', 'overcloud') }}"
+freeipa_source_dir: "{{ (install|default({})).get('deployment', {}).get('files', 'virt') }}"
+freeipa_templates_basedir: "{{ hostvars[groups['undercloud'][0]].ansible_user_dir }}/{{ freeipa_source_dir | basename }}"
+freeipa_heat_templates_basedir: "{{ (install|default({})).get('heat', {}).get('templates', {}).get('basedir', '/usr/share/openstack-tripleo-heat-templates') }}"
+freeipa_use_ceph: "{{ ( True if (install.storage|default({})).backend|default('') == 'ceph' else False ) }}"
+freeipa_network_environment_file: "{{ freeipa_templates_basedir }}/network/network-environment.yaml"
+#freeipa_network_environment_file:
+freeipa_network_environment_v6_file: "{{ freeipa_templates_basedir }}/network/network-environment-v6.yaml"
+freeipa_forwarder: 10.1.32.3
+

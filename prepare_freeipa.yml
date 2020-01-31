@@ -1,0 +1,110 @@
+---
+- hosts: freeipa
+  vars:
+    ctlplane_interface: "{{ hostvars['localhost']['ctlplane_interface'] }}"
+  tasks:
+    - name: Clean network interfaces
+      shell: |
+        /root/clean-interfaces.sh --nuke
+      changed_when: false
+
+    - name: remove the previous epel package
+      yum:
+        name: epel-release
+        state: absent
+      ignore_errors: true
+
+    - name: install epel on freeipa
+      yum:
+        name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
+        state: latest
+
+    - name: install haveged on freeipa
+      yum:
+        name: haveged
+        state: latest
+    
+    - name: remove the previous installed ipa server
+      shell: |
+        echo yes | ipa-server-install --uninstall
+      ignore_errors: true
+
+    - name: get freeipa_local_interface
+      shell: |
+        for i in /sys/class/net/*
+        do
+          udevcontent=`udevadm info -p $i --query property`
+          if [[ $udevcontent =~ {{ ctlplane_interface }} ]]
+          then
+            freeipa_local_interface=`echo $i | cut -d '/' -f 5`
+            break
+          fi
+        done
+        echo $freeipa_local_interface
+      register: freeipa_interface
+
+    -  name: set freeipa_local_interface
+       set_fact:
+         freeipa_local_interface: "{{ freeipa_interface.stdout }}"
+    - debug:
+        msg: "{{ freeipa_local_interface }}"
+
+    - name: add ip address for freeipa
+      shell: |
+        ip a a "{{ freeipa_ip }}" brd "{{ freeipa_brd }}" dev "{{  freeipa_local_interface }}"
+      ignore_errors: true
+      changed_when: false
+
+    - name: disable ipv6 on freeipa
+      shell: |
+        echo "net.ipv6.conf.all.disable_ipv6 = 0" > /etc/sysctl.conf
+        sysctl -p
+
+- hosts: localhost
+  tasks:
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ freeipa_hostname }}"
+        ssh_user: "root"
+
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ freeipa_hostname }}"
+        user: "root"
+
+    - name: python interpreter
+      set_fact:
+        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
+
+    - name: add freeipa_host to inventory file
+      add_host:
+        name: "freeipa"
+        ansible_host: "{{ freeipa_hostname }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "root"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+    - name: update FreeIPA DNS for overcloud public_vip
+      replace:
+        path:  "{{ infrared_tls_dir }}/tasks/prepare_freeipa.yml"
+        regexp: '10.0.0.101'
+        replace: "{{ external_allocation_pools_start }}"
+
+    - name: update the  public_vip.yaml.j2
+      template:
+        src: public_vip.yaml.j2
+        dest: "{{ infrared_tls_dir }}/templates/public_vip.yaml.j2"
+
+- hosts: undercloud
+  tasks:
+    - name: install needed network manager libs
+      package:
+        name:
+          - NetworkManager-glib
+          - nm-connection-editor
+          - libsemanage-python
+          - policycoreutils-python
+        state: present
+      become: true
+      failed_when: false
+

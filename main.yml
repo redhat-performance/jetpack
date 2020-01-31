@@ -21,6 +21,11 @@
   tags:
     - always
 
+- import_playbook: prepare_freeipa.yml 
+  tags:
+    - prepare_freeipa
+  when: tls_everywhere == true
+
 - import_playbook: undercloud.yml
   tags:
     - undercloud

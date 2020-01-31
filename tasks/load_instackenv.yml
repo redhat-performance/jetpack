@@ -42,7 +42,7 @@
           oc_instackenv_content: |
               {% set a=instackenv_content.pop('nodes') %}
               {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
-  when: virtual_uc != true
+  when: virtual_uc != true and tls_everywhere !=true
 
 - name: set undercloud and overcloud info
   block:
@@ -54,6 +54,20 @@
       set_fact:
           oc_instackenv_content: "{{ instackenv_content }}"
   when: virtual_uc == true
+
+- name: set undercloud and overcloud info
+  block:
+    - name: set undercloud hostname and freeipa hostname
+      set_fact:
+        undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+        freeipa_hostname: "{{ freeipa_hostname|default(instackenv_content.nodes[1].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+
+    - name: set overcloud_instackenv content
+      set_fact:
+          oc_instackenv_content: |
+              {% set a=instackenv_content.pop('nodes') %}
+              {{ instackenv_content | combine({'nodes': a|difference([a[0],a[1]])}, recursive=True) }}
+  when: virtual_uc != true and tls_everywhere == true
 
 - name: create overcloud_instackenv.json file
   copy:
