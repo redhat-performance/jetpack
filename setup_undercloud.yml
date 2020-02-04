@@ -30,12 +30,12 @@
 
     - name: set os_install
       set_fact:
-        os_install: "{{ (((osp_release|int > 14) and (rhel_version is version('8.0', '<')))|ternary('RHEL 8', ((osp_release|int < 15) and (rhel_version is version ('8.0', '>=')))|ternary('RHEL 7', false))) }}"
+        os_install: "{{ (((osp_release|int > 14) and (rhel_version is version('8.0', '<')))|ternary('RHEL 8.1', ((osp_release|int < 15) and (rhel_version is version ('8.0', '>=')))|ternary('RHEL 7', false))) }}"
       when: force_reprovision == false
 
     - name: set os_install
       set_fact:
-        os_install: "{{ ((osp_release|int > 14)|ternary('RHEL 8', 'RHEL 7')) }}"
+        os_install: "{{ ((osp_release|int > 14)|ternary('RHEL 8.1', 'RHEL 7')) }}"
       when: force_reprovision == true
 
     - name: Reboot if OS install needed
