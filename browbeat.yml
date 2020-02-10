@@ -22,6 +22,14 @@
           ./generate_tripleo_hostfile.sh -l
       args:
           chdir: "{{ browbeat_dir }}/ansible"
+
+    - name: Add OS_CACERT to overcloudrc
+      lineinfile:
+        path: overcloudrc
+        insertafter: "export PYTHONWARNINGS"
+        line: "export OS_CACERT=/etc/ipa/ca.crt"
+      when:  tls_everywhere == true 
+
     - name: install browbeat
       shell: |
           ansible-playbook -i hosts install/browbeat.yml
@@ -32,3 +40,4 @@
            source .browbeat-venv/bin/activate
       args:
           chdir: "{{ browbeat_dir }}"
+

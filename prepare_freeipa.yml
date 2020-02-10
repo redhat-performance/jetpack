@@ -17,13 +17,13 @@
     - name: install epel on freeipa
       yum:
         name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm"
-        state: latest
+        state: present
 
     - name: install haveged on freeipa
       yum:
         name: haveged
-        state: latest
-    
+        state: present
+
     - name: remove the previous installed ipa server
       shell: |
         echo yes | ipa-server-install --uninstall
@@ -51,7 +51,7 @@
 
     - name: add ip address for freeipa
       shell: |
-        ip a a "{{ freeipa_ip }}" brd "{{ freeipa_brd }}" dev "{{  freeipa_local_interface }}"
+        ip a a "{{ freeipa_ip }}" brd "{{ freeipa_gw }}" dev "{{  freeipa_local_interface }}"
       ignore_errors: true
       changed_when: false
 
@@ -107,4 +107,3 @@
         state: present
       become: true
       failed_when: false
-

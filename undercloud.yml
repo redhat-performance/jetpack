@@ -26,17 +26,11 @@
           - name: set undercloud_local_interface
             set_fact:
               undercloud_local_interface: "{{ local_interface.stdout }}"
-   
+
           - name: add ip address on undercloud_local_interface
             become: true
-            nmcli:
-              conn_name: "{{ undercloud_local_interface }}"
-              ifname: "{{ undercloud_local_interface }}"
-              type: ethernet
-              ip4: "{{ freeipa_uc_ip }}"
-              gw4: "{{ freeipa_uc_gw }}"
-              state: present
-              autoconnect: yes
+            shell: |
+              sudo nmcli con add con-name {{ undercloud_local_interface }} ifname {{ undercloud_local_interface }} type ethernet ipv4.method manual ipv4.address {{ freeipa_uc_ip }} ipv4.dns {{ freeipa_gw }} connection.autoconnect yes
             delegate_to: "{{ undercloud_hostname }}"
             when: tls_everywhere == true
 
@@ -56,6 +50,7 @@
         copy:
           dest: "{{ infrared_tls_dir }}/defaults/main.yml"
           src: "{{ freeipa_vars }}/freeipa.yml"
+        when: tls_everywhere == true
 
       - name: replace value for freeipa_local_interface var
         vars:
@@ -63,24 +58,26 @@
         shell: |
           echo {{ freeipa_interface }}
           sed -i 's/freeipa_local_interface/{{ freeipa_interface }}/g' {{ infrared_tls_dir }}/defaults/main.yml
+        when: tls_everywhere == true
 
-      - name: set_dns for undercloud 
+      - name: set_dns for undercloud
         copy:
           dest: "{{ infrared_tls_dir }}/tasks/set_undercloud_dns.yml"
           src: freeipa/set_undercloud_dns.yml
-     
+        when: tls_everywhere == true
+
       - name: add task for ipa-client execute
         blockinfile:
-          path: /root/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere/tasks/prepare_undercloud.yml
+          path: "{{ infrared_tls_dir }}/tasks/prepare_undercloud.yml"
           insertbefore:  Prepare novajoin to work
           block: |
             ##ipa-client
               - name: execute ipa-client
                 shell: |
-                    ipa-client-install --uninstall
                     sudo ipa-client-install --principal=admin --password={{ freeipa_admin_password }} --server={{ freeipa_server_hostname }} --domain={{ freeipa_cloud_domain }} --realm={{ freeipa_realm }} --hostname={{ freeipa_undercloud_hostname }} --unattended --force-join
                 changed_when: false
                 ignore_errors: true
+        when: tls_everywhere == true
 
       - name: Set container params
         set_fact:

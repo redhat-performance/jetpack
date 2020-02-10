@@ -21,7 +21,7 @@
   tags:
     - always
 
-- import_playbook: prepare_freeipa.yml 
+- import_playbook: prepare_freeipa.yml
   tags:
     - prepare_freeipa
   when: tls_everywhere == true

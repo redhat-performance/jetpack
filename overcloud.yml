@@ -153,7 +153,7 @@
       - name: run tripleo-overcloud deploy with extra templates tls
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --tls-everywhere true --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --tls-everywhere true --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
         when: tls_everywhere == true and ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
