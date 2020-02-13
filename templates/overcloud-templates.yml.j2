@@ -3,7 +3,7 @@
 tripleo_heat_templates:
 {% for template in  env_files.results %}
 {% if template.stat.exists == False %}
-    - /home/stack/{{ template.item }}
+    - /home/stack/extra_templates/{{ template.item }}
 {% else %}
     - {{ template.item }}
 {% endif %}

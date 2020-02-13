@@ -1,2 +1,2 @@
 resource_registry:
-  OS::TripleO::NodeUserData: /home/stack/os-net-config-mappings.yaml
+  OS::TripleO::NodeUserData: /home/stack/extra_templates/os-net-config-mappings.yaml

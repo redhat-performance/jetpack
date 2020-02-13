@@ -22,10 +22,6 @@
       - name: set heat_template_version
         set_fact:
           heat_template_version: "{{ tht_version.stdout }}"
-      - name: generate os-net-config-mappings.yaml
-        template:
-          src: "os-net-config-mappings.yaml.j2"
-          dest: "/home/stack/os-net-config-mappings.yaml"
 
 - hosts: localhost
   gather_facts: yes
@@ -45,9 +41,18 @@
           - name: Copy files to undercloud if they do not exist
             copy:
               src: "{{ item.item }}"
-              dest: "/home/stack/"
+              dest: "/home/stack/extra_templates/"
             loop: "{{ env_files.results }}"
             when: not item.stat.exists
+            delegate_to: "{{ undercloud_hostname }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
+
+          - name: generate os-net-config-mappings.yaml
+            template:
+              src: "os-net-config-mappings.yaml.j2"
+              dest: "/home/stack/extra_templates/os-net-config-mappings.yaml"
             delegate_to: "{{ undercloud_hostname }}"
             vars:
               ansible_python_interpreter: "{{ python_interpreter }}"
