@@ -70,6 +70,9 @@ extra_templates:
 registry_mirror: redhat.com
 registry_namespace: redhat
 insecure_registries: redhat.com
+# undercloud.conf default section
+undercloud_public_host: 192.168.24.2
+undercloud_admin_host: 192.168.24.3
 # undercloud.conf ctlplane-subnet section config options
 cidr: 192.168.24.0/24
 gateway: 192.168.24.1
