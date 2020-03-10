@@ -110,25 +110,27 @@
             msg: "Failing as compute count is less than 1"
         when: compute_count|int < 1
 
-      - name: set network-backend option
+      - name: check neutron_backend defined
         set_fact:
-          network_backend: "{{ (osp_release|int > 14)|ternary((vxlan | default(false)) | ternary('vxlan', 'geneve'), 'vxlan') }}"
+          neutron_backend: "{{ (osp_release|int > 14) | ternary('ovn', 'ovs') }}"
+        when: neutron_backend is not defined
 
-      - name: Fix up containers-prepare-parameter.yaml for OSP 16 ML2/OVS
-        replace:
-          path: /home/stack/containers-prepare-parameter.yaml
-          regexp: 'ovn'
-          replace: 'null'
-        when: osp_release|int > 14 and network_backend == 'vxlan'
-        delegate_to: "{{ undercloud_hostname }}"
-        vars:
-          ansible_python_interpreter: "{{ python_interpreter }}"
-          ansible_user: "stack"
+      - name: set ovn facts
+        set_fact:
+          network_backend: 'geneve'
+          network_type: '--network-ovn'
+        when: neutron_backend == 'ovn'
+
+      - name: set ovs facts
+        set_fact:
+          network_backend: 'vxlan'
+          network_type: '--network-ovs'
+        when: neutron_backend == 'ovs'
 
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend {{ network_backend }} --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
         when: extra_templates is not defined and parameter_defaults is not defined
@@ -136,7 +138,7 @@
       - name: run tripleo-overcloud deploy with extra templates
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend {{ network_backend }} --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
         when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
