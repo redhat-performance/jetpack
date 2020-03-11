@@ -28,7 +28,7 @@
         path: overcloudrc
         insertafter: "export PYTHONWARNINGS"
         line: "export OS_CACERT=/etc/ipa/ca.crt"
-      when:  tls_everywhere == true 
+      when: tls_everywhere == true 
 
     - name: install browbeat
       shell: |
