@@ -2,7 +2,7 @@
 - hosts: localhost
   vars:
       undercloud_host: "{{ groups.undercloud|first }}"
-      machine_type: "{{ (lab_name in ['scale', 'alias'])| ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
+      machine_type: "{{ (lab_name == 'scale') | ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
   tasks:
       - name: get subnet mask
         shell: |

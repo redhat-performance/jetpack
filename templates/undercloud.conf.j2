@@ -9,6 +9,8 @@ clean_nodes = True
 container_images_file=/home/stack/containers-prepare-parameter.yaml
 container_insecure_registries={{ registry_mirror }},{{ insecure_registries }}
 undercloud_timezone = UTC
+undercloud_public_host = {{ undercloud_public_host }}
+undercloud_admin_host = {{ undercloud_admin_host }}
 {% endif %}
 
 {% if osp_release <= 12 %}

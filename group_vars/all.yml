@@ -2,9 +2,9 @@
 infrared_dir: "{{ ansible_user_dir }}/infrared"
 infrared_workspaces_dir: "{{ ansible_user_dir }}/.infrared/.workspaces"
 infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
-instackenv_file: "{{ ansible_user_dir }}/instackenv.json"
+instackenv_file: "{{ playbook_dir }}/instackenv.json"
 undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
-log_directory: ""{{ playbook_dir }}/logs"
+log_directory: "{{ playbook_dir }}/logs"
 cloud_name: cloud00
 lab_name: scale
 ansible_ssh_pass: password
@@ -71,6 +71,9 @@ extra_templates:
 registry_mirror: redhat.com
 registry_namespace: redhat
 insecure_registries: redhat.com
+# undercloud.conf default section
+undercloud_public_host: 192.168.24.2
+undercloud_admin_host: 192.168.24.3
 # undercloud.conf ctlplane-subnet section config options
 cidr: 192.168.24.0/24
 gateway: 192.168.24.1
@@ -118,6 +121,7 @@ undercloud_host: 172.16.0.2
 vm_external_interface: eth0
 undercloud_local_interface: eth0
 virtual_uc_ctlplane_name: em1
+virtual_uc_ctlplane_interface: em1
 
 #freeipa variables when tls_everywhere is set to true
 infrared_tls_dir: "{{ ansible_user_dir }}/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere"
@@ -130,3 +134,6 @@ freeipa_cloud_domain: redhat.local
 freeipa_server_hostname: freeipa.redhat.local
 freeipa_realm: REDHAT.LOCAL 
 freeipa_undercloud_hostname: undercloud.redhat.local
+
+#Neutron backend, if not set default will be used.
+#neutron_backend: ovn

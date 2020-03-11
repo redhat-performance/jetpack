@@ -1,7 +1,7 @@
 ---
 - name: set fact for instack file
   set_fact:
-    instackenv_file: "{{ instackenv_file|default('~/instackenv.json', true) }}"
+    instackenv_file: "{{ instackenv_file|default('{{ playbook_dir }}/instackenv.json', true) }}"
 
 - name: check instackenv file available
   stat:
