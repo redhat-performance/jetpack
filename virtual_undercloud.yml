@@ -1,6 +1,22 @@
 ---
-- hosts: localhost
+- hosts: undercloud_hypervisor
   tasks:
+    - name: check if ssh key exists
+      stat:
+        path: "{{ ansible_ssh_key }}"
+      register: sshkey
+
+    - name:  Generate ssh key
+      shell:
+        ssh-keygen -q -N "" -f {{ ansible_ssh_key }}
+      when: sshkey.stat.exists == False
+
+    - name: install packages
+      include_tasks: tasks/install_packages.yml
+
+    - name: setup infrared
+      include_tasks: tasks/setup_infrared.yml
+
     - include_tasks: tasks/copykeys.yml
       vars:
         hostname: "localhost"
@@ -19,35 +35,65 @@
     - name: clean previous vm
       shell: |
          source {{ infrared_dir }}/.venv/bin/activate
-         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --image-url '{{ vm_image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True --cleanup True
+         infrared virsh --host-address 127.0.0.1 --host-user root --host-key /root/.ssh/id_rsa --image-url '{{ vm_image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True --cleanup True
       retries: 3
       ignore_errors: yes
 
     - name: create undercloud vm
       shell: |
          source {{ infrared_dir }}/.venv/bin/activate
-         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --image-url '{{ vm_image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True -vvv 2>&1 | tee log_virsh1
-
-    - include_tasks: tasks/get_interpreter.yml
-      vars:
-        hostname: "{{ undercloud_hostname }}"
-        user: "cloud-user"
-
-    - name: python interpreter
-      set_fact:
-        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
+         infrared virsh --host-address 127.0.0.1 --host-user root --host-key /root/.ssh/id_rsa --image-url '{{ vm_image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True -vvv 2>&1 | tee log_virsh1
 
     - name: add undercloud_host to inventory file
       add_host:
         name: "undercloud"
-        ansible_host: "{{ undercloud_hostname }}"
+        groups: "baremetal,undercloud,tester"
+        ansible_host: "{{ undercloud_host }}"
+        ansible_ssh_private_key_file: /root/.ssh/id_rsa
+        ansible_user: "root"
+
+    - name: copy the inventory
+      fetch:
+        src: "{{ infrared_hosts_file }}"
+        dest: "{{ playbook_dir }}"
+
+- hosts: localhost
+  tasks:
+    - name : copy the inventory
+      copy:
+        src: "{{ playbook_dir }}/hypervisor/root/.infrared/.workspaces/active/hosts"
+        dest: "{{ infrared_hosts_file }}"
+
+    - name: create ssh config
+      template:
+        src: virtual_uc_ssh_config.yml.j2
+        dest: "{{ ansible_user_dir }}/.ssh/config"
+
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ undercloud_host }}"
+        ssh_user: "root"
+        ansible_ssh_pass: "redhat"
+
+    - name: add hypervisor to inventory file
+      add_host:
+        name: "hypervisor"
+        groups: "undercloud_hypervisor"
+        ansible_host: "{{ hostvars['hypervisor']['ansible_default_ipv4']['address'] }}"
+        ansible_user: "root"
         ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
-        ansible_user: "cloud-user"
         ansible_python_interpreter: "{{ python_interpreter }}"
+
+    - name: ignore errors for the task waiting for the undercloud to be available
+      lineinfile:
+        path: "{{ ansible_user_dir }}/.infrared/plugins/tripleo-undercloud/tasks/update_and_reboot.yml"
+        insertafter: "uc_reachable is succeeded"
+        line: "  ignore_errors: true "
 
 - hosts: undercloud
   vars:
     user: "stack"
+    undercloud_node: "{{ hostvars['localhost']['instack_firstnode'] }}"
   gather_facts: yes
   tasks:
     # infrared taking the dns server from the vm's /etc/resolv.conf,
@@ -65,7 +111,6 @@
         mode: 0644
         backup: yes
       become: yes
-
     - name: copy the resolv.conf
       copy:
         src: "/etc/resolv.conf"
@@ -113,4 +158,3 @@
         ssh-keygen -q -t rsa -f /home/{{ user }}/.ssh/id_rsa -C "" -N ""
       when: ssh_keys_result.stat.exists == False
       become: yes
-

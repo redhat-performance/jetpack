@@ -1,0 +1,10 @@
+{% if virtual_uc %}
+Host vmhost
+    User root
+    Hostname {{ instack_firstnode }}
+
+Host {{ undercloud_host }}
+    Hostname {{ undercloud_host }}
+    User cloud-user
+    ProxyJump vmhost
+{% endif %}
