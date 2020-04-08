@@ -122,7 +122,10 @@ vm_external_interface: eth0
 undercloud_local_interface: eth0
 virtual_uc_ctlplane_name: em1
 virtual_uc_ctlplane_interface: em1
-
+# RHEL 7 image url
+vm_image_url: https://url.corp.redhat.com/rhel-guest-image-7-6-210-x86-64-qcow2
+# RHEL 8 image url
+# vm_image_url: 'http://download.hosts.prod.upshift.rdu2.redhat.com/released/RHEL-8/8.1.0/BaseOS/x86_64/images/rhel-guest-image-8.1-263.x86_64.qcow2'
 #freeipa variables when tls_everywhere is set to true
 infrared_tls_dir: "{{ ansible_user_dir }}/infrared/.venv/lib/python2.7/site-packages/infrared/common/roles/tls-everywhere"
 freeipa_vars: "{{ ansible_user_dir }}/jetpack/freeipa/group_vars"
@@ -134,6 +137,5 @@ freeipa_cloud_domain: redhat.local
 freeipa_server_hostname: freeipa.redhat.local
 freeipa_realm: REDHAT.LOCAL 
 freeipa_undercloud_hostname: undercloud.redhat.local
-
 #Neutron backend, if not set default will be used.
 #neutron_backend: ovn
