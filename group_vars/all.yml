@@ -131,11 +131,11 @@ infrared_tls_dir: "{{ ansible_user_dir }}/infrared/.venv/lib/python2.7/site-pack
 freeipa_vars: "{{ ansible_user_dir }}/jetpack/freeipa/group_vars"
 freeipa_uc_ip: 192.168.24.20/24
 freeipa_gw: 192.168.24.255
-freeipa_ip: 192.168.24.251/24 
+freeipa_ip: 192.168.24.251/24
 freeipa_admin_password: 12345678
 freeipa_cloud_domain: redhat.local
 freeipa_server_hostname: freeipa.redhat.local
-freeipa_realm: REDHAT.LOCAL 
+freeipa_realm: REDHAT.LOCAL
 freeipa_undercloud_hostname: undercloud.redhat.local
 #Neutron backend, if not set default will be used.
 #neutron_backend: ovn
