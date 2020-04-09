@@ -56,11 +56,12 @@
             dest: "{{ ansible_user_dir }}/badfish"
 
         - name: Create badfish virtualenv
-          command: virtualenv {{ badfish_venv }} creates={{ badfish_venv }}
+          command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
 
         - name: Install badfish requirements
           pip:
             requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
+            virtualenv_command: /usr/bin/python3 -m venv
             virtualenv: "{{ badfish_venv }}"
 
         - include_tasks: tasks/get_interpreter.yml
@@ -94,7 +95,7 @@
         - name: set undercloud to PXE boot off Foreman (Dell)
           shell: |
               source {{ badfish_venv }}/bin/activate
-              python badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
+              python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
           args:
             chdir: "{{ ansible_user_dir }}/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
@@ -106,7 +107,7 @@
         - name: power cycle undercloud (Dell)
           shell: |
               source {{ badfish_venv }}/bin/activate
-              python badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
+              python3 badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
           args:
             chdir: "{{ ansible_user_dir }}/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
