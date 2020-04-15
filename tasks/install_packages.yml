@@ -18,5 +18,6 @@
       - python3-libselinux
       - python3-netaddr
       - python3-pip
+      - docker
   become: true
   failed_when: false
