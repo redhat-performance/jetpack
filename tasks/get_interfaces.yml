@@ -1,0 +1,73 @@
+---
+- name: find virtual interfaces
+  find:
+    paths: /sys/devices/virtual/net
+    recurse: no
+    file_type: directory
+  register: find_virtual_nics
+
+- name: set virtual nics
+  set_fact:
+    virtual_nics: "{{ virtual_nics|default([]) + [item.path | basename] }}"
+  with_items: "{{ find_virtual_nics.files }}"
+
+- name: find all interfaces
+  find:
+    paths: /sys/class/net
+    recurse: no
+    file_type: any
+  register: find_nics
+
+- name: set nics
+  set_fact:
+    nics: "{{ nics|default([]) + [item.path | basename] }}"
+  when: "item.path|basename not in virtual_nics"
+  with_items: "{{ find_nics.files }}"
+
+- name: bring up ifaces
+  command: ip link set {{ item }} up
+  with_items: "{{ nics }}"
+  changed_when: false
+  become: true
+
+- name: wait for 20 seconds for interface up
+  wait_for:
+    delay: 20
+    timeout: 0
+
+- name: get default route
+  shell: |
+    ip r | grep default
+  register: default_route
+  become: true
+
+- name: detect ifaces
+  command: ip link show dev {{ item }}
+  with_items: "{{ nics }}"
+  register: detect_iface
+  changed_when: false
+  become: true
+
+- name: working interfaces
+  set_fact:
+    ifaces: "{{ ifaces|default([]) + [item.item] }}"
+  when: '"LOWER_UP" in item.stdout'
+  with_items: "{{ detect_iface.results }}"
+
+- name: show addresses
+  shell: |
+    ip -4 address show {{ item }} | grep inet | awk '{ print $2}'
+  with_items: "{{ ifaces }}"
+  register: addr_show
+  changed_when: false
+  become: true
+
+- name: set public interface
+  set_fact:
+    public_interface: "{{ item.item }}"
+  when: item.item in default_route.stdout
+  with_items: "{{ addr_show.results }}"
+
+- name: set eligible interfaces
+  set_fact:
+    ifaces: "{{ ifaces | difference([public_interface]) }}"

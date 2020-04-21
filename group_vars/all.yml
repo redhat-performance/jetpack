@@ -16,44 +16,6 @@ controller_count: 3
 #compute_count: 1
 set_boot_order: false
 hammer_host: hwstore.example.com
-alias:
-#lab specific vars
-  lab_url: "http://quads.alias.bos.scalelab.redhat.com"
-  machine_types:
-    dell:
-      740xd: 
-        interfaces: [enp25s0f0, enp25s0f1, enp140s0f0, enp140s0f1]
-    supermicro:
-      6029r:
-        interfaces: [enp94s0f0, enp94s0f1, enp95s0f0, enp95s0f1]
-      6048p:
-        interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
-scale:
-# lab specific vars
-  lab_url: "http://quads.rdu2.scalelab.redhat.com"
-  machine_types:
-    supermicro:
-      1029p: 
-        interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
-      1029u:
-        interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
-      6048r:
-        interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
-      5039ms:
-        interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
-      6049p:
-        interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
-      6048p:
-        interfaces:  []
-    dell:
-      r620: 
-        interfaces: [enp66s0f2, enp66s0f3, enp1s0f0, enp1s0f1]
-      r630: 
-        interfaces: [enp1s0f0, enp1s0f1, enp1s0f2, enp1s0f3]
-      r730xd:
-        interfaces: [enp1s0f0, enp1s0f1, enp130s0f0, enp130s0f1]
-      r930:
-        interfaces: [enp1s0f0, enp1s0f1, enp10s0f0, enp10s0f1]
 
 # Other lab machines have to define their interfaces through below
 # 'interfaces' variable. prepare_nic_configs.yml will use that
@@ -63,8 +25,7 @@ scale:
 # 'interfaces' parameter.
 #interfaces: []
 
-extra_templates:
-  - firstboot.yaml
+#extra_templates:
 
 # containers params
 registry_mirror: redhat.com

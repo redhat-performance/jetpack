@@ -68,7 +68,6 @@ This playbook will install undercloud on the undercloud node using “infrared t
 Tasks include
 
   * Prepare undercloud.conf
-  * Get the control plane interface from undercloud through udevadm
   * For OSP14 and above, we need to pass container registry defined in group_vars/all.yaml as undercloud is unable to pull from the default registries provided by infrared 
 
 `introspect.yml <https://github.com/redhat-performance/jetpack/blob/master/intropsect.yml>`_

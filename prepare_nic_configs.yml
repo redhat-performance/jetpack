@@ -1,4 +1,12 @@
 ---
+- hosts: undercloud
+  vars:
+      instackenv_content: "{{ hostvars['localhost']['instackenv_content'] }}"
+  tasks:
+    - name: get interfaces from undercloud
+      include_tasks: tasks/get_interfaces.yml
+      when: interfaces is not defined
+
 - hosts: localhost
   vars:
       undercloud_host: "{{ groups.undercloud|first }}"
@@ -15,32 +23,13 @@
 
       - name: set some vars
         set_fact:
-          ifaces: "{{ interfaces|default([]) }}"
+          ifaces: "{{ interfaces }}"
+        when: interfaces is defined
 
-      - block:
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ item.value.interfaces }}"
-          with_dict: "{{ scale.machine_types.supermicro }}"
-          when: item.key == machine_type and machine_type in scale.machine_types.supermicro
-
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ item.value.interfaces }}"
-          with_dict: "{{ scale.machine_types.dell }}"
-          when: item.key == machine_type and machine_type in scale.machine_types.dell
-
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ item.value.interfaces }}"
-          with_dict: "{{ alias.machine_types.dell }}"
-          when: item.key == machine_type and machine_type in alias.machine_types.dell
-        when: lab_name in ['scale', 'alias']
-
-      - name: interfaces is empty
-        fail:
-            msg: other lab types should specify interfaces
-        when: ifaces|length == 0
+      - name: set some vars
+        set_fact:
+          ifaces: "{{ hostvars[undercloud_host]['ifaces'] }}"
+        when: interfaces is not defined
 
       # br-isolated will be always first interface, followed by br-ctlplane,
       # br-tenant and br-external. br-external and br-ctlplane will be shared if

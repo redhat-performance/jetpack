@@ -63,8 +63,7 @@ scale:
 # 'interfaces' parameter.
 interfaces: [enp1s0f1]
 
-extra_templates:
-  - firstboot.yaml
+#extra_templates:
 
 # containers params
 registry_mirror: redhat.com
