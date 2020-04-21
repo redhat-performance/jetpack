@@ -22,10 +22,6 @@
       - name: set heat_template_version
         set_fact:
           heat_template_version: "{{ tht_version.stdout }}"
-      - name: generate os-net-config-mappings.yaml
-        template:
-          src: "os-net-config-mappings.yaml.j2"
-          dest: "/home/stack/os-net-config-mappings.yaml"
 
 - hosts: localhost
   gather_facts: yes

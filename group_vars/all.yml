@@ -31,29 +31,57 @@ alias:
 scale:
 # lab specific vars
   lab_url: "http://quads.rdu2.scalelab.redhat.com"
-  machine_types:
-    supermicro:
-      1029p: 
-        interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
-      1029u:
-        interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
-      6048r:
-        interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
-      5039ms:
-        interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
-      6049p:
-        interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
-      6048p:
-        interfaces:  []
-    dell:
-      r620: 
-        interfaces: [enp66s0f2, enp66s0f3, enp1s0f0, enp1s0f1]
-      r630: 
-        interfaces: [enp1s0f0, enp1s0f1, enp1s0f2, enp1s0f3]
-      r730xd:
-        interfaces: [enp1s0f0, enp1s0f1, enp130s0f0, enp130s0f1]
-      r930:
-        interfaces: [enp1s0f0, enp1s0f1, enp10s0f0, enp10s0f1]
+  rhel7:
+    machine_types:
+      supermicro:
+        1029p:
+          interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
+        1029u:
+          interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        6048r:
+          interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
+        5039ms:
+          interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+        6049p:
+          interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        6048p:
+          interfaces:  []
+      dell:
+        r620:
+          interfaces: [p2p3, p2p4, em1, em2]
+        r630:
+          interfaces: [em1, em2, em3, em4]
+        r730xd:
+          interfaces: [em1, em2, p4p1, p4p2]
+        r930:
+          interfaces: [em1, em2, p1p1, p1p2]
+
+  rhel8:
+    machine_types:
+      supermicro:
+        1029p:
+          interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
+        1029u:
+          interfaces: [ens1f0, ens1f1, ens2f0, ens2f1 ]
+        6048r:
+          interfaces: []
+        5039ms:
+          interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+        6049p:
+          interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        6048p:
+          interfaces:  []
+      dell:
+        r620:
+          interfaces: [enp66s0f2, enp66s0f3, eno1, eno2]
+        r630:
+          interfaces: [eno1, eno2, eno3, eno4]
+        r730xd:
+          interfaces: []
+        r930:
+          interfaces: []
+
+
 
 # Other lab machines have to define their interfaces through below
 # 'interfaces' variable. prepare_nic_configs.yml will use that
@@ -63,8 +91,8 @@ scale:
 # 'interfaces' parameter.
 #interfaces: []
 
-extra_templates:
-  - firstboot.yaml
+#extra_templates:
+
 
 # containers params
 registry_mirror: redhat.com
