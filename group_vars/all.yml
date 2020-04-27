@@ -18,19 +18,19 @@ set_boot_order: false
 hammer_host: hwstore.example.com
 alias:
 #lab specific vars
-  lab_url: "http://quads.alias.bos.scalelab.redhat.com"
+  lab_url: "http://quads11.alias.bos.scalelab.redhat.com"
   machine_types:
     dell:
       740xd: 
         rhel7_interfaces: [enp25s0f0, enp25s0f1, enp134s0f0, enp134s0f1]
-        rhel8_interfaces: []
+        rhel8_interfaces: [eno1, eno2, ens7f0, ens7f1]
     supermicro:
       6029r:
         rhel7_interfaces: [enp94s0f0, enp94s0f1, enp95s0f0, enp95s0f1]
-        rhel8_interfaces: []
+        rhel8_interfaces: [enp95s0f0, enp95s0f1, enp94s0f0, enp94s0f1]
       6048p:
         rhel7_interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
-        rhel8_interfaces: []
+        rhel8_interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
 
 scale:
 # lab specific vars
