@@ -78,30 +78,16 @@
 
         - name: set undercloud to PXE boot (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
-          when: lab_name == "scale" and (osp_release|int <= 13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel7.machine_types.supermicro
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
             ansible_python_interpreter: "{{ python_interpreter }}"
 
-        - name: set undercloud to PXE boot (Supermicro)
-          shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
-          when: lab_name == "scale" and (osp_release|int > 13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel8.machine_types.supermicro
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
-        - name: power cycle undercloud (Supermicro)
-          shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
-          when: lab_name == "scale" and (osp_release|int <= 13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel7.machine_types.supermicro
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
 
         - name: power cycle undercloud (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
-          when: lab_name == "scale" and (osp_release|int > 13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel8.machine_types.supermicro
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
@@ -113,20 +99,7 @@
               python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
           args:
             chdir: "{{ ansible_user_dir }}/badfish"
-          when: lab_name == "scale" and(osp_release|int <= 13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel7.machine_types.dell
-          retries: 5
-          delay: 3
-          register: result
-          until: result.rc == 0
-
-
-        - name: set undercloud to PXE boot off Foreman (Dell)
-          shell: |
-              source {{ badfish_venv }}/bin/activate
-              python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish"
-          when: lab_name == "scale" and(osp_release|int > 13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel8.machine_types.dell
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
           retries: 5
           delay: 3
           register: result
@@ -138,15 +111,7 @@
               python3 badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
           args:
             chdir: "{{ ansible_user_dir }}/badfish"
-          when: lab_name == "scale" and (osp_release|int <=13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel7.machine_types.dell
-
-        - name: power cycle undercloud (Dell)
-          shell: |
-              source {{ badfish_venv }}/bin/activate
-              python3 badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish"
-          when: lab_name == "scale" and (osp_release|int <=13) and undercloud_hostname.split('.')[0].split('-')[3] in scale.rhel8.machine_types.dell
+          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
 
         - name: wait for 420 seconds before checking for undercloud
           wait_for:
