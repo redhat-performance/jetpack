@@ -60,6 +60,10 @@
     - name: set undercloud hostname
       set_fact:
         undercloud_hostname: "{{ undercloud_host }}"
+ 
+    - name: undercloud_interface
+      set_fact:
+        undercloud_interface: "{{ undercloud_interface|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
 
     - name: set overcloud_instackenv content
       set_fact:
