@@ -8,6 +8,11 @@
     - always
   when: virtual_uc != true
 
+- import_playbook: virtual_interface.yml
+  tags:
+    - always
+  when: virtual_uc == true
+
 - import_playbook: virtual_undercloud.yml
   tags:
     - always
@@ -20,6 +25,12 @@
 - import_playbook: prepare_nic_configs.yml
   tags:
     - always
+  when: virtual_uc == false
+
+- import_playbook: prepare_nic_configs_virtual.yml
+  tags:
+    - always
+  when: virtual_uc == true
 
 - import_playbook: undercloud.yml
   tags:
