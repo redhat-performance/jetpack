@@ -1,0 +1,35 @@
+---
+- hosts: localhost
+  vars:
+    machine_type: "{{ (lab_name == 'scale') | ternary(undercloud_interface.split('.')[0].split('-')[3], undercloud_interface.split('.')[0].split('-')[2]) }}"
+
+  tasks:
+      - block:
+        - name: set interfaces
+          set_fact:
+            ifaces_v: "{{ item.value.interfaces }}"
+          with_dict: "{{ scale.machine_types.supermicro }}"
+          when: item.key == machine_type and machine_type in scale.machine_types.supermicro
+
+        - name: set interfaces
+          set_fact:
+            ifaces_v: "{{ item.value.interfaces }}"
+          with_dict: "{{ scale.machine_types.dell }}"
+          when: item.key == machine_type and machine_type in scale.machine_types.dell
+
+        - name: set interfaces
+          set_fact:
+            ifaces_v: "{{ item.value.interfaces }}"
+          with_dict: "{{ alias.machine_types.dell }}"
+          when: item.key == machine_type and machine_type in alias.machine_types.dell
+        when: lab_name in ['scale', 'alias']
+
+
+      - name: set interface
+        set_fact:
+          virtual_uc_ctlplane_interface: "{{ ifaces_v[1] }}"
+
+      - name: print name of interface
+        debug:
+          msg: "{{ virtual_uc_ctlplane_interface }}"
+

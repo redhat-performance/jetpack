@@ -31,6 +31,17 @@
   vars:
       instackenv_content: "{{ lookup('file', '{{ instackenv_file }}') | from_json }}"
 
+- name: skip first node of instack env file
+  set_fact:
+      instackenv_content: |
+          {% set a=instackenv_content.pop('nodes') %}
+          {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
+
+- name: update the instackenv file
+  copy:
+      dest: "{{ instackenv_file }}"
+      content: "{{ instackenv_content }}"
+
 - name: set undercloud and overcloud info
   block:
     - name: set undercloud hostname
