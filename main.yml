@@ -8,6 +8,11 @@
     - always
   when: virtual_uc != true
 
+- import_playbook: virtual_interface.yml
+  tags:
+    - always
+  when: virtual_uc == true
+
 - import_playbook: virtual_undercloud.yml
   tags:
     - always
