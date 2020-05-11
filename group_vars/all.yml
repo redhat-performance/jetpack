@@ -22,7 +22,7 @@ alias:
   machine_types:
     dell:
       740xd: 
-        interfaces: [enp25s0f0, enp25s0f1, enp140s0f0, enp140s0f1]
+        interfaces: [enp25s0f0, enp25s0f1, enp134s0f0, enp134s0f1]
     supermicro:
       6029r:
         interfaces: [enp94s0f0, enp94s0f1, enp95s0f0, enp95s0f1]
