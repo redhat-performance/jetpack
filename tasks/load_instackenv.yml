@@ -49,7 +49,16 @@
     - name: set undercloud hostname
       set_fact:
         undercloud_hostname: "{{ undercloud_host }}"
+
+    - name: first node in instackenv
+      set_fact:
         instack_firstnode: "{{ (instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+      when: lab_name in ['scale', 'alias']
+
+    - name: undercloud hypervisor
+      set_fact:
+        instack_firstnode: "{{ undercloud_hypervisor }}"
+      when: lab_name not in ['scale', 'alias']
 
     - name: set overcloud_instackenv content
       set_fact:

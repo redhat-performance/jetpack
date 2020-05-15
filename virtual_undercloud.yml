@@ -84,12 +84,6 @@
         ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
         ansible_python_interpreter: "{{ python_interpreter }}"
 
-    - name: ignore errors for the task waiting for the undercloud to be available
-      lineinfile:
-        path: "{{ ansible_user_dir }}/.infrared/plugins/tripleo-undercloud/tasks/update_and_reboot.yml"
-        insertafter: "uc_reachable is succeeded"
-        line: "  ignore_errors: true "
-
 - hosts: undercloud
   vars:
     user: "stack"
