@@ -97,7 +97,7 @@
               source {{ badfish_venv }}/bin/activate
               python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
           args:
-            chdir: "{{ ansible_user_dir }}/badfish"
+            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
           retries: 5
           delay: 3
@@ -109,7 +109,7 @@
               source {{ badfish_venv }}/bin/activate
               python3 badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
           args:
-            chdir: "{{ ansible_user_dir }}/badfish"
+            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
 
         - name: wait for 420 seconds before checking for undercloud
