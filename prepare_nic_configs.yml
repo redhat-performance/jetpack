@@ -20,44 +20,22 @@
       - block:
         - name: set interfaces
           set_fact:
-            ifaces: "{{ item.value.rhel7_interfaces }}"
+            ifaces: "{{ (osp_release|int > 13)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ scale.machine_types.supermicro }}"
-          when: item.key == machine_type and (osp_release <= 13) and machine_type in scale.machine_types.supermicro
+          when: item.key == machine_type and machine_type in scale.machine_types.supermicro
 
         - name: set interfaces
           set_fact:
-            ifaces: "{{ item.value.rhel8_interfaces }}"
-          with_dict: "{{ scale.machine_types.supermicro }}"
-          when: item.key == machine_type and (osp_release > 13) and machine_type in scale.machine_types.supermicro
-
-
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ item.value.rhel7_interfaces }}"
+            ifaces: "{{ (osp_release|int > 13)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ scale.machine_types.dell }}"
-          when: item.key == machine_type and (osp_release <=13) and machine_type in scale.machine_types.dell
+          when: item.key == machine_type and machine_type in scale.machine_types.dell
 
         - name: set interfaces
           set_fact:
-            ifaces: "{{ item.value.rhel8_interfaces }}"
-          with_dict: "{{ scale.machine_types.dell }}"
-          when: item.key == machine_type and (osp_release > 13) and machine_type in scale.machine_types.dell
-
-
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ item.value.rhel7_interfaces }}"
+            ifaces: "{{ (osp_release|int > 13)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ alias.machine_types.dell }}"
-          when: item.key == machine_type and machine_type in alias.machine_types.dell and (osp_release <= 13)
+          when: item.key == machine_type and machine_type in alias.machine_types.dell
 
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ item.value.rhel8_interfaces }}"
-          with_dict: "{{ alias.machine_types.dell }}"
-          when: item.key == machine_type and machine_type in alias.machine_types.dell and (osp_release > 13)
-
-        - debug:
-            msg: "{{ ifaces }}"
         when: lab_name in ['scale', 'alias']
 
       - name: interfaces is empty
