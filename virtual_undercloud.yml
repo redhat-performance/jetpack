@@ -1,6 +1,12 @@
 ---
 - hosts: undercloud_hypervisor
   tasks:
+    - name: Clean network interfaces
+      shell: |
+        /root/clean-interfaces.sh --nuke
+      changed_when: false
+      ignore_errors: yes
+
     - name: check if ssh key exists
       stat:
         path: "{{ ansible_ssh_key }}"
