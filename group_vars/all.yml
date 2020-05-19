@@ -80,6 +80,7 @@ scale:
 
 #extra_templates:
 
+#heat_configs:
 
 # containers params
 registry_mirror: redhat.com
