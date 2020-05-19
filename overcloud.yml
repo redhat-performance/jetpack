@@ -22,10 +22,6 @@
       - name: set heat_template_version
         set_fact:
           heat_template_version: "{{ tht_version.stdout }}"
-      - name: generate os-net-config-mappings.yaml
-        template:
-          src: "os-net-config-mappings.yaml.j2"
-          dest: "/home/stack/os-net-config-mappings.yaml"
 
 - hosts: localhost
   gather_facts: yes
@@ -130,7 +126,7 @@
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --build {{ osp_puddle }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
         when: extra_templates is not defined and parameter_defaults is not defined

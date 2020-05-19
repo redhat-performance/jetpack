@@ -84,6 +84,7 @@
             ansible_user: root
             ansible_python_interpreter: "{{ python_interpreter }}"
 
+
         - name: power cycle undercloud (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
