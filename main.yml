@@ -41,6 +41,11 @@
   tags:
     - overcloud
 
+- import_playbook: shift_stack.yml
+  tags:
+    - shift_stack
+  when: shift_stack == true
+
 - import_playbook: browbeat.yml
   tags:
     - browbeat
