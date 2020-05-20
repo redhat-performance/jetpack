@@ -113,7 +113,7 @@
 
       - name: set ovn facts
         set_fact:
-          network_backend: 'geneve'
+          network_backend: 'geneve,vlan'
           network_type: '--network-ovn'
         when: neutron_backend == 'ovn'
 
