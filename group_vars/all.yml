@@ -83,7 +83,7 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 # undercloud to access overcloud resources
 external_gateway: 172.18.0.1/16
 external_network_vlan_id: 300
-clean_debug: True
+clean_debug: False
 #adding changes 
 external_net_cidr: 172.18.0.0/16
 external_allocation_pools_start: 172.18.0.50
