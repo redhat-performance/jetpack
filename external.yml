@@ -5,24 +5,9 @@
   vars:
        external_interface: "{{ hostvars['localhost']['external_interface'] }}"
   tasks:
-      - name: set ext_interface for baremetal
-        block:
-          - name: get ext_interface
-            shell: |
-              for i in /sys/class/net/*
-              do
-                udevcontent=`udevadm info -p $i --query property`
-                if [[ $udevcontent =~ {{ external_interface }} ]]
-                then
-                  ext_interface=`echo $i | cut -d '/' -f 5`
-                  break
-                fi
-              done
-              echo $ext_interface
-            register: ext_interface
-          - name: set ext_iface
-            set_fact:
-              ext_iface: "{{ ext_interface.stdout }}"
+      - name: set ext_iface
+        set_fact:
+          ext_iface: "{{ external_interface }}"
         when: virtual_uc != true
 
       - name: set ext_iface
