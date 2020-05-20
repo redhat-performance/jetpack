@@ -1,9 +1,15 @@
 ---
 - hosts: localhost
   tasks:
-    - name: add masqerade rule
+    - name: get public network
       shell: |
-          sudo iptables -t nat -A POSTROUTING -o eno1 -j MASQUERADE
+          ip r | grep default | cut -d ' ' -f5
+      register: public_network
+      delegate_to: "{{ undercloud_hostname }}"
+
+    - name: add masquerade rule
+      shell: |
+          sudo iptables -t nat -A POSTROUTING -o {{ public_network.stdout }} -j MASQUERADE
       changed_when: false
       delegate_to: "{{ undercloud_hostname }}"
 
