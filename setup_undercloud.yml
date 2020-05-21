@@ -3,6 +3,13 @@
   vars:
       badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
       chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+      osp_rhel_mapping:
+        10: 7.7
+        13: 7.7
+        14: 7.7
+        15: 8.0
+        16: 8.1
+        16.1: 8.2
   tasks:
     - name: check if os installed as root user
       shell: |
@@ -30,12 +37,12 @@
 
     - name: set os_install
       set_fact:
-        os_install: "{{ (((osp_release|int > 14) and (rhel_version is version('8.0', '<')))|ternary('RHEL 8.1', ((osp_release|int < 15) and (rhel_version is version ('8.0', '>=')))|ternary('RHEL 7.7', false))) }}"
-      when: force_reprovision == false
+        os_install: "RHEL {{ osp_rhel_mapping[osp_release] }}"
+      when: force_reprovision == false and (osp_rhel_mapping[osp_release]|float != rhel_version|float)
 
     - name: set os_install
       set_fact:
-        os_install: "{{ ((osp_release|int > 14)|ternary('RHEL 8.1', 'RHEL 7.7')) }}"
+        os_install: "RHEL {{ osp_rhel_mapping[osp_release] }}"
       when: force_reprovision == true
 
     - name: Reboot if OS install needed
@@ -127,7 +134,7 @@
           delegate_to: localhost
           retries: 100
           until: uc_reachable is succeeded
-      when: (os_install is defined) and (os_install != false)
+      when: (os_install is defined)
 
     - name: Check if stack user exists
       shell: |
