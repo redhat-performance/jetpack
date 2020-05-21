@@ -210,7 +210,6 @@ resources:
                             -
                               type: interface
                               name: {{ external_interface }}
-                              primary: true
                             -
                               type: vlan
                               vlan_id:
@@ -228,7 +227,6 @@ resources:
                             -
                               type: interface
                               name: {{ ctlplane_interface }}
-                              primary: true
                           addresses:
                             -
                               ip_netmask:
@@ -251,7 +249,6 @@ resources:
                             -
                               type: interface
                               name: {{ isolated_interface }}
-                              primary: true
 {% endif %}
                             -
                               type: vlan
@@ -286,7 +283,6 @@ resources:
                             -
                               type: interface
                               name: {{ tenant_interface }}
-                              primary: true
 {% endif %}
                             -
                               type: vlan
