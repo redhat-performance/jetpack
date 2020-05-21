@@ -19,6 +19,13 @@ registry_mirror: <register_mirror>
 registry_namespace: <namespace>
 insecure_registries: <insecure_registry>
 ```
+#Supported distros
+
+Currently supported distros for ansible jump host are:
+
+* Fedora 25,26,27
+* RHEL 7.3,7.4,7.5,7.6,7.7
+
 
 # Requirements
 
