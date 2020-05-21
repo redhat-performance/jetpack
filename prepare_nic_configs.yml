@@ -13,9 +13,10 @@
         set_fact:
             subnet_mask: "{{ prefix.stdout }}"
 
-      - name: set some vars
+      - name: set interfaces for non scale/alias machines
         set_fact:
-          ifaces: "{{ interfaces|default([]) }}"
+          ifaces: "{{ (osp_release|int > 14)| ternary(interfaces.rhel8_interfaces, interfaces.rhel7_interfaces) }}"
+        when: lab_name not in ['scale', 'alias']
 
       - block:
         - name: set interfaces
@@ -41,7 +42,7 @@
       - name: interfaces is empty
         fail:
             msg: other lab types should specify interfaces
-        when: ifaces|length == 0
+        when: (ifaces is defined) and (ifaces|length == 0)
 
       # br-isolated will be always first interface, followed by br-ctlplane,
       # br-tenant and br-external. br-external and br-ctlplane will be shared if
