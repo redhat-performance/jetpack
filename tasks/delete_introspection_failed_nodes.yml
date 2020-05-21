@@ -54,3 +54,14 @@
   with_items: "{{ total_nodes.stdout_lines | default([]) }}"
   changed_when: false
 
+- name: wait for all nodes to be available
+  shell: |
+    source ~/stackrc;
+    openstack baremetal node show {{ item }} -c provision_state -f value
+  register: status
+  until: ('available' in status.stdout)
+  delay: 10
+  retries: 10000
+  ignore_errors: true
+  changed_when: False
+  with_items: "{{ total_nodes.stdout_lines | default([]) }}"
