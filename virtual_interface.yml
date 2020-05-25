@@ -1,22 +1,24 @@
 ---
 - hosts: localhost
+  set_fact:
+     machine_type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
   tasks:
       - block:
         - name: set interfaces
           set_fact:
-            ifaces_v: "{{ item.value.interfaces }}"
+            ifaces_v: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ scale.machine_types.supermicro }}"
           when: item.key == machine_type and machine_type in scale.machine_types.supermicro
 
         - name: set interfaces
           set_fact:
-            ifaces_v: "{{ item.value.interfaces }}"
+            ifaces_v: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ scale.machine_types.dell }}"
           when: item.key == machine_type and machine_type in scale.machine_types.dell
 
         - name: set interfaces
           set_fact:
-            ifaces_v: "{{ item.value.interfaces }}"
+            ifaces_v: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ alias.machine_types.dell }}"
           when: item.key == machine_type and machine_type in alias.machine_types.dell
         when: lab_name in ['scale', 'alias']
@@ -25,8 +27,3 @@
       - name: set interface
         set_fact:
           virtual_uc_ctlplane_interface: "{{ ifaces_v[1] }}"
-
-      - name: print name of interface
-        debug:
-          msg: "{{ virtual_uc_ctlplane_interface }}"
-
