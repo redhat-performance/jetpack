@@ -20,21 +20,22 @@
       - block:
         - name: set interfaces
           set_fact:
-            ifaces: "{{ item.value.interfaces }}"
+            ifaces: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ scale.machine_types.supermicro }}"
           when: item.key == machine_type and machine_type in scale.machine_types.supermicro
 
         - name: set interfaces
           set_fact:
-            ifaces: "{{ item.value.interfaces }}"
+            ifaces: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ scale.machine_types.dell }}"
           when: item.key == machine_type and machine_type in scale.machine_types.dell
 
         - name: set interfaces
           set_fact:
-            ifaces: "{{ item.value.interfaces }}"
+            ifaces: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
           with_dict: "{{ alias.machine_types.dell }}"
           when: item.key == machine_type and machine_type in alias.machine_types.dell
+
         when: lab_name in ['scale', 'alias']
 
       - name: interfaces is empty
@@ -48,7 +49,6 @@
       - name: set control and external interfaces
         set_fact:
            ctlplane_interface: "{{ (ifaces|length > 1) | ternary(ifaces[1], ifaces[0]) }}"
-           external_interface: "{{ (ifaces|length > 3) | ternary(ifaces[3], ifaces[0]) }}"
 
       - name: set external interface
         set_fact:

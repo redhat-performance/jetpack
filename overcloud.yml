@@ -22,10 +22,6 @@
       - name: set heat_template_version
         set_fact:
           heat_template_version: "{{ tht_version.stdout }}"
-      - name: generate os-net-config-mappings.yaml
-        template:
-          src: "os-net-config-mappings.yaml.j2"
-          dest: "/home/stack/os-net-config-mappings.yaml"
 
 - hosts: localhost
   gather_facts: yes
@@ -117,7 +113,7 @@
 
       - name: set ovn facts
         set_fact:
-          network_backend: 'geneve'
+          network_backend: 'geneve,vlan'
           network_type: '--network-ovn'
         when: neutron_backend == 'ovn'
 
@@ -127,18 +123,19 @@
           network_type: '--network-ovs'
         when: neutron_backend == 'ovs'
 
+      - name: set extra template facts
+        set_fact:
+          oc_extra_templates: "--overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
+
+      - name: set heat config facts
+        set_fact:
+          oc_heat_configs: "--config-heat {{ heat_configs | join(' --config-heat ') }}"
+        when: ( heat_configs is defined and heat_configs|length>0 )
+
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} {{ oc_extra_templates | default('') }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false {{ oc_heat_configs | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
-        when: extra_templates is not defined and parameter_defaults is not defined
-
-      - name: run tripleo-overcloud deploy with extra templates
-        shell: |
-            source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false > {{ log_directory }}/overcloud_deploy.log 2>&1
-        args:
-            chdir: "{{ infrared_dir }}"
-        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
