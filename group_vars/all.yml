@@ -10,9 +10,7 @@ lab_name: scale
 ansible_ssh_pass: password
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
-ocp_release: 4.5
 osp_puddle: passed_phase2
-ocp_puddle: latest
 controller_count: 3
 # No need to set compute_count. This will be set to all remaining nodes, which is calclulated in overcloud.yml
 #compute_count: 1
@@ -111,15 +109,6 @@ external_allocation_pools_start: 172.17.5.50
 external_allocation_pools_end: 172.17.5.150
 external_interface_default_route: 172.17.5.1
 
-#ocp
-external_ocp_net_cidr: 172.17.5.0/24
-external_ocp_allocation_pools_start: 172.17.5.210
-external_ocp_allocation_pools_end: 172.17.5.250
-external_ocp_gateway: 172.17.5.1
-external_ipv6_gateway: 2620:52:0:13b8::fe
-external_ipv6_net_cidr: 2620:52:0:13b8::/64
-external_ipv6_allocation_pools_start: 2620:52:0:13b8::1000:1
-external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
 #internal
 internal_api_net_cidr: 172.17.1.0/24
 internal_api_allocation_pools_start: 172.17.1.10
@@ -158,12 +147,3 @@ vm_image_url: https://url.corp.redhat.com/rhel-guest-image-7-6-210-x86-64-qcow2
 #neutron_backend: ovn
 #ocp installation
 shift_stack: false
-public_net_name: nova
-ocp_tasks:
-  - create_external_network
-  - forward_overcloud_dashboard
-  - network_time
-  - tempest_deployer_input
-master_nodes: 3
-worker_nodes: 3
-ocp_network_type: Kuryr
