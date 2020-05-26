@@ -44,16 +44,6 @@
   register: total_nodes
   changed_when: false
 
-- name: set provision state of all nodes to available
-  shell: |
-      source ~/stackrc;
-      export PROV_STATE=$(openstack baremetal node show {{ item }} -c provision_state -f value);
-      if [[ $PROV_STATE != *"available"* ]]; then
-          openstack baremetal node provide {{ item }};
-      fi
-  with_items: "{{ total_nodes.stdout_lines | default([]) }}"
-  changed_when: false
-
 - name: wait for all nodes to be available
   shell: |
     source ~/stackrc;
@@ -61,7 +51,7 @@
   register: status
   until: ('available' in status.stdout)
   delay: 10
-  retries: 10000
+  retries: 720
   ignore_errors: true
   changed_when: False
   with_items: "{{ total_nodes.stdout_lines | default([]) }}"
