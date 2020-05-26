@@ -78,7 +78,9 @@ scale:
 # scale/alias.machine_types.supermicro/dell...interfaces
 # note: If you are using scale lab or alias lab, don't enable below
 # 'interfaces' parameter.
-#interfaces: []
+interfaces:
+  rhel8_interfaces: [eno1]
+  rhel7_interfaces: [em1]
 
 #extra_templates:
 
