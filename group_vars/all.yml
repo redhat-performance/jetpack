@@ -147,3 +147,14 @@ vm_image_url: https://url.corp.redhat.com/rhel-guest-image-7-6-210-x86-64-qcow2
 #neutron_backend: ovn
 #ocp installation
 shift_stack: false
+# enable nvme parameters
+# README has details about how to get these values
+#nvme:
+#    vendor_id: '144d'
+#    product_id: 'a804'
+#    address: '01:00.0'
+#    flavor:
+#      name: 'nvme'
+#      ram: 16384
+#      disk: 40
+#      vcpus: 4

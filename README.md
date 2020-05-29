@@ -83,9 +83,58 @@ extra_templates:
   - example.yml
   - /usr/share/openstack-tripleo-heat-templates/environments/services/sahara.yaml
 parameter_defaults:
-  - NeutronOVSFirewallDriver: openvswitch`
+  NeutronServicePlugins: qos,ovn-router,trunk,segments
+  NeutronTypeDrivers: geneve,flat
+resource_registry:
+  - OS::TripleO::NodeUserData=/home/stack/firstboot-nvme.yaml
+  - OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
 ```
 
 *extra_templates* is a list of extra template files that you want to deploy the overcloud with. Jetpack searches the undercloud for these files when absolute path on undercloud is provided, and if the environment file does not exist on the undercloud then jetpack/files/ is searched on the ansible controller machine for the custom environment file user wants to deploy with and if it exists, copies it over to the undercloud from where it is used for deployment.
+extra_templates:
+  - /usr/share/openstack-tripleo-heat-templates/environments/services/neutron-ovn-ha.yaml
+  - /home/stack/firstboot.yaml
+In the above case, jetpack copies firstboot from jetpack/files/firstboot.yaml to undercloud's /home/stack folder, if it doesn't exit in the undercloud at /home/stack/firstboot.yaml.
 
-*parameter_defaults* is a list of key value pairs for customizing the deployment like ```NeutronOVSFirewallDriver: openvswitch```.
+*parameter_defaults* is a dictionary of key value pairs for customizing the deployment like ```NeutronOVSFirewallDriver: openvswitch```.
+Specify them in group_vars/all.yml like below
+parameter_defaults:
+  NeutronServicePlugins: qos,ovn-router,trunk,segments
+  NeutronTypeDrivers: geneve,flat
+
+*resource_registry* is a list of resource type and its template that you want to deploy the overcloud with. Template can be a file path or ```OS::Heat::None```. Jetpack searches the undercloud for the template files when absolute path on undercloud is provided, and if the environment file does not exist on the undercloud then jetpack/files/ is searched on the ansible controller machine for the custom template file user wants to deploy with and if it exists, copies it over to the undercloud from where it is used for deployment.
+resource_registry:
+  - OS::TripleO::NodeUserData=/home/stack/firstboot-nvme.yaml
+  - OS::TripleO::Services::NeutronL3Agent: OS::Heat::None
+In the above case, jetpack copies firstboot-nvme.yaml from jetpack/files/firstboot-nvme.yaml to undercloud's /home/stack folder, if it doesn't exit in the undercloud at /home/stack/firstboot-nvme.yaml.
+
+
+*nvme* need to be configured to pass overcloud compute node's non-volatile memory express device directly to overcloud VM. Read [1] for details. ```flavor``` is used to create openstack flavor after the deployment in Jetpack's post module. We can get the nvme device details with the below script
+cat ./get_nvme_address.sh
+sudo yum install pciutils -y
+nvme_exist=`lspci -nn | grep "Non-Volatile memory controller"`
+if [[ $? == 0 ]]
+then
+   address=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $1 }'`
+   vendor=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f1`
+   product=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f2`
+   echo "nvme supported"
+   echo "address: $address"
+   echo "vendor_id: $vendor"
+   echo "product_id: $product"
+else
+  echo "nvme not supported"
+fi
+
+Set the parameters in group_vars like below
+nvme:
+    vendor_id: '144d'
+    product_id: 'a804'
+    address: '01:00.0'
+    flavor:
+      name: 'nvme'
+      ram: 16384
+      disk: 40
+      vcpus: 4
+
+[1] https://access.redhat.com/documentation/en-us/openshift_container_platform/3.11/html-single/scaling_and_performance_guide/index#providing-storage-to-an-etcd-node-using-pci-passthrough-with-openstack 

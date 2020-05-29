@@ -22,10 +22,70 @@
       - name: set heat_template_version
         set_fact:
           heat_template_version: "{{ tht_version.stdout }}"
+      - name: generate firstboot-nvme.yaml
+        template:
+          src: "firstboot-nvme.yaml.j2"
+          dest: "/home/stack/firstboot-nvme.yaml"
+        when: nvme is defined
 
 - hosts: localhost
   gather_facts: yes
   tasks:
+      - name: set nvme parameter_defaults
+        vars:
+          nvme_params: {
+            NovaSchedulerDefaultFilters: ['RetryFilter','AvailabilityZoneFilter','ComputeFilter','ComputeCapabilitiesFilter','ImagePropertiesFilter','ServerGroupAntiAffinityFilter','ServerGroupAffinityFilter','PciPassthroughFilter'],
+            NovaSchedulerAvailableFilters: ['nova.scheduler.filters.all_filters'],
+            NovaPCIPassthrough: [{
+                vendor_id: "{{ nvme.vendor_id }}",
+                product_id: "{{ nvme.product_id }}",
+                address: "{{ nvme.address }}" }],
+            ControllerExtraConfig: {
+                "nova::pci::aliases": [{
+                    name: 'nvme',
+                    vendor_id: "{{ nvme.vendor_id }}",
+                    product_id: "{{ nvme.product_id }}",
+                    device_type: 'type-PCI'}]
+            },
+            ComputeExtraConfig: {
+                "nova::pci::aliases": [{
+                    name: 'nvme',
+                    vendor_id: "{{ nvme.vendor_id }}",
+                    product_id: "{{ nvme.product_id }}",
+                    device_type: 'type-PCI'}]
+             },
+             ComputeKernelArgs: "intel_iommu=on iommu=pt",
+          }
+        set_fact:
+          parameter_defaults: "{{ parameter_defaults|default({}) | combine(nvme_params) }}"
+        when: nvme is defined
+
+      - name: set resource_registry nvme parameters
+        vars:
+          res_reg: "{{ resource_registry|default([]) }}"
+        set_fact:
+          resource_registry: "{{ res_reg + ['OS::TripleO::NodeUserData=/home/stack/firstboot-nvme.yaml'] }}"
+        when: nvme is defined
+
+      - name: add tripleo_heat_templates to template
+        set_fact:
+          config_template: "{{ config_template | default({}) | combine({'tripleo_heat_templates': extra_templates}) }}"
+        when: extra_templates is defined
+
+      - name: add parameter_defaults to template
+        set_fact:
+          config_template: "{{ config_template | default({}) | combine({'custom_templates': {'parameter_defaults': parameter_defaults} }) }}"
+        when: parameter_defaults is defined
+
+      - name: copy template content to extra template file
+        copy:
+            dest: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+            content: "{{ config_template | to_nice_yaml }}"
+        when: config_template is defined
+
+      # tripleo_heat_templates and resource_registry will define the files.
+      # Check if these exist in the undercloud and copy them from jetpack/files
+      # if they don't exist.
       - name: Enable overcloud deployment with extra user defined templates
         block:
           - name: Check if the templates exist on the undercloud
@@ -33,6 +93,7 @@
               path: "{{ item }}"
             register: env_files
             loop: "{{ extra_templates }}"
+            when: extra_templates is defined
             delegate_to: "{{ undercloud_hostname }}"
             vars:
               ansible_python_interpreter: "{{ python_interpreter }}"
@@ -40,41 +101,49 @@
 
           - name: Copy files to undercloud if they do not exist
             copy:
-              src: "{{ item.item }}"
+              src: "{{ item.item| basename }}"
               dest: "/home/stack/"
             loop: "{{ env_files.results }}"
-            when: not item.stat.exists
+            when: (extra_templates is defined) and (not item.stat.exists)
             delegate_to: "{{ undercloud_hostname }}"
             vars:
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
+        when: ( extra_templates is defined and extra_templates|length>0 )
 
-          - name: Template out extra overcloud-templates file
-            template:
-              src: overcloud-templates.yml.j2
-              dest: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
-
-          - name: load vars from extra.yml
-            include_vars:
-              file: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
-
-          - name: slurp heat templates content
-            slurp:
-              src: "{{ item }}"
-            loop: "{{ tripleo_heat_templates }}"
-            register: slurp_content
-            delegate_to: "{{ undercloud_hostname }}"
+      - name: Enable overcloud deployment with resource registry templates
+        block:
+          - name: get filenames for resource registry
             vars:
-              ansible_python_interpreter: "{{ python_interpreter }}"
-              ansible_user: "stack"
-
-          - name: set vxlan fact
+              res_reg_files: []
             set_fact:
-              vxlan: true
-            when: '"vxlan" in (item.content | b64decode )'
-            with_items: "{{ slurp_content.results }}"
+                res_reg_files: "{{ res_reg_files + [ item.split('=')[1] ] }}"
+            when: "'OS::Heat::None' not in item"
+            loop: "{{ resource_registry }}"
 
-        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
+          - name: Check if the resource registry templates exist on the undercloud
+            stat:
+              path: "{{ item }}"
+            register: registry_files
+            loop: "{{ res_reg_files }}"
+            when: res_reg_files is defined
+            delegate_to: "{{ undercloud_hostname }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
+
+          - name: Copy files to undercloud if they do not exist
+            copy:
+              src: "{{ item.item| basename }}"
+              dest: "/home/stack/"
+            loop: "{{ registry_files.results }}"
+            when: (res_reg_files is defined) and (not item.stat.exists)
+            delegate_to: "{{ undercloud_hostname }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
+        when: ( resource_registry is defined and resource_registry|length > 0)
+
       - name: Set compute count fact
         set_fact:
             compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int)) }}"
@@ -126,16 +195,23 @@
       - name: set extra template facts
         set_fact:
           oc_extra_templates: "--overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
-        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults|length>0 )
+        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults.keys()|length>0 )
 
       - name: set heat config facts
         set_fact:
           oc_heat_configs: "--config-heat {{ heat_configs | join(' --config-heat ') }}"
         when: ( heat_configs is defined and heat_configs|length>0 )
 
+      # infrared is not using resource_registry passed through templates
+      # and forcing us to use --config-resource cli option
+      - name: set resource registry using infrared config resource
+        set_fact:
+          oc_config_resource: "--config-resource {{ resource_registry | join(' --config-resource ') }}"
+        when: ( resource_registry is defined and resource_registry|length>0 )
+
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} {{ oc_extra_templates | default('') }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false {{ oc_heat_configs | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout 240 --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} {{ oc_extra_templates | default('') }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false {{ oc_heat_configs | default('') }} {{ oc_config_resource | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"

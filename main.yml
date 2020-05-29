@@ -41,6 +41,10 @@
   tags:
     - overcloud
 
+- import_playbook: post.yml
+  tags:
+    - post
+
 - import_playbook: shift_stack.yml
   tags:
     - shift_stack
