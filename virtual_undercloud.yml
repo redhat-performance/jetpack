@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  set_fact:
+  vars:
     image_url: "{{ (osp_release <=13 ) | ternary(vm_image_url.rhel7, vm_image_url.rhel8) }}"
   tasks:
     - include_tasks: tasks/copykeys.yml
