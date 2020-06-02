@@ -1,0 +1,21 @@
+ocp_release: 4.5
+ocp_puddle: latest
+
+external_ocp_net_cidr: 172.17.5.0/24
+external_ocp_allocation_pools_start: 172.17.5.210
+external_ocp_allocation_pools_end: 172.17.5.250
+external_ocp_gateway: 172.17.5.1
+external_ipv6_gateway: 2620:52:0:13b8::fe
+external_ipv6_net_cidr: 2620:52:0:13b8::/64
+external_ipv6_allocation_pools_start: 2620:52:0:13b8::1000:1
+external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
+
+public_net_name: nova
+ocp_tasks:
+  - create_external_network
+  - forward_overcloud_dashboard
+  - network_time
+  - tempest_deployer_input
+master_nodes: 3
+worker_nodes: 3
+ocp_network_type: Kuryr
