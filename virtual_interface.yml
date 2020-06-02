@@ -1,6 +1,6 @@
 ---
 - hosts: localhost
-  set_fact:
+  vars:
      machine_type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
   tasks:
       - block:
