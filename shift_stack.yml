@@ -72,13 +72,13 @@
     - name: openshift prepare
       shell: |
           source .venv/bin/activate
-          infrared openshift -o openshift-prepare.yml --prepare yes --install no --post no --openstack-version {{ osp_release }} --openstack-build {{ osp_puddle }} --openshift-puddle {{ ocp_puddle }} --openshift-release {{ ocp_release }} --openshift-separated-project yes --overcloud-cloud overcloud --openstack-ssl no --dns {{ dns_server }} > {{ log_directory }}/ocp_prepare.log  2>&1
+          infrared openshift -o openshift-prepare.yml --prepare yes --install no --post no --openstack-version {{ osp_release }} --openstack-build {{ osp_puddle }} --openshift-puddle {{ ocp_puddle }} --openshift-build {{ ocp_build }} --openshift-release {{ ocp_release }} --openshift-separated-project yes --overcloud-cloud overcloud --openstack-ssl no --dns {{ dns_server }} > {{ log_directory }}/ocp_prepare.log  2>&1
       args:
         chdir: "{{ infrared_dir }}"
 
     - name: openshift install
       shell: |
           source .venv/bin/activate
-          infrared openshift -o openshift-install.yml --prepare no --install yes --post no --openstack-public-network {{ public_net_name }} --openstack-version {{ osp_release }} --openstack-build {{ osp_puddle }} --openshift-puddle {{ ocp_puddle }} --openshift-release {{ ocp_release }} --openshift-master {{ master_nodes }} --openshift-node {{ worker_nodes }} --openshift-separated-project yes --overcloud-cloud overcloud --openshift-network-type {{ ocp_network_type }} --openshift-etcd-ramdisk false --openstack-ssl no --dns {{ dns_server }} > {{ log_directory }}/ocp_install.log  2>&1
+          infrared openshift -o openshift-install.yml --prepare no --install yes --post no --openstack-public-network {{ public_net_name }} --openstack-version {{ osp_release }} --openstack-build {{ osp_puddle }} --openshift-puddle {{ ocp_puddle }} --openshift-build {{ ocp_build }} --openshift-release {{ ocp_release }} --openshift-master {{ master_nodes }} --openshift-node {{ worker_nodes }} --openshift-separated-project yes --overcloud-cloud overcloud --openshift-network-type {{ ocp_network_type }} --openshift-etcd-ramdisk false --openstack-ssl no --dns {{ dns_server }} > {{ log_directory }}/ocp_install.log  2>&1
       args:
         chdir: "{{ infrared_dir }}"

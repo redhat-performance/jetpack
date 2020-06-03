@@ -1,4 +1,5 @@
 ocp_release: 4.5
+ocp_build: 4.5
 ocp_puddle: latest
 
 external_ocp_net_cidr: 172.17.5.0/24
