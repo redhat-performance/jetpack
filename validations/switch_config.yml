@@ -1,0 +1,89 @@
+---
+- hosts: localhost
+  tasks:
+    - name: include
+      include_tasks: tasks/load_instackenv.yml
+
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        ssh_user: "root"
+
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "root"
+
+    - name: python interpreter
+      set_fact:
+        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
+
+    - name: add undercloud_host to inventory file
+      add_host:
+        name: "undercloud"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "root"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+    - name: add all hosts
+      set_fact:
+        oc_nodes: "{{ oc_nodes|default([]) + [item.pm_addr | replace('mgmt-','') | replace('-drac', '')] }}"
+      with_items: "{{ instackenv_content.nodes }}"
+
+    - name: remove undercloud hostname
+      set_fact:
+        oc_nodes: "{{ oc_nodes | difference([undercloud_hostname]) }}"
+
+- hosts: undercloud
+  vars:
+    oc_nodes: "{{ hostvars['localhost']['oc_nodes'] }}"
+  tasks:
+    - name: get default route
+      shell: |
+        ip r | grep default | cut -d ' ' -f5
+      register: default_route
+      become: true
+
+    - name: set virtual nics
+      set_fact:
+        virtual_nics: ['lo', "{{ default_route.stdout }}" ]
+
+    - name: find all interfaces
+      find:
+        paths: /sys/class/net
+        recurse: no
+        file_type: any
+      register: find_nics
+
+    - name: set nics
+      set_fact:
+        nics: "{{ nics|default([]) + [item.path | basename] }}"
+      with_items: "{{ find_nics.files }}"
+
+    - name: detect ifaces
+      command: ip link show dev {{ item }}
+      with_items: "{{ nics }}"
+      register: detect_iface
+
+    - name: working interfaces
+      set_fact:
+        ifaces: "{{ ifaces|default([]) + [item.item] }}"
+      when: '"LOWER_UP" in item.stdout'
+      with_items: "{{ detect_iface.results }}"
+
+    - name: remove virtual ifaces
+      set_fact:
+        ifaces: "{{ ifaces | difference(virtual_nics) }}"
+
+    - name: print working interfaces
+      debug: var=ifaces
+
+    # lab scripts assign the same ip address on all interfaces of a host
+    - name: ping ip addresses
+      shell: |
+        address=`sshpass -p {{ ansible_ssh_pass }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ item[0] }} ip  -4 a s {{ item[1] }} | grep inet | awk '{ print $2 }' | cut -d'/' -f1`
+        ping -c 3 -I {{ item[1] }} $address
+      with_nested:
+        - "{{ oc_nodes }}"
+        - "{{ ifaces }}"

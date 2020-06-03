@@ -89,3 +89,8 @@ parameter_defaults:
 *extra_templates* is a list of extra template files that you want to deploy the overcloud with. Jetpack searches the undercloud for these files when absolute path on undercloud is provided, and if the environment file does not exist on the undercloud then jetpack/files/ is searched on the ansible controller machine for the custom environment file user wants to deploy with and if it exists, copies it over to the undercloud from where it is used for deployment.
 
 *parameter_defaults* is a list of key value pairs for customizing the deployment like ```NeutronOVSFirewallDriver: openvswitch```.
+
+## Validations
+
+1) To validate if the lab machines network interfaces are properly connected or not, run this playbook
+ansible-playbook validations/switch_config.yml
