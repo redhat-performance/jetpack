@@ -1,0 +1,45 @@
+heat_template_version: {{ heat_template_version }}
+
+description: >
+  This is an example showing how you can do firstboot configuration
+  of the nodes via cloud-init.  To enable this, replace the default
+  mapping of OS::TripleO::NodeUserData in ../overcloud_resource_registry*
+parameters:
+  ComputeKernelArgs:
+    description: >
+      Space seprated list of Kernel args to be update to grub.
+      The given args will be appended to existing args of GRUB_CMDLINE_LINUX in file /etc/default/grub
+      Example: "intel_iommu=on"
+    type: string
+    default: ""
+
+resources:
+  userdata:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: {get_resource: compute_kernel_args}
+
+  # Verify the logs on /var/log/cloud-init.log on the overcloud node
+  compute_kernel_args:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          template: |
+            #!/bin/bash
+            set -x
+            FORMAT='compute'
+            if [[ $(hostname) == *$FORMAT* ]] ; then
+              sed "s/^\(GRUB_CMDLINE_LINUX=\".*\)\"/\1 $KERNEL_ARGS\"/g" -i /etc/default/grub ;
+              grub2-mkconfig -o /etc/grub2.cfg
+              reboot
+            fi
+          params:
+            $KERNEL_ARGS: {get_param: ComputeKernelArgs}
+
+
+outputs:
+  OS::stack_id:
+    value: {get_resource: userdata}
+
