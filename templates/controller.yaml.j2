@@ -182,6 +182,15 @@ resources:
     properties:
       group: script
       config:
+{% if public_external_interface is defined %}
+        list_join:
+        - ''
+        - - |
+            #!/bin/bash
+            for f in $(find /proc/sys/net/ipv4 -name rp_filter) ; do echo 0 > $f ; done
+
+          -
+{% endif %}
             str_replace:
               template:
                   get_file: {%raw%}{{ install.heat.templates.basedir }}{%endraw%}/network/scripts/run-os-net-config.sh
@@ -210,6 +219,12 @@ resources:
                             -
                               type: interface
                               name: {{ external_interface }}
+{% if external_network_vlan_id is not defined %}
+                          addresses:
+                            -
+                              ip_netmask:
+                                  get_param: ExternalIpSubnet
+{% else %}
                             -
                               type: vlan
                               vlan_id:
@@ -218,6 +233,7 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: ExternalIpSubnet
+{% endif %}
 {% if external_interface != ctlplane_interface %}
                         -
                           type: ovs_bridge
