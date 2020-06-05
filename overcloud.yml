@@ -31,11 +31,43 @@
 - hosts: localhost
   gather_facts: yes
   tasks:
+      - name: Set compute count fact
+        set_fact:
+            compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int)) }}"
+
+      - name: get nodes
+        shell: |
+            source ~/stackrc
+            openstack baremetal node list -f value -c UUID
+        register: nodes_uuids
+        changed_when: false
+        delegate_to: "{{ groups.undercloud|first }}"
+        vars:
+          ansible_python_interpreter: "{{ python_interpreter }}"
+          ansible_user: "stack"
+
+      - name: check registered nodes with requested node count
+        debug:
+           msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
+        when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+
+      - name: Adjust compute count
+        set_fact:
+            compute_count: "{{ compute_count|int - 1 }}"
+        when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+        with_items: "{{ nodes_uuids }}"
+
+      - name: fail when compute count is less than 1
+        fail:
+            msg: "Failing as compute count is less than 1"
+        when: compute_count|int < 1
+
       - name: set nvme parameter_defaults
         vars:
           nvme_params: {
             NovaSchedulerDefaultFilters: ['RetryFilter','AvailabilityZoneFilter','ComputeFilter','ComputeCapabilitiesFilter','ImagePropertiesFilter','ServerGroupAntiAffinityFilter','ServerGroupAffinityFilter','PciPassthroughFilter'],
             NovaSchedulerAvailableFilters: ['nova.scheduler.filters.all_filters'],
+            NovaSchedulerMaxAttempts: "{{ compute_count }}",
             NovaPCIPassthrough: [{
                 vendor_id: "{{ nvme.vendor_id }}",
                 product_id: "{{ nvme.product_id }}",
@@ -143,37 +175,6 @@
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
         when: ( resource_registry is defined and resource_registry|length > 0)
-
-      - name: Set compute count fact
-        set_fact:
-            compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int)) }}"
-
-      - name: get nodes
-        shell: |
-            source ~/stackrc
-            openstack baremetal node list -f value -c UUID
-        register: nodes_uuids
-        changed_when: false
-        delegate_to: "{{ groups.undercloud|first }}"
-        vars:
-          ansible_python_interpreter: "{{ python_interpreter }}"
-          ansible_user: "stack"
-
-      - name: check registered nodes with requested node count
-        debug:
-           msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
-        when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
-
-      - name: Adjust compute count
-        set_fact:
-            compute_count: "{{ compute_count|int - 1 }}"
-        when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
-        with_items: "{{ nodes_uuids }}"
-
-      - name: fail when compute count is less than 1
-        fail:
-            msg: "Failing as compute count is less than 1"
-        when: compute_count|int < 1
 
       - name: check neutron_backend defined
         set_fact:
