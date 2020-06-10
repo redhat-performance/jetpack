@@ -1,0 +1,47 @@
+#jinja2: trim_blocks:True, lstrip_blocks:True
+apiVersion: v1
+baseDomain: "shiftstack.com"
+clusterID: "{{ ocp_cluster_id }}"
+compute:
+- name: worker
+  replicas: {{ worker_nodes }}
+  {% if ocp_worker_flavor != "" %}
+  platform:
+    openstack:
+      type: {{ ocp_worker_flavor }}
+  {% else %}
+  platform: {}
+  {% endif %}
+controlPlane:
+  name: master
+  replicas: {{ master_nodes }}
+  {% if ocp_master_flavor != "" %}
+  platform:
+    openstack:
+      type: {{ ocp_master_flavor }}
+  {% else %}
+  platform: {}
+  {% endif %}
+metadata:
+  name: "ostest"
+networking:
+  clusterNetworks:
+  - cidr:             10.128.0.0/14
+    hostSubnetLength: 9
+  serviceCIDR: 172.30.0.0/16
+  machineCIDR: 10.196.0.0/16
+  type: "{{ ocp_network_type }}"
+platform:
+  openstack:
+    cloud:            "shiftstack"
+    externalNetwork:  "{{ public_net_name }}"
+    region:           "regionOne"
+    computeFlavor:    "m4.xlarge"
+    lbFloatingIP:     "{{ api_floating_ip }}"
+    externalDNS: ['{{ ansible_dns.nameservers[0] }}']
+    octaviaSupport: "1"
+    trunkSupport: "1"
+pullSecret: |
+  {{ ocp_pull_secret }}
+sshKey: |
+  {{ ssh_public_key }}
