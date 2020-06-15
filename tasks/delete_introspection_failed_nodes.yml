@@ -33,7 +33,7 @@
   shell: |
       source ~/stackrc
       openstack baremetal node delete {{ item }}
-  with_items: "{{ failed_nodes_uuids }}"
+  with_items: "{{ failed_nodes_uuids | default([]) }}"
   changed_when: false
   ignore_errors: true
 
