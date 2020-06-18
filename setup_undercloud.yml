@@ -96,7 +96,7 @@
         - name: set undercloud to PXE boot off Foreman (Dell)
           shell: |
               source {{ badfish_venv }}/bin/activate
-              python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --boot-to-type foreman --pxe
+              python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t foreman --pxe
           args:
             chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
           when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
