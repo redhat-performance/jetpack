@@ -138,3 +138,19 @@ nvme:
       vcpus: 4
 
 [1] https://access.redhat.com/documentation/en-us/openshift_container_platform/3.11/html-single/scaling_and_performance_guide/index#providing-storage-to-an-etcd-node-using-pci-passthrough-with-openstack 
+
+## Deploying with external public network
+
+We can request scale lab team for external public network and use this for accessing overcloud VMs from outside LAB environment.
+
+1) To use this public network, set public_external_interface: true in group_vars/all.yml 
+2) Scale Lab team will enable public network on 4th interface of the nodes. For example, for 1029p nodes, this will be 'ens2f3' for osp version 14 and above, otherwise 'enp94s0f3'. Set this to external_interface variable i.e
+external_interface: ens2f3
+3) CIDR details provided by the scale lab team should be defined like below
+external_gateway: 10.1.57.1/24
+external_net_cidr: 10.1.57.0/24
+external_allocation_pools_start: 10.1.57.10
+external_allocation_pools_end: 10.1.57.30
+external_interface_default_route: 10.1.57.1
+Note: external_network_vlan_id shouldn't be defined as scale lab team configures this network with a vlan on external switch. We need to use this interface as access port and shouldn't define any VLANs on it. Also while creating overcloud external network after overcloud deployment, specify --provider:network_type as flat i.e
+neutron net-create --router:external=True --provider:network_type flat --provider:physical_network datacentre public

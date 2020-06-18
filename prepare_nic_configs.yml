@@ -50,20 +50,22 @@
       - name: set control and external interfaces
         set_fact:
            ctlplane_interface: "{{ (ifaces|length > 1) | ternary(ifaces[1], ifaces[0]) }}"
+        when: ctlplane_interface is not defined
 
       - name: set external interface
         set_fact:
           external_interface: "{{ (ifaces|length > 3) | ternary(ifaces[3], ctlplane_interface) }}"
+        when: external_interface is not defined
 
       - name: set tenant interface
         set_fact:
           tenant_interface: "{{ ifaces[2] }}"
-        when: ifaces|length > 2
+        when: tenant_interface is not defined and ifaces|length > 2
 
       - name: set isolated interface
         set_fact:
           isolated_interface: "{{ ifaces[0] }}"
-        when: ifaces|length > 1
+        when: isolated_interface is not defined and ifaces|length > 1
 
       - name: set nic configs
         set_fact:

@@ -21,7 +21,9 @@ parameter_defaults:
     ExternalNetCidr: {{ external_net_cidr }}
     ExternalAllocationPools: [{'start': '{{ external_allocation_pools_start }}', 'end': '{{ external_allocation_pools_end }}' }]
     ExternalInterfaceDefaultRoute: {{ external_interface_default_route }}
+{% if external_network_vlan_id is defined %}
     ExternalNetworkVlanID: {{ external_network_vlan_id }}
+{% endif %}
     InternalApiNetCidr: {{ internal_api_net_cidr }}
     InternalApiAllocationPools: [{'start': '{{ internal_api_allocation_pools_start }}', 'end': '{{ internal_api_allocation_pools_end }}' }]
     InternalApiNetworkVlanID: {{ internal_api_network_vlan_id }}

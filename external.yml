@@ -25,10 +25,28 @@
               ext_iface: "{{ ext_interface.stdout }}"
         when: virtual_uc != true
 
+      - name: fail when both public_external_interface and external_network_vlan_id defined
+        fail:
+          msg: Both public_external_interface and external_network_vlan_id defined
+        when: public_external_interface is defined and external_network_vlan_id is defined
+
       - name: set ext_iface
         set_fact:
           ext_iface: "{{ vm_external_interface }}"
         when: virtual_uc == true
+
+      # "Reverse path" filter prevents packets from coming in or going out on
+      #  an unexpected interface to help prevent routing loops (check with lab team).
+      # The default route on undercloud was out the primary foreman interface,
+      # so when undercloud gets packets coming in on the 4th NIC, it sends the traffic back
+      # out the foreman interface. Turning off this configuration enables to use
+      # public_external_interface i.e 4th interface
+      - name: disable rp_filter
+        shell: |
+            for f in $(find /proc/sys/net/ipv4 -name rp_filter) ; do echo 0 > $f ; done
+        become: true
+        ignore_errors: true
+        when: public_external_interface is defined
 
       - name: create vlan interface on external interface
         vars:
@@ -37,18 +55,28 @@
             ip link add link {{ ext_iface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
             ip link set dev {{ ext_iface }} up
             ip link set dev {{ vlan_interface }} up
-            ip a a {{ external_gateway }} brd {{ external_network_broadcast }} dev {{ vlan_interface }}
+            ip a a {{ external_gateway }} dev {{ vlan_interface }}
         become: true
         ignore_errors: true
+        when: external_network_vlan_id is defined
+
+      - name: add ip on when external interface is real public interface
+        shell: |
+            ip a a {{ external_gateway }} dev {{ ext_iface }}
+        become: true
+        ignore_errors: true
+        when: external_network_vlan_id is not defined
 
       - name: get default route
         shell: |
             ip r | grep default | cut -d ' ' -f5
         register: default_route
         become: true
+        when: external_network_vlan_id is defined
 
       - name: masquerade on public interface
         shell: |
             iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
         become: true
+        when: external_network_vlan_id is defined
 
