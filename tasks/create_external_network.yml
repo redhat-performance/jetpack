@@ -1,0 +1,23 @@
+---
+- name: create public network
+  os_network:
+    cloud: "overcloud"
+    external: yes
+    shared: yes
+    state: present
+    provider_network_type: vlan
+    provider_physical_network: datacentre
+    provider_segmentation_id: "{{ external_ocp_vlan_id }}"
+    name: "{{ public_net_name }}"
+
+- name: create subnet
+  os_subnet:
+    cloud: "overcloud"
+    state: present
+    gateway_ip: "{{ external_ocp_gateway }}"
+    allocation_pool_start: "{{ external_ocp_allocation_pools_start }}"
+    allocation_pool_end: "{{ external_ocp_allocation_pools_end }}"
+    enable_dhcp: no
+    network_name: "{{ public_net_name }}"
+    cidr: "{{ external_ocp_net_cidr }}"
+    name: 'public-subnet'

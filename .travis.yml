@@ -2,6 +2,6 @@ language: python
 python:
   - "3.7"
 install:
-  - pip install -r tests/requirements.txt
+  - pip install git+https://github.com/ansible/ansible-lint.git
 script:
-  - ansible-lint main.yml -x 204,301,303,305,306,401,601,602
+  - ansible-lint main.yml -x 204,207,301,303,305,306,401,601,602

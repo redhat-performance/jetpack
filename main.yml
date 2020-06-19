@@ -45,7 +45,7 @@
   tags:
     - post
 
-- import_playbook: shift_stack.yml
+- import_playbook: ocp_on_osp.yml
   tags:
     - shift_stack
   when: shift_stack == true
