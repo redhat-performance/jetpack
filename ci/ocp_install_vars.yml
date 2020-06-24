@@ -1,0 +1,43 @@
+ocp_release: "{{ lookup('env', 'OPENSHIFT_RELEASE')|default('4.4.6', true) }}"
+ocp_puddle: latest
+install_client: true
+
+external_ocp_net_cidr: 172.17.5.0/24
+external_ocp_allocation_pools_start: 172.17.5.210
+external_ocp_allocation_pools_end: 172.17.5.250
+external_ocp_gateway: 172.17.5.1
+
+external_ipv6_gateway: 2620:52:0:13b8::fe
+external_ipv6_net_cidr: 2620:52:0:13b8::/64
+external_ipv6_allocation_pools_start: 2620:52:0:13b8::1000:1
+external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
+
+public_net_name: nova
+
+ocp_master_flavor: "{{ lookup('env', 'OPENSHIFT_MASTER_INSTANCE_TYPE')|default('nvme', true) }}"
+ocp_worker_flavor: "{{ lookup('env', 'OPENSHIFT_WORKER_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
+ocp_cluster_id: "{{ ansible_date_time.epoch | to_uuid }}"
+ocp_tasks:
+  - create_external_network
+  - forward_overcloud_dashboard
+  - network_time
+  - tempest_deployer_input
+master_nodes: "{{ lookup('env', 'OPENSHIFT_MASTER_COUNT')|default(3, true) }}"
+worker_nodes: "{{ lookup('env', 'OPENSHIFT_WORKER_COUNT')|default(5, true) }}"
+# specify the openshift SDN name, OpenShiftSDN or Kuryr
+ocp_network_type: "{{ lookup('env', 'OPENSHIFT_NETWORK_TYPE')|default('Kuryr', true) }}"
+
+ssh_key_file: "{{ lookup('env', 'OPENSHIFT_INSTALL_SSH_PUB_KEY_FILE')|default('~/.ssh/id_rsa.pub', true) }}"
+#ocp_pull_secret: "{{ lookup('env', 'OPENSHIFT_INSTALL_PULL_SECRET')| to_yaml }}"
+
+ocp_create_infra_nodes: "{{ lookup('env', 'OPENSHIFT_TOGGLE_INFRA_NODE')|default(true, true) }}"
+ocp_create_workload_nodes: "{{ lookup('env', 'OPENSHIFT_TOGGLE_WORKLOAD_NODE')|default(true, true) }}"
+ocp_post_install_poll_attempts: "{{ lookup('env', 'OPENSHIFT_POST_INSTALL_POLL_ATTEMPTS')|default('50', true) }}"
+machineset_metadata_label_prefix: "{{ lookup('env', 'MACHINESET_METADATA_LABEL_PREFIX')|default('machine.openshift.io', true) }}"
+openshift_alertmanager_storage_size: "{{ lookup('env', 'OPENSHIFT_ALERTMANAGER_STORAGE_SIZE')|default('2Gi', true) }}"
+openshift_alertmanager_storage_class: "{{ lookup('env', 'OPENSHIFT_ALERTMANAGER_STORAGE_CLASS')|default('standard', true) }}"
+openshift_prometheus_storage_size: "{{ lookup('env', 'OPENSHIFT_PROMETHEUS_STORAGE_SIZE')|default('10Gi', true) }}"
+openshift_prometheus_storage_class: "{{ lookup('env', 'OPENSHIFT_PROMETHEUS_STORAGE_CLASS')|default('standard', true) }}"
+openshift_prometheus_retention_period: "{{ lookup('env', 'OPENSHIFT_PROMETHEUS_RETENTION_PERIOD')|default('15d', true) }}"
+openshift_workload_node_flavor: "{{ lookup('env', 'OPENSHIFT_WORKLOAD_NODE_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
+openshift_infra_node_flavor: "{{ lookup('env', 'OPENSHIFT_INFRA_NODE_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
