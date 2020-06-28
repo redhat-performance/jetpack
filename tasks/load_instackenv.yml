@@ -50,9 +50,41 @@
       set_fact:
         undercloud_hostname: "{{ undercloud_host }}"
 
+    - name: first node in instackenv
+      set_fact:
+        instack_firstnode: "{{ (instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+      when: lab_name in ['scale', 'alias']
+
+    - name: undercloud hypervisor
+      set_fact:
+        instack_firstnode: "{{ undercloud_hypervisor }}"
+      when: lab_name not in ['scale', 'alias']
+
     - name: set overcloud_instackenv content
       set_fact:
-          oc_instackenv_content: "{{ instackenv_content }}"
+          oc_instackenv_content: |
+              {% set a=instackenv_content.pop('nodes') %}
+              {{ instackenv_content | combine({'nodes': a|difference([a[0]])}, recursive=True) }}
+
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ instack_firstnode }}"
+        ssh_user: "root"
+
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ instack_firstnode }}"
+        user: "root"
+
+    - name: add hypervisor to inventory file
+      add_host:
+        name: "hypervisor"
+        groups: "undercloud_hypervisor"
+        ansible_host: "{{ instack_firstnode }}"
+        ansible_user: "root"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
   when: virtual_uc == true
 
 - name: create overcloud_instackenv.json file

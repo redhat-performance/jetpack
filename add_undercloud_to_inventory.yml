@@ -8,6 +8,7 @@
       vars:
         hostname: "{{ undercloud_hostname }}"
         user: "stack"
+
     - name: add undercloud_host to inventory file
       add_host:
         name: "undercloud"
@@ -16,15 +17,19 @@
         ansible_user: "stack"
         ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
         ansible_python_interpreter: "{{ python_interpreter }}"
+
     - name: generate inventory file
       template:
         dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
         src: inventory.j2
+
     - name: update inventory file symlink
       file:
         dest: "{{ infrared_hosts_file }}"
         state: link
         src: "{{ inventory_file_name }}"
+        force: true
+
     - name: copy keys
       copy:
         src: "~/.ssh/id_rsa.pub"
