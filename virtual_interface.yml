@@ -23,7 +23,6 @@
           when: item.key == machine_type and machine_type in alias.machine_types.dell
         when: lab_name in ['scale', 'alias']
 
-
       - name: set interface
         set_fact:
           virtual_uc_ctlplane_interface: "{{ ifaces_v[1] }}"

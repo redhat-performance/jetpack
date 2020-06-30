@@ -1,12 +1,13 @@
 ---
 - hosts: localhost
-  vars:
-    image_url: "{{ (osp_release <=13 ) | ternary(vm_image_url.rhel7, vm_image_url.rhel8) }}"
   tasks:
     - include_tasks: tasks/copykeys.yml
       vars:
         hostname: "localhost"
         ssh_user: "root"
+    - name: image url
+      set_fact:
+       image_url: "{{ (osp_release <=13 ) | ternary(vm_image_url.rhel7, vm_image_url.rhel8) }}"
 
     - name: copy topology node
       template:
@@ -116,4 +117,3 @@
         ssh-keygen -q -t rsa -f /home/{{ user }}/.ssh/id_rsa -C "" -N ""
       when: ssh_keys_result.stat.exists == False
       become: yes
-
