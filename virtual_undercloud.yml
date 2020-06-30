@@ -5,6 +5,7 @@
       vars:
         hostname: "localhost"
         ssh_user: "root"
+    
     - name: image url
       set_fact:
        image_url: "{{ (osp_release <=13 ) | ternary(vm_image_url.rhel7, vm_image_url.rhel8) }}"
