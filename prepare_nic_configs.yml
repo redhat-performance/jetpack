@@ -2,7 +2,6 @@
 - hosts: localhost
   vars:
       undercloud_host: "{{ groups.undercloud|first }}"
-      machine_type: "{{ (lab_name == 'scale') | ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
   tasks:
       - name: get subnet mask
         shell: |
@@ -17,27 +16,6 @@
         set_fact:
           ifaces: "{{ (osp_release|int > 14)| ternary(interfaces.rhel8_interfaces, interfaces.rhel7_interfaces) }}"
         when: lab_name not in ['scale', 'alias']
-
-      - block:
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
-          with_dict: "{{ scale.machine_types.supermicro }}"
-          when: item.key == machine_type and machine_type in scale.machine_types.supermicro
-
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
-          with_dict: "{{ scale.machine_types.dell }}"
-          when: item.key == machine_type and machine_type in scale.machine_types.dell
-
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ (osp_release|int > 14)| ternary(item.value.rhel8_interfaces, item.value.rhel7_interfaces) }}"
-          with_dict: "{{ alias.machine_types.dell }}"
-          when: item.key == machine_type and machine_type in alias.machine_types.dell
-
-        when: lab_name in ['scale', 'alias']
 
       - name: interfaces is empty
         fail:

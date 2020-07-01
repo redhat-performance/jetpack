@@ -76,8 +76,18 @@
             hostname: "{{ hammer_host }}"
             user: "root"
 
+        - name: set hammer build command
+          set_fact:
+            hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --overwrite 1"
+          when: lab_name == "scale"
+
+        - name: set hammer build params
+          set_fact:
+            hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ os_install }}' --partition-table 'ALIAS-Partition' --overwrite 1"
+          when: lab_name == "alias"
+
         - name: update host to install new os
-          shell: hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --overwrite 1
+          shell: "{{ hammer_build_cmd }}"
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
@@ -85,7 +95,7 @@
 
         - name: set undercloud to PXE boot (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
-          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
+          when: vendor is defined and vendor == "supermicro"
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
@@ -94,7 +104,7 @@
 
         - name: power cycle undercloud (Supermicro)
           shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
-          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.supermicro
+          when: vendor is defined and vendor == "supermicro"
           delegate_to: "{{ hammer_host }}"
           vars:
             ansible_user: root
@@ -106,7 +116,7 @@
               python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t foreman --pxe
           args:
             chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+          when: vendor is defined and vendor == "dell"
           retries: 5
           delay: 3
           register: result
@@ -118,7 +128,7 @@
               python3 badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
           args:
             chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+          when: vendor is defined and vendor == "dell"
 
         - name: wait for 420 seconds before checking for undercloud
           wait_for:
