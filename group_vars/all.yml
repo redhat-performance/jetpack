@@ -154,10 +154,9 @@ undercloud_host: 172.16.0.2
 vm_external_interface: eth0
 undercloud_local_interface: eth0
 virtual_uc_ctlplane_interface: em1
-# RHEL 7 image url
-vm_image_url: https://url.corp.redhat.com/rhel-guest-image-7-6-210-x86-64-qcow2
-# RHEL 8 image url
-# vm_image_url: 'http://download.hosts.prod.upshift.rdu2.redhat.com/released/RHEL-8/8.1.0/BaseOS/x86_64/images/rhel-guest-image-8.1-263.x86_64.qcow2'
+vm_image_url:
+   rhel7: https://url.corp.redhat.com/rhel-guest-image-7-6-210-x86-64-qcow2
+   rhel8: http://download.hosts.prod.upshift.rdu2.redhat.com/released/RHEL-8/8.1.0/BaseOS/x86_64/images/rhel-guest-image-8.1-263.x86_64.qcow2
 #Neutron backend, if not set default will be used.
 #neutron_backend: ovn
 #ocp installation

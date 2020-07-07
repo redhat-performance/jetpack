@@ -6,6 +6,10 @@
         hostname: "localhost"
         ssh_user: "root"
 
+    - name: image url
+      set_fact:
+        image_url: "{{ (osp_release <=13 ) | ternary(vm_image_url.rhel7, vm_image_url.rhel8) }}"
+
     - name: copy topology node
       template:
         src: virtual_uc_topology.yml.j2
@@ -19,14 +23,15 @@
     - name: clean previous vm
       shell: |
          source {{ infrared_dir }}/.venv/bin/activate
-         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --image-url '{{ vm_image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True --cleanup True
+         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --image-url '{{ image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True --cleanup True
       retries: 3
       ignore_errors: yes
 
     - name: create undercloud vm
       shell: |
          source {{ infrared_dir }}/.venv/bin/activate
-         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --image-url '{{ vm_image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True -vvv 2>&1 | tee log_virsh1
+         infrared virsh --host-address 127.0.0.1 --host-key /root/.ssh/id_rsa --image-url '{{ image_url }}' --topology-network virtual_uc_network --topology-nodes virtual_uc_topology:1 --host-memory-overcommit True -vvv 2>&1 | tee log_virsh1
+
 
     - include_tasks: tasks/get_interpreter.yml
       vars:
