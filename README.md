@@ -55,8 +55,9 @@ Below is the sequence of steps these playbooks run before deploying overcloud
 6) Prepare overcloud_instackenv.json which will be used for describing overcloud baremetal nodes from instackenv file downloaded  from the scalelab.
    Tasks will remove undercloud node from the downloaded instackenv file and generate new overcloud_instackenv.json file.
 7) Run infrared plugins
-   a) tripleo-undercloud to install the undercloud
-   b) tripleo-overcloud plugin to install overcloud
+
+   - tripleo-undercloud to install the undercloud
+   - tripleo-overcloud plugin to install overcloud
 
 # Documentation
 https://jetpack-docs.readthedocs.io/en/latest/
@@ -111,13 +112,14 @@ In the above case, jetpack copies firstboot-nvme.yaml from jetpack/files/firstbo
 
 *nvme* need to be configured to pass overcloud compute node's non-volatile memory express device directly to overcloud VM. Read [1] for details. ```flavor``` is used to create openstack flavor after the deployment in Jetpack's post module. We can get the nvme device details with the below script
 cat ./get_nvme_address.sh
+```
 sudo yum install pciutils -y
-nvme_exist=`lspci -nn | grep "Non-Volatile memory controller"`
+nvme_exist=lspci -nn | grep "Non-Volatile memory controller"
 if [[ $? == 0 ]]
 then
-   address=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $1 }'`
-   vendor=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f1`
-   product=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f2`
+   address=lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $1 }'
+   vendor=lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f1
+   product=lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f2
    echo "nvme supported"
    echo "address: $address"
    echo "vendor_id: $vendor"
@@ -125,7 +127,7 @@ then
 else
   echo "nvme not supported"
 fi
-
+```
 Set the parameters in group_vars like below
 nvme:
     vendor_id: '144d'
@@ -154,3 +156,10 @@ external_allocation_pools_end: 10.1.57.30
 external_interface_default_route: 10.1.57.1
 Note: external_network_vlan_id shouldn't be defined as scale lab team configures this network with a vlan on external switch. We need to use this interface as access port and shouldn't define any VLANs on it. Also while creating overcloud external network after overcloud deployment, specify --provider:network_type as flat i.e
 neutron net-create --router:external=True --provider:network_type flat --provider:physical_network datacentre public
+
+## Containerize Jetpack
+
+To run jetpack inside a container you need to update the group_vars/all.yml in your localhost as it will be consumed by the jetpack_container.sh script and podman should be installed.
+
+Execute jetpack_container.sh script to build and run jetpack container.
+   `./jetpack_container.sh`

@@ -8,5 +8,4 @@ podman build -t jetpack .
 # run jetpack container
 podman run -it \
       -v ./group_vars/all.yml:$ansible_dir/group_vars/all.yml:Z \
-      -v ./instackenv.json:$ansible_dir/instackenv.json:Z \
       -t localhost/jetpack
