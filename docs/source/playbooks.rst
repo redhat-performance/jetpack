@@ -35,7 +35,6 @@ In `group_vars/all.yml <https://github.com/redhat-performance/jetpack/blob/maste
   * ``undercloud_host: 172.16.0.2``
   * ``vm_external_interface: eth0``
   * ``undercloud_local_interface: eth0``
-  * ``virtual_uc_ctlplane_interface: em1``
 
 `add_undercloud_to_inventory.yml <https://github.com/redhat-performance/jetpack/blob/master/add_undercloud_to_inventory.yml>`_
 ------------------------------------------------------------------------------------------------------------------------------
