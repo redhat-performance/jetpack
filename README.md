@@ -1,7 +1,7 @@
 # Jetpack
 
 JetPack is the easiest way to deploy Director/Tripleo on baremetal. 
-JetPack will install OpenStack using infrared on a set of homegnous servers. User can run JetPack from their laptop or an ansible jump host.
+JetPack will install OpenStack using infrared on a set of homogeneous servers. User can run JetPack from their laptop or an ansible jump host.
 Once the user's baremetal node allocation is ready to use, they need to set below bare minimum variables.
 
 ```
