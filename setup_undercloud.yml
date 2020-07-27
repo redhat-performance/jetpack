@@ -45,6 +45,46 @@
         os_install: "RHEL {{ osp_rhel_mapping[osp_release] }}"
       when: force_reprovision == true
 
+    - name: clone badfish
+      git:
+        repo: "https://github.com/redhat-performance/badfish.git"
+        dest: "{{ ansible_user_dir }}/badfish"
+
+    - name: Create badfish virtualenv
+      command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
+
+    - name: Install badfish requirements
+      pip:
+        requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
+        virtualenv_command: /usr/bin/python3 -m venv
+        virtualenv: "{{ badfish_venv }}"
+
+    - name: list oc_instackenv_content
+      shell: |
+        echo "{{ oc_instackenv_content.nodes[item | int].pm_addr }}"
+      with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
+      register: host_list
+
+    - name: Set the boot order to director mode (Dell)
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        echo {{ item.stdout }}
+        python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t director
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      with_items: "{{ host_list.results }}"
+      when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+
+    - name: Set the boot order to director mode (Dell)
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        echo {{ item.stdout }}
+        python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t director
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      with_items: "{{ host_list.results }}"
+      when: lab_name == "alias" and undercloud_hostname.split('.')[0].split('-')[3] in alias.machine_types.dell
+
     - name: Reboot if OS install needed
       block:
         - name: delete overcloud before re install undercloud
@@ -56,20 +96,6 @@
           vars:
             hostname: "{{ hammer_host }}"
             ssh_user: "root"
-
-        - name: clone badfish
-          git:
-            repo: "https://github.com/redhat-performance/badfish.git"
-            dest: "{{ ansible_user_dir }}/badfish"
-
-        - name: Create badfish virtualenv
-          command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
-
-        - name: Install badfish requirements
-          pip:
-            requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
-            virtualenv_command: /usr/bin/python3 -m venv
-            virtualenv: "{{ badfish_venv }}"
 
         - include_tasks: tasks/get_interpreter.yml
           vars:
