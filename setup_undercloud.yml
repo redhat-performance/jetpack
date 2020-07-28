@@ -68,22 +68,24 @@
     - name: Set the boot order to director mode (Dell)
       shell: |
         source {{ badfish_venv }}/bin/activate
-        echo {{ item.stdout }}
         python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t director
       args:
         chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
       with_items: "{{ host_list.results }}"
-      when: lab_name == "scale" and undercloud_hostname.split('.')[0].split('-')[3] in scale.machine_types.dell
+      when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
+      retries: 5
+      delay: 3
+      register: result
+      until: result.rc == 0
 
-    - name: Set the boot order to director mode (Dell)
+    - name: power cycle overcloud nodes (Dell)
       shell: |
         source {{ badfish_venv }}/bin/activate
-        echo {{ item.stdout }}
-        python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t director
+        python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} --power-cycle
       args:
         chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
       with_items: "{{ host_list.results }}"
-      when: lab_name == "alias" and undercloud_hostname.split('.')[0].split('-')[3] in alias.machine_types.dell
+      when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
 
     - name: Reboot if OS install needed
       block:
