@@ -50,7 +50,7 @@
         alloc_start: "{{ ((external_allocation_pools_end | ipaddr('int')) + 1) | ipaddr }}"
       shell: |
         source /home/stack/overcloudrc
-        neutron subnet-create --ip_version 4 --gateway $gateway_address --allocation-pool start={{ alloc_start }},end={{ alloc_end }} --disable-dhcp {{ public_net_name }} {{ external_net_cidr }}
+        neutron subnet-create --ip_version 4 --gateway {{ gateway_address }} --allocation-pool start={{ alloc_start }},end={{ alloc_end }} --disable-dhcp {{ public_net_name }} {{ external_net_cidr }}
       changed_when: false
       ignore_errors: true
 
