@@ -37,12 +37,12 @@
 
     - name: set os_install
       set_fact:
-        os_install: "RHEL {{ osp_rhel_mapping[osp_release] }}"
-      when: force_reprovision == false and (osp_rhel_mapping[osp_release]|float != rhel_version|float)
+        os_install: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
+      when: force_reprovision == false and (osp_rhel_mapping[osp_release|float]|float != rhel_version|float)
 
     - name: set os_install
       set_fact:
-        os_install: "RHEL {{ osp_rhel_mapping[osp_release] }}"
+        os_install: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
       when: force_reprovision == true
 
     - name: Reboot if OS install needed
