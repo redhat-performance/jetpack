@@ -28,4 +28,7 @@ worker_nodes: 3
 ocp_network_type: Kuryr
 
 ssh_key_file: '/home/stack/.ssh/id_rsa.pub'
-ocp_pull_secret: ""
+
+# when pull secret is not enabled it will try to read from the value
+# from OPENSHIFT_INSTALL_PULL_SECRET env variable
+#pull_secret: ""

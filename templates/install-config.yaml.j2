@@ -41,7 +41,6 @@ platform:
     externalDNS: ['{{ ansible_dns.nameservers[0] }}']
     octaviaSupport: "1"
     trunkSupport: "1"
-pullSecret: |
-  {{ ocp_pull_secret }}
+pullSecret: {{ ocp_pull_secret }}
 sshKey: |
   {{ ssh_public_key }}
