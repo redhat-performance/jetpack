@@ -162,6 +162,10 @@ vm_image_url:
 #neutron_backend: ovn
 #ocp installation
 shift_stack: false
+#browbeat installation
+#installs browbeat, if this variable is not defined or set true
+#skips browbeat installation, only if the variable set false
+browbeat: true
 # enable nvme parameters
 # README has details about how to get these values
 #nvme:
