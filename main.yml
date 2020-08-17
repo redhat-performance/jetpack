@@ -53,6 +53,7 @@
 - import_playbook: browbeat.yml
   tags:
     - browbeat
+  when: browbeat is not defined or browbeat == true
 
 - import_playbook: cleanup.yml
   tags:

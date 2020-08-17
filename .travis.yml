@@ -4,4 +4,4 @@ python:
 install:
   - pip install git+https://github.com/ansible/ansible-lint.git
 script:
-  - ansible-lint main.yml -x 204,207,301,303,305,306,401,601,602
+  - ansible-lint main.yml -x 204,207,208,301,303,305,306,401,601,602
