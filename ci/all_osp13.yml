@@ -151,3 +151,6 @@ shift_stack: false
 #      ram: 16384
 #      disk: 40
 #      vcpus: 4
+
+#For Nova-less provisioning enable the variable
+novaless_prov: false

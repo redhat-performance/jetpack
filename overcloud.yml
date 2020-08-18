@@ -62,6 +62,16 @@
             msg: "Failing as compute count is less than 1"
         when: compute_count|int < 1
 
+      - name: prepare for nova-less provisioning
+        block:
+          - name: provisioning baremetal nodes
+            include_tasks: tasks/provisioning_baremetal_nodes.yml
+
+          - name: set fact for extra templates (metalsmith)
+            set_fact:
+              extra_templates: "/home/stack/overcloud-baremetal-deployed.yaml"
+        when: novaless_prov
+
       - name: set nvme parameter_defaults
         vars:
           nvme_params: {
