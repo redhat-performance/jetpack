@@ -62,16 +62,6 @@
             msg: "Failing as compute count is less than 1"
         when: compute_count|int < 1
 
-      - name: prepare for nova-less provisioning
-        block:
-          - name: provisioning baremetal nodes
-            include_tasks: tasks/provisioning_baremetal_nodes.yml
-
-          - name: set fact for extra templates (metalsmith)
-            set_fact:
-              extra_templates: "/home/stack/overcloud-baremetal-deployed.yaml"
-        when: novaless_prov
-
       - name: set nvme parameter_defaults
         vars:
           nvme_params: {
@@ -151,7 +141,7 @@
             vars:
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
-        when: ( extra_templates is defined and extra_templates|length>0 )
+        when: (extra_templates is defined and extra_templates|length>0 and (not novaless_prov))
 
       - name: Enable overcloud deployment with resource registry templates
         block:
@@ -219,6 +209,12 @@
         set_fact:
           oc_config_resource: "--config-resource {{ resource_registry | join(' --config-resource ') }}"
         when: ( resource_registry is defined and resource_registry|length>0 )
+
+      - name: prepare for nova-less provisioning
+        block:
+          - name: provisioning baremetal nodes
+            include_tasks: tasks/provisioning_baremetal_nodes.yml
+        when: novaless_prov
 
       - name: run tripleo-overcloud deploy
         shell: |

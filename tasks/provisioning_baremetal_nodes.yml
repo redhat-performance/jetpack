@@ -2,8 +2,6 @@
 - name: set facts for heat env file
   set_fact:
     node_data_path: "{{ ansible_user_dir }}/metalsmith_node_data.yaml"
-    concurrency: 100
-    node_def_path: "/home/stack/overcloud-baremetal-deployed.yaml"
 
 - name: prepare metalsmith_node_data.yml
   template:
@@ -15,14 +13,14 @@
   lineinfile:
     path: "{{ node_data_path }}"
     insertafter: "cont_instances"
-    line: '  - hostname: controller-{{ item }}'
+    line: '  - hostname: controller-{{ (item|int)-1 }}'
   with_sequence: start=1 end={{ controller_count }}
 
 - name: hostname for compute nodes
   lineinfile:
     path: "{{ node_data_path }}"
     insertafter: "comp_instances"
-    line: '  - hostname: compute-{{ item }}'
+    line: '  - hostname: compute-{{ (item|int)-1 }}'
   with_sequence: start=1 end={{ compute_count }}
 
 - name: assign name to baremetal node list
@@ -39,14 +37,14 @@
 - name: name of controller nodes
   lineinfile:
     path: "{{ node_data_path }}"
-    insertafter: "hostname: controller"
+    insertafter: "hostname: controller-{{ (item|int)-1 }}"
     line: '    name: node-{{ item }}'
   with_sequence: start=1 end={{ controller_count }}
 
 - name: name of compute nodes
   lineinfile:
     path: "{{ node_data_path }}"
-    insertafter: "hostname: compute"
+    insertafter: "hostname: compute-{{ (item|int)-(controller_count|int)-1 }}"
     line: '    name: node-{{ item }}'
   with_sequence: start={{ (controller_count|int)+1 }} end={{ (controller_count|int)+(compute_count|int) }}
 
@@ -62,9 +60,15 @@
     dest: "/home/stack/"
   delegate_to: "{{ groups.undercloud|first }}"
 
+- name: store heat env file
+  file:
+    path: ~/virt
+    state: directory
+  delegate_to: "{{ groups.undercloud|first }}"
+
 - name: generate heat env file
   shell: |
     source ~/stackrc
-    time openstack overcloud node provision --concurrency {{ concurrency }} -o {{ node_def_path }} ~/metalsmith_node_data.yaml
+    openstack overcloud node provision -o ~/virt/baremetal_environment.yaml ~/metalsmith_node_data.yaml
   delegate_to: "{{ groups.undercloud|first }}"
 

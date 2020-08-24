@@ -37,3 +37,12 @@ To deploy the overcloud with custom environment files, the user needs to add a s
   ``- example.yml``
 ``parameter_defaults:``
   ``- NeutronOVSFirewallDriver: openvswitch``
+
+Nova-less Deployement
+---------------------
+
+For Nova-less deploy set extra_templates in `group_vars/all.yml <https://github.com/redhat-performance/jetpack/blob/master/group_vars/all.yml>`_ as below
+
+``extra_templates:``
+  ``- /usr/share/openstack-tripleo-heat-templates/environments/deployed-server-environment.yaml``
+
