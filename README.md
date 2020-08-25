@@ -109,22 +109,7 @@ resource_registry:
 In the above case, jetpack copies firstboot-nvme.yaml from jetpack/files/firstboot-nvme.yaml to undercloud's /home/stack folder, if it doesn't exit in the undercloud at /home/stack/firstboot-nvme.yaml.
 
 
-*nvme* need to be configured to pass overcloud compute node's non-volatile memory express device directly to overcloud VM. Read [1] for details. ```flavor``` is used to create openstack flavor after the deployment in Jetpack's post module. We can get the nvme device details with the below script
-cat ./get_nvme_address.sh
-sudo yum install pciutils -y
-nvme_exist=`lspci -nn | grep "Non-Volatile memory controller"`
-if [[ $? == 0 ]]
-then
-   address=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $1 }'`
-   vendor=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f1`
-   product=`lspci -nn | grep "Non-Volatile memory controller" | awk '{ print $NF }' | tr -d [] | cut -d: -f2`
-   echo "nvme supported"
-   echo "address: $address"
-   echo "vendor_id: $vendor"
-   echo "product_id: $product"
-else
-  echo "nvme not supported"
-fi
+*nvme* need to be configured to pass overcloud compute node's non-volatile memory express device directly to overcloud VM. Read [1] for details. ```flavor``` is used to create openstack flavor after the deployment in Jetpack's post module. We can get the nvme device details with the [get_nvme_details.sh](scripts/get_nvme_details.sh) script
 
 Set the parameters in group_vars like below
 nvme:
