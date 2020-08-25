@@ -169,3 +169,18 @@
         ./openshift-install --log-level=debug create cluster --dir=ostest > ocp_install.log 2>&1
       args:
         chdir: /home/stack/
+    - name: install ocp client
+      block:
+        - name: get the ocp client
+          get_url:
+            validate_certs: no
+            url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ ocp_release }}/openshift-client-linux.tar.gz
+            dest: /home/stack/openshift-client-linux.tar.gz
+
+        - name: untar ocp client
+          unarchive:
+            src: /home/stack/openshift-client-linux.tar.gz
+            dest: /usr/local/bin/
+            remote_src: yes
+          become: true
+      when: install_client == true
