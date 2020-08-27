@@ -108,7 +108,7 @@
 
     - name: set pull secret from env
       set_fact:
-        ocp_pull_secret: "{{ lookup('env', 'OPENSHIFT_INSTALL_PULL_SECRET')| to_yaml }}"
+        ocp_pull_secret: "{{ lookup('env', 'OPENSHIFT_INSTALL_PULL_SECRET') }}"
       when: pull_secret is not defined
 
     - name: set key value fact
