@@ -180,7 +180,10 @@
         - name: untar ocp client
           unarchive:
             src: /home/stack/openshift-client-linux.tar.gz
-            dest: /usr/local/bin/
+            dest: /home/stack/
             remote_src: yes
-          become: true
+            mode: 0700
+        - name: copy oc to bin
+          shell: |
+            sudo cp /home/stack/oc /usr/local/bin
       when: install_client == true
