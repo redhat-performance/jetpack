@@ -1,0 +1,8 @@
+---
+# node definition file for metalsmith
+- name: Controller
+  count: {{ controller_count }}
+  cont_instances:
+- name: Compute
+  count: {{ compute_count | default(1) }}
+  comp_instances:

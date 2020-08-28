@@ -1,0 +1,74 @@
+---
+- name: set facts for heat env file
+  set_fact:
+    node_data_path: "{{ ansible_user_dir }}/metalsmith_node_data.yaml"
+
+- name: prepare metalsmith_node_data.yml
+  template:
+    src: "metalsmith_node_data.yaml.j2"
+    dest: "{{ node_data_path }}"
+    force: yes
+
+- name: hostname for controller nodes
+  lineinfile:
+    path: "{{ node_data_path }}"
+    insertafter: "cont_instances"
+    line: '  - hostname: controller-{{ (item|int)-1 }}'
+  with_sequence: start=1 end={{ controller_count }}
+
+- name: hostname for compute nodes
+  lineinfile:
+    path: "{{ node_data_path }}"
+    insertafter: "comp_instances"
+    line: '  - hostname: compute-{{ (item|int)-1 }}'
+  with_sequence: start=1 end={{ compute_count }}
+
+- name: assign name to baremetal node list
+  shell: |
+    source ~/stackrc
+    count=1;
+    for NODE in `openstack baremetal node list -c UUID -f value` ; do
+    for i in $NODE; do
+        openstack baremetal node set $i --name node-$count; count=$((count+1)); done
+     done
+  ignore_errors: yes
+  delegate_to: "{{ groups.undercloud|first }}"
+
+- name: name of controller nodes
+  lineinfile:
+    path: "{{ node_data_path }}"
+    insertafter: "hostname: controller-{{ (item|int)-1 }}"
+    line: '    name: node-{{ item }}'
+  with_sequence: start=1 end={{ controller_count }}
+
+- name: name of compute nodes
+  lineinfile:
+    path: "{{ node_data_path }}"
+    insertafter: "hostname: compute-{{ (item|int)-(controller_count|int)-1 }}"
+    line: '    name: node-{{ item }}'
+  with_sequence: start={{ (controller_count|int)+1 }} end={{ (controller_count|int)+(compute_count|int) }}
+
+- name: Update metalsmith_node_data.yaml
+  replace:
+    path: "{{ node_data_path }}"
+    regexp: 'co..\_instances\:'
+    replace: 'instances:'
+
+- name: copy the yaml file to undercloud
+  copy:
+    src: "{{ node_data_path }}"
+    dest: "/home/stack/"
+  delegate_to: "{{ groups.undercloud|first }}"
+
+- name: store heat env file
+  file:
+    path: ~/virt
+    state: directory
+  delegate_to: "{{ groups.undercloud|first }}"
+
+- name: generate heat env file
+  shell: |
+    source ~/stackrc
+    openstack overcloud node provision -o ~/virt/baremetal_environment.yaml ~/metalsmith_node_data.yaml
+  delegate_to: "{{ groups.undercloud|first }}"
+
