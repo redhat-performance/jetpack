@@ -139,3 +139,10 @@ external_allocation_pools_end: 10.1.57.30
 external_interface_default_route: 10.1.57.1
 Note: external_network_vlan_id shouldn't be defined as scale lab team configures this network with a vlan on external switch. We need to use this interface as access port and shouldn't define any VLANs on it. Also while creating overcloud external network after overcloud deployment, specify --provider:network_type as flat i.e
 neutron net-create --router:external=True --provider:network_type flat --provider:physical_network datacentre public
+
+## Containerize Jetpack
+
+To run jetpack inside a container you need to update the group_vars/all.yml in your localhost as it will be consumed by the jetpack_container.sh script and podman should be installed.
+
+Execute jetpack_container.sh script to build and run jetpack container.
+   `./jetpack_container.sh`
