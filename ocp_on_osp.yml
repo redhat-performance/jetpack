@@ -187,3 +187,6 @@
           shell: |
             sudo cp /home/stack/oc /usr/local/bin
       when: install_client == true
+
+- import_playbook: create_ocp_infra_nodes.yml
+  when: ocp_create_infra_nodes == true or ocp_create_workload_nodes == true
