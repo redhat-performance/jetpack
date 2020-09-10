@@ -1,15 +1,18 @@
 ---
 - hosts: localhost
   tasks:
+      - name: set instackenv_file
+        set_fact:
+          custom_instackenv: " --instackenv-file {{ overcloud_instackenv_path }} "
+        when: hybrid_params is not defined
+
       - name: run tripleo-overcloud introspection
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --instackenv-file {{ overcloud_instackenv_path }} --deployment-files {{ nic_configs }} --introspect yes > {{ log_directory }}/overcloud_introspect.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} {{ custom_instackenv | default('') }} --deployment-files {{ nic_configs }} --introspect yes {{ hybrid_params | default('') }} > {{ log_directory }}/overcloud_introspect.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
         changed_when: false
-        async: 2400
-        poll: 60
         ignore_errors: true
 
 - hosts: undercloud

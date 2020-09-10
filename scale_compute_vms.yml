@@ -1,0 +1,186 @@
+- hosts: localhost
+  gather_facts: yes
+  tasks:
+    - name: generate local_hosts inventory file needed for infrared virsh pre playbook
+      template:
+        dest: "{{ infrared_workspaces_dir }}/active/local_hosts"
+        src: inventory.j2
+
+    - name: set controller nodes
+      set_fact:
+        controller_nodes: "{{ controller_nodes|default([]) + [(oc_instackenv_content.nodes[item | int]|combine({'name': 'controller-'+item}))] }}"
+      with_sequence: 0-{{ controller_count-1 }}
+
+    - name: set hypervisor nodes for compute VMs
+      set_fact:
+        hypervisor_nodes: "{{ oc_instackenv_content.nodes[controller_count:] }}"
+
+    - name: set overcloud_instackenv content to controller nodes
+      set_fact:
+        oc_instackenv_content: "{{ {} | combine({'nodes': controller_nodes}, recursive=True) }}"
+
+    - name: create overcloud_instackenv.json file
+      copy:
+        dest: "{{ overcloud_instackenv_path }}"
+        content: "{{ oc_instackenv_content }}"
+
+    - name: get hypervisor hosts
+      shell: |
+        echo "{{ hypervisor_nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '') }}"
+      with_sequence: 0-{{ (hypervisor_nodes|length - 1) }}
+      register: host_list
+
+    - name: hostname list
+      set_fact:
+         hostname_list: "{{ hostname_list|default([]) + [item.stdout] }}"
+      with_items: "{{ host_list.results }}"
+
+    - include_tasks: tasks/install_os.yml
+      vars:
+        chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+        needed_os: "{{ (lab_name == 'scale') | ternary('CentOS 7', 'CentOS 7.7') }}"
+        hypervisor_host: "{{ hyp }}"
+        hypervisor_password: "{{ ansible_ssh_pass }}"
+      with_items: "{{ hostname_list }}"
+      loop_control:
+        loop_var: hyp
+
+    - include_tasks: tasks/copykeys.yml
+      vars:
+        hostname: "{{ hyp }}"
+        ssh_user: "root"
+        id_file:  "{{ ansible_ssh_key }}"
+      with_items: "{{ hostname_list }}"
+      loop_control:
+        loop_var: hyp
+
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ hostname_list[0] }}"
+        user: "root"
+
+    - name: add hypervisors to inventory file
+      add_host:
+        name: "{{ hyp }}"
+        groups: "hypervisor"
+        ansible_host: "{{ hyp }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "root"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+      with_items: "{{ hostname_list }}"
+      loop_control:
+        loop_var: hyp
+
+    # create ssh key on the first hypervisor
+    - name: check if ssh key exists
+      stat:
+        path: "{{ ansible_ssh_key }}"
+      register: sshkey
+      delegate_to: "{{ groups.hypervisor|first }}"
+
+    - name:  Generate ssh key
+      shell:
+        ssh-keygen -q -N "" -f {{ ansible_ssh_key }}
+      when: sshkey.stat.exists == False
+      delegate_to: "{{ groups.hypervisor|first }}"
+
+    - name:  install sshpass on first hypervisor
+      package:
+        name: sshpass
+        state: installed
+      delegate_to: "{{ groups.hypervisor|first }}"
+
+    # copy first hypervisor key to all hypervisors (as vbmc ports are created on first hypervisor)
+    - name: remove key
+      shell: |
+        ssh-keygen -R {{ hyp }}
+      changed_when: false
+      with_items: "{{ groups.hypervisor }}"
+      loop_control:
+        loop_var: hyp
+      delegate_to: "{{ groups.hypervisor|first }}"
+      ignore_errors: true
+
+    - name: add ssh key
+      shell: |
+        echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id -i {{ ansible_ssh_key }} -o 'StrictHostKeyChecking no' -f root@{{ hyp }}
+      changed_when: false
+      with_items: "{{ groups.hypervisor }}"
+      loop_control:
+        loop_var: hyp
+      delegate_to: "{{ groups.hypervisor|first }}"
+    - name: set rhel 7 interfaces for hypervisors
+      vars:
+        lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+      set_fact:
+        hyp_ifaces: "{{ lab_vars['machine_types'][vendor][machine_type]['rhel7_interfaces'] }}"
+
+
+- hosts: hypervisor
+  tasks:
+    - name: Clean network interfaces
+      shell: |
+        /root/clean-interfaces.sh --nuke
+      changed_when: false
+
+    - name: install packages
+      package:
+        name: "{{ item }}"
+        state: installed
+      loop: ['gcc', 'libffi-devel', 'openssl-devel', 'python-virtualenv', 'libvirt', 'qemu-kvm', 'libselinux-python']
+
+    - name: start libvirtd
+      systemd:
+        state: started
+        name: libvirtd
+    # workaround for infrared issue https://github.com/redhat-openstack/infrared/issues/396
+    - name: create network script file for interfaces
+      vars:
+        hyp_ifaces: "{{ hostvars['localhost']['hyp_ifaces'] }}"
+      shell: |
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[0] }}
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[1] }}
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[2] }}
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[3] }}
+
+
+- hosts: localhost
+  vars:
+    topology_network_path: "{{ ansible_user_dir }}/4_nets_multi_hypervisor.yml"
+  tasks:
+    - name: remove existing inmemory inventory especially hypervisor
+      meta: refresh_inventory
+
+    - name: create topology network file
+      vars:
+        isolated_interface: "{{ hyp_ifaces[0] }}"
+        ctlplane_interface: "{{ hyp_ifaces[1] }}"
+        tenant_interface: "{{ hyp_ifaces[2] }}"
+        external_interface: "{{ hyp_ifaces[3] }}"
+      template:
+        src: 4_nets_multi_hypervisor.yml.j2
+        dest: "{{ topology_network_path }}"
+    - name: prepare host address variable
+      set_fact:
+        host_address: "--host-address {{ hostname_list | join(' --host-address ') }}"
+
+    - name: run virsh for multi hypervisor
+      shell: |
+            source .venv/bin/activate
+            infrared virsh {{ host_address }} --host-key {{ ansible_ssh_key }} --topology-nodes compute:{{ compute_count|default(1) }} --topology-network {{ topology_network_path }} --host-memory-overcommit True > {{ log_directory }}/virsh.log 2>&1
+      args:
+        chdir: "{{ infrared_dir }}"
+
+    - name: reload inventory content created by virsh command
+      meta: refresh_inventory
+
+    - name: hybrid deployment params
+      set_fact:
+        hybrid_params: " --specific-node-ids true  --hybrid {{ overcloud_instackenv_path }}  --vbmc-host hypervisor"
+
+    - name: set deployment_timeout to 2400
+      set_fact:
+        deployment_timeout: 2400
+
+
+- import_playbook: add_undercloud_to_inventory.yml

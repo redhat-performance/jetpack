@@ -181,3 +181,15 @@ browbeat: true
 
 #For Nova-less provisioning enable the variable
 novaless_prov: false
+
+# This feature creates VMs on hypervisors and uses them as overcloud
+# compute nodes to simulate overcloud scale deployment. This feature
+# requires control plane network tuning as below
+scale_compute_vms: false
+#undercloud_public_host: 192.168.0.2
+#undercloud_admin_host: 192.168.0.3
+#cidr: 192.168.0.0/16
+#gateway: 192.168.0.1
+#dhcp_start: 192.168.0.5
+#dhcp_end: 192.168.10.254
+#inspection_iprange: 192.168.11.1,192.168.20.254

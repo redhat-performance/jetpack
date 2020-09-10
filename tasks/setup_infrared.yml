@@ -21,6 +21,17 @@
     chdir: "{{ infrared_dir }}"
   changed_when: false
 
+- name: use infrared patch
+  shell: |
+    git fetch "https://review.gerrithub.io/redhat-openstack/infrared" refs/changes/07/502407/1 && git checkout FETCH_HEAD
+  args:
+    chdir: "{{ infrared_dir }}"
+
+- name: change deployment timeout in infrared code
+  shell: |
+    sed -ri 's/^(\s*)(maximum\s*:\s*240\s*$)/\1maximum: 2400/' {{ infrared_dir }}/plugins/tripleo-overcloud/plugin.spec
+  when: scale_compute_vms == true
+
 - name: add infrared plugins
   shell: source .venv/bin/activate && infrared plugin add all
   args:
