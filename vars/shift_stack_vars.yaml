@@ -33,3 +33,16 @@ ssh_key_file: '/home/stack/.ssh/id_rsa.pub'
 # when pull secret is not enabled it will try to read from the value
 # from OPENSHIFT_INSTALL_PULL_SECRET env variable
 #pull_secret: ""
+
+ocp_create_infra_nodes: true
+ocp_create_workload_nodes: true
+ocp_post_install_poll_attempts: 50
+machineset_metadata_label_prefix: machine.openshift.io
+openshift_alertmanager_storage_size: 2Gi
+openshift_alertmanager_storage_class: standard
+openshift_prometheus_storage_size: 10Gi
+openshift_prometheus_storage_class: standard
+openshift_prometheus_retention_period: 15d
+openshift_workload_node_flavor: m4.xlarge
+openshift_infra_node_flavor: m4.xlarge
+dittybopper_enable: true
