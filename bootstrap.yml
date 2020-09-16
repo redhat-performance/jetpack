@@ -44,27 +44,6 @@
           - name: set vendor
             set_fact:
               vendor: "{{ (machine_type in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell') }}"
-
-          - name: Get Product Name of 1029u
-            shell: |
-               dmidecode -t system | grep "Product Name" | cut -d '-' -f3
-            register: product_name_1029u
-            when: machine_type == '1029u'
-
-          - name: set fact rhel 8 ifaces (1029u)
-            set_fact:
-              rhel8_interfaces: "{{ (product_name_1029u.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', 'rhel8_interfaces_trtp') }}"
-            when: osp_release|int > 14 and machine_type == '1029u'
-
-          - name: set_fact iface_rhel_version
-            set_fact:
-              iface_rhel_version: "{{ (osp_release|int > 14)| ternary(rhel8_interfaces, 'rhel7_interfaces') }}"
-            when: machine_type == '1029u'
-
-          - name: set interfaces
-            set_fact:
-              ifaces: "{{ lab_vars['machine_types'][vendor][machine_type][iface_rhel_version] }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
-          iface_rhel_version: "{{ (osp_release|int > 14)| ternary('rhel8_interfaces', 'rhel7_interfaces') }}"
         when: lab_name in ['scale', 'alias']
