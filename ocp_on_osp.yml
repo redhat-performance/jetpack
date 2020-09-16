@@ -169,6 +169,7 @@
         ./openshift-install --log-level=debug create cluster --dir=ostest > ocp_install.log 2>&1
       args:
         chdir: /home/stack/
+
     - name: install ocp client
       block:
         - name: get the ocp client
@@ -183,10 +184,25 @@
             dest: /home/stack/
             remote_src: yes
             mode: 0700
+
         - name: copy oc to bin
           shell: |
             sudo cp /home/stack/oc /usr/local/bin
+            sudo chmod a+x /usr/local/bin/oc
       when: install_client == true
+
+    - name: create .kube dir on home
+      file:
+        path: /home/stack/.kube
+        state: directory
+        mode: a+rwx
+
+    - name: copy the kubeconfig file
+      copy:
+        src: /home/stack/ostest/auth/kubeconfig
+        dest: /home/stack/.kube/config
+        mode: a+rx
+        remote_src: yes
 
 - import_playbook: create_ocp_infra_nodes.yml
   when: ocp_create_infra_nodes == true or ocp_create_workload_nodes == true
