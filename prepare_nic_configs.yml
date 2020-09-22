@@ -105,3 +105,10 @@
             src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', 'osp10_compute.yaml.j2') }}"
             dest: "{{ nic_config_path }}/compute.yaml.j2"
             force: yes
+
+      - name: prepare compute.yaml.j2
+        template:
+            src: "{{ (osp_release|int > 10) | ternary('compute_vms.yaml.j2', 'osp10_compute.yaml.j2') }}"
+            dest: "{{ nic_config_path }}/compute.yaml.j2"
+            force: yes
+        when: scale_compute_vms == true

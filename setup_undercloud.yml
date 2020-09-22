@@ -1,7 +1,6 @@
 - hosts: localhost
   gather_facts: yes
   vars:
-      badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
       chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
       osp_rhel_mapping:
         10: 7.7
@@ -11,53 +10,11 @@
         16: 8.1
         16.1: 8.2
   tasks:
-    - name: check if os installed as root user
-      shell: |
-        sshpass -p {{ ansible_ssh_pass }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ undercloud_hostname }} 'cat /etc/redhat-release'
-      register: rhel_release
-      ignore_errors: true
-
-    - name: set rhel version
-      set_fact:
-        rhel_version: "{{ rhel_release.stdout.split()[-2] }}"
-      ignore_errors: true
-      when: rhel_release.stdout != ""
-
-    - name: Check if os is installed as stack user
-      shell: |
-        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'cat /etc/redhat-release'
-      register: rhel_release
-      ignore_errors: true
-      when: rhel_version is not defined
-
-    - name: set rhel version
-      set_fact:
-        rhel_version: "{{ rhel_release.stdout.split()[-2] }}"
-      when: rhel_version is not defined
-
-    - name: set os_install
-      set_fact:
-        os_install: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
-      when: force_reprovision == false and (osp_rhel_mapping[osp_release|float]|float != rhel_version|float)
-
-    - name: set os_install
-      set_fact:
-        os_install: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
-      when: force_reprovision == true
-
-    - name: clone badfish
-      git:
-        repo: "https://github.com/redhat-performance/badfish.git"
-        dest: "{{ ansible_user_dir }}/badfish"
-
-    - name: Create badfish virtualenv
-      command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
-
-    - name: Install badfish requirements
-      pip:
-        requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
-        virtualenv_command: /usr/bin/python3 -m venv
-        virtualenv: "{{ badfish_venv }}"
+    - include_tasks: tasks/install_os.yml
+      vars:
+        needed_os: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
+        hypervisor_host: "{{ undercloud_hostname }}"
+        hypervisor_password: "{{ ansible_ssh_pass }}"
 
     - name: list oc_instackenv_content
       shell: |
@@ -112,93 +69,6 @@
         chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
       with_items: "{{ host_list.results }}"
       when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
-
-    - name: Reboot if OS install needed
-      block:
-        - name: delete overcloud before re install undercloud
-          shell: |
-            ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'source ~/stackrc && openstack overcloud delete overcloud -y'
-          ignore_errors: true
-
-        - include_tasks: tasks/copykeys.yml
-          vars:
-            hostname: "{{ hammer_host }}"
-            ssh_user: "root"
-
-        - include_tasks: tasks/get_interpreter.yml
-          vars:
-            hostname: "{{ hammer_host }}"
-            user: "root"
-
-        - name: set hammer build command
-          set_fact:
-            hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --overwrite 1"
-          when: lab_name == "scale"
-
-        - name: set hammer build params
-          set_fact:
-            hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ undercloud_hostname }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ os_install }}' --partition-table 'ALIAS-Partition' --overwrite 1"
-          when: lab_name == "alias"
-
-        - name: update host to install new os
-          shell: "{{ hammer_build_cmd }}"
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
-
-        - name: set undercloud to PXE boot (Supermicro)
-          shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
-          when: vendor is defined and vendor == "supermicro"
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
-
-
-        - name: power cycle undercloud (Supermicro)
-          shell: ipmitool -I lanplus -H mgmt-{{ undercloud_hostname }} -U quads -P {{ chassis_password }} chassis power cycle
-          when: vendor is defined and vendor == "supermicro"
-          delegate_to: "{{ hammer_host }}"
-          vars:
-            ansible_user: root
-            ansible_python_interpreter: "{{ python_interpreter }}"
-
-        - name: set undercloud to PXE boot off Foreman (Dell)
-          shell: |
-              source {{ badfish_venv }}/bin/activate
-              python3 badfish.py -H mgmt-{{ undercloud_hostname }} -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t foreman --pxe
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          when: vendor is defined and vendor == "dell"
-          retries: 5
-          delay: 3
-          register: result
-          until: result.rc == 0
-
-        - name: power cycle undercloud (Dell)
-          shell: |
-              source {{ badfish_venv }}/bin/activate
-              python3 badfish.py -H mgmt-{{ undercloud_hostname }}  -u quads -p {{ chassis_password }} --reboot-only
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          when: vendor is defined and vendor == "dell"
-
-        - name: wait for 420 seconds before checking for undercloud
-          wait_for:
-            timeout: 420
-
-        - name: waiting for the undercloud to be available
-          wait_for:
-            port: 22
-            host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
-            search_regex: OpenSSH
-            timeout: 30
-          register: uc_reachable
-          delegate_to: localhost
-          retries: 100
-          until: uc_reachable is succeeded
-      when: (os_install is defined)
 
     - name: Check if stack user exists
       shell: |

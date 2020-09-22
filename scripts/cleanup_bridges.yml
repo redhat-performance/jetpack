@@ -1,0 +1,25 @@
+---
+- hosts: hypervisor
+  vars:
+    br_iface_map: {
+     'br-ctlplane': 'enp94s0f1',
+     'br-external': 'enp94s0f3',
+     'br-isolated': 'enp94s0f0'}
+  tasks:
+    - name: del iface from bridge
+      shell: |
+        brctl delif {{ item.key }} {{ item.value }}
+      with_dict: "{{ br_iface_map }}"
+      ignore_errors: true
+    - name: down the bridge
+      shell: |
+        ifdown {{ item.key }}
+      ignore_errors: true
+      with_dict: "{{ br_iface_map }}"
+    - name: delete brdige
+      shell: |
+        brctl delbr {{ item.key }}
+      ignore_errors: true
+      with_dict: "{{ br_iface_map }}"
+
+

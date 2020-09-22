@@ -1,0 +1,110 @@
+---
+- name: set os_search_string
+  set_fact:
+    os_search_string: "{{ ('CentOS' in needed_os) | ternary('CentOS', 'Red Hat Enterprise Linux') }}"
+
+- name: check redhat release in hypervsior as root and stack users
+  shell: |
+    sshpass -p {{ hypervisor_password }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q {{ item }}@{{ hypervisor_host }} 'cat /etc/redhat-release'
+  register: rhel_release
+  loop: ['root', 'stack']
+  ignore_errors: true
+
+- name: set os_install when installed OS version not matching with the needed
+  vars:
+    rhel_stdout: "{{ (rhel_release.results[0].stdout) | ternary(rhel_release.results[0].stdout, rhel_release.results[1].stdout) }}"
+  set_fact:
+    os_install: "{{ needed_os }}"
+  when: rhel_stdout == "" or (needed_os.split()[1] not in rhel_stdout) or (os_search_string not in rhel_stdout)
+
+- name: set os_install for forceful provisioning
+  set_fact:
+    os_install: "{{ needed_os }}"
+  when: force_reprovision == true
+
+- name: Reboot if OS install needed
+  block:
+    - name: delete overcloud before re install undercloud
+      shell: |
+        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'source ~/stackrc && openstack overcloud delete overcloud -y'
+      ignore_errors: true
+      when: hypervisor_host == undercloud_hostname
+
+    - name: set hammer build command
+      vars:
+        medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"
+      set_fact:
+        hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'generic-rhel' --overwrite 1"
+      when: lab_name == "scale"
+
+    - name: set hammer build params
+      vars:
+        medium: "{{ ('CentOS' in os_install) | ternary('CentOS mirror', os_install) }}"
+      set_fact:
+        hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'ALIAS-Partition' --overwrite 1"
+      when: lab_name == "alias"
+
+    - name: update host to install new os
+      shell: "{{ hammer_build_cmd }}"
+      delegate_to: "{{ hammer_host }}"
+      vars:
+        ansible_user: root
+        ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+
+    - name: set hypervisor host to PXE boot (Supermicro)
+      shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
+      when: vendor is defined and vendor == "supermicro"
+      delegate_to: "{{ hammer_host }}"
+      vars:
+        ansible_user: root
+        ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+
+
+    - name: power cycle hypervisor host (Supermicro)
+      shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis power cycle
+      when: vendor is defined and vendor == "supermicro"
+      delegate_to: "{{ hammer_host }}"
+      vars:
+        ansible_user: root
+        ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+
+    - name: set hypervisor host to PXE boot off Foreman (Dell)
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        python3 badfish.py -H mgmt-{{ hypervisor_host }} -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t foreman --pxe
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: vendor is defined and vendor == "dell"
+      retries: 5
+      delay: 3
+      register: result
+      until: result.rc == 0
+
+    - name: power cycle hypervisor (Dell)
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        python3 badfish.py -H mgmt-{{ hypervisor_host }}  -u quads -p {{ chassis_password }} --reboot-only
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: vendor is defined and vendor == "dell"
+
+    - name: wait for 420 seconds before checking for hypervisor
+      wait_for:
+        timeout: 420
+
+    - name: waiting for the hypervisor to be available
+      wait_for:
+        port: 22
+        host: "{{ hypervisor_host }}"
+        search_regex: OpenSSH
+        timeout: 30
+      register: hyp_reachable
+      delegate_to: localhost
+      retries: 100
+      until: hyp_reachable is succeeded
+
+    - name: maintain list of os installed hypervisors
+      set_fact:
+        hypervisors_os_installed: "{{ (hypervisors_os_installed | default([]) ) + [ hypervisor_host ] }}"
+  when: (os_install is defined)
+

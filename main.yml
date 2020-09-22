@@ -3,6 +3,9 @@
   tags:
     - always
 
+- import_playbook: scale_compute_vms.yml
+  when: scale_compute_vms == true
+
 - import_playbook: setup_undercloud.yml
   tags:
     - always

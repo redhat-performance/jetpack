@@ -1,6 +1,11 @@
 - hosts: localhost
   gather_facts: yes
   tasks:
+      - name: check if instackenv file exists
+        stat: path=/home/stack/instackenv.json
+        register: st
+        delegate_to: "{{ groups.undercloud|first }}"
+
       - name: copy instack file to /home/stack/instackenv.json for infrared tagging
         copy:
             src: "{{ overcloud_instackenv_path }}"
@@ -9,6 +14,7 @@
         vars:
             ansible_python_interpreter: "{{ python_interpreter }}"
             ansible_user: "stack"
+        when: not st.stat.exists
 
       - name: run tripleo-overcloud tagging
         shell: |
