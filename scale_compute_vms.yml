@@ -35,15 +35,26 @@
          hostname_list: "{{ hostname_list|default([]) + [item.stdout] }}"
       with_items: "{{ host_list.results }}"
 
-    - include_tasks: tasks/install_os.yml
+    - name: install os
       vars:
         chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
         needed_os: "{{ (lab_name == 'scale') | ternary('CentOS 7', 'CentOS 7.7') }}"
         hypervisor_host: "{{ hyp }}"
         hypervisor_password: "{{ ansible_ssh_pass }}"
+      include_tasks: tasks/install_os.yml
       with_items: "{{ hostname_list }}"
       loop_control:
         loop_var: hyp
+
+    - name: Wait for hypervisors to be avaialable
+      async_status:
+        jid: "{{ item }}"
+      register: install_tasks
+      until: install_tasks.finished
+      retries: 300
+      delay: 10
+      with_items: "{{ async_install }}"
+      when: async_install is defined
 
     - include_tasks: tasks/copykeys.yml
       vars:

@@ -10,11 +10,25 @@
         16: 8.1
         16.1: 8.2
   tasks:
-    - include_tasks: tasks/install_os.yml
+    - name: set async_install to empty list
+      set_fact:
+        async_install: []
+
+    - name: install os on undercloud node
       vars:
         needed_os: "RHEL {{ osp_rhel_mapping[osp_release|float] }}"
         hypervisor_host: "{{ undercloud_hostname }}"
         hypervisor_password: "{{ ansible_ssh_pass }}"
+      include_tasks: tasks/install_os.yml
+
+    - name: Wait for undercloud to be avaialable
+      async_status:
+        jid: "{{ item }}"
+      register: install_uc
+      until: install_uc.finished
+      retries: 300
+      delay: 10
+      with_items: "{{ async_install }}"
 
     - name: list oc_instackenv_content
       shell: |
