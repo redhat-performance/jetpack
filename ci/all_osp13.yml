@@ -154,3 +154,4 @@ shift_stack: false
 
 #For Nova-less provisioning enable the variable
 novaless_prov: false
+scale_compute_vms: false

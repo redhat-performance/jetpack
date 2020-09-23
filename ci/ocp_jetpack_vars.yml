@@ -170,6 +170,7 @@ vm_image_url:
 #neutron_backend: ovn
 browbeat: false
 novaless_prov: false
+scale_compute_vms: false
 #ocp installation
 shift_stack: "{{ (lookup('env', 'OPENSHIFT_INSTALL')|default(true, true))|bool }}"
 # enable nvme parameters
