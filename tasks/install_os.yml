@@ -59,7 +59,6 @@
         ansible_user: root
         ansible_python_interpreter: "{{ hammer_python_interpreter }}"
 
-
     - name: power cycle hypervisor host (Supermicro)
       shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis power cycle
       when: vendor is defined and vendor == "supermicro"
@@ -88,23 +87,24 @@
         chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
       when: vendor is defined and vendor == "dell"
 
-    - name: wait for 420 seconds before checking for hypervisor
+    - name: wait for 120 seconds before checking for hypervisor
       wait_for:
-        timeout: 420
-
-    - name: waiting for the hypervisor to be available
-      wait_for:
-        port: 22
-        host: "{{ hypervisor_host }}"
-        search_regex: OpenSSH
-        timeout: 30
-      register: hyp_reachable
-      delegate_to: localhost
-      retries: 100
-      until: hyp_reachable is succeeded
-
-    - name: maintain list of os installed hypervisors
-      set_fact:
-        hypervisors_os_installed: "{{ (hypervisors_os_installed | default([]) ) + [ hypervisor_host ] }}"
+        timeout: 120
   when: (os_install is defined)
+
+- name: waiting for the hypervisor to be available
+  wait_for:
+    port: 22
+    host: "{{ hypervisor_host }}"
+    timeout: 3000
+    connect_timeout: 30
+    sleep: 5
+  register: hyp_reachable
+  delegate_to: localhost
+  async: 3000
+  poll: 0
+
+- name: save install jids
+  set_fact:
+    async_install: "{{ async_install|default([]) + [hyp_reachable.ansible_job_id] }}"
 
