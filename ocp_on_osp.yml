@@ -205,4 +205,4 @@
         remote_src: yes
 
 - import_playbook: create_ocp_infra_nodes.yml
-  when: ocp_create_infra_nodes == true or ocp_create_workload_nodes == true
+  when: (ocp_create_infra_nodes|bool == true or ocp_create_workload_nodes|bool == true)
