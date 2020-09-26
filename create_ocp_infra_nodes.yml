@@ -122,4 +122,4 @@
           command: ./deploy.sh
           args:
             chdir: "{{ ansible_user_dir }}/dittybopper"
-      when: dittybopper_enable
+      when: dittybopper_enable|bool
