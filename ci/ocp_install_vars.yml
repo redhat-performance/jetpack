@@ -41,3 +41,4 @@ openshift_prometheus_storage_class: "{{ lookup('env', 'OPENSHIFT_PROMETHEUS_STOR
 openshift_prometheus_retention_period: "{{ lookup('env', 'OPENSHIFT_PROMETHEUS_RETENTION_PERIOD')|default('15d', true) }}"
 openshift_workload_node_flavor: "{{ lookup('env', 'OPENSHIFT_WORKLOAD_NODE_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
 openshift_infra_node_flavor: "{{ lookup('env', 'OPENSHIFT_INFRA_NODE_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
+dittybopper_enable: "{{ lookup('env', 'ENABLE_DITTYBOPPER')|default(true, true) }}"
