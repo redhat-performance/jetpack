@@ -181,6 +181,7 @@ browbeat: true
 
 #For Nova-less provisioning enable the variable
 novaless_prov: false
+new_nodes_instack: "{{ playbook_dir }}/newnodes.json"
 
 # This feature creates VMs on hypervisors and uses them as overcloud
 # compute nodes to simulate overcloud scale deployment. This feature
