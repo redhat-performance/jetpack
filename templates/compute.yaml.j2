@@ -245,7 +245,7 @@ resources:
                               next_hop:
                                   get_param: EC2MetadataIp
 {% endif %}
-{% if ifaces|length > 1 %}
+{% if isolated_interface is defined %}
                         -
                           type: ovs_bridge
                           name: br-isolated
@@ -271,7 +271,7 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: StorageIpSubnet
-{% if ifaces|length > 2 %}
+{% if tenant_interface is defined %}
                         -
                           type: ovs_bridge
                           name: br-tenant

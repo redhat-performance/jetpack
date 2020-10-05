@@ -12,7 +12,13 @@
 # environment files we should think about using it here to automatically
 # include network-isolation.yaml.
 resource_registry:
+{% if composable_roles == true %}
+{% for machine_type in machine_types %}
+  OS::TripleO::Compute{{ machine_type }}::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/compute_{{ machine_type }}.yaml
+{% endfor %}
+{% else %}
   OS::TripleO::Compute::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/compute.yaml
+{% endif %}
   OS::TripleO::Controller::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/controller.yaml
 
 parameter_defaults:

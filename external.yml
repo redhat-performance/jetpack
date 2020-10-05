@@ -20,10 +20,19 @@
               done
               echo $ext_interface
             register: ext_interface
+
           - name: set ext_iface
             set_fact:
               ext_iface: "{{ ext_interface.stdout }}"
-        when: virtual_uc != true
+        when: virtual_uc != true and composable_roles == false
+
+      - name: set ext_iface
+        set_fact:
+          ext_iface: "{{ hostvars['localhost']['external_interfaces'][0] }}"
+        when: composable_roles and lab_name in ['scale', 'alias']
+
+      - debug:
+          msg: "{{ ext_iface }}"
 
       - name: fail when both public_external_interface and external_network_vlan_id defined
         fail:

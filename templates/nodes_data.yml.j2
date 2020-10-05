@@ -2,9 +2,14 @@
 parameter_defaults:
   ControllerCount: {{ controller_count }}
 {% for node_type in machine_types %}
+{% if node_type|string() == controller_machine_type|string()  %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int }}
+{% else %}
   Compute{{ node_type }}Count: {{ machine_count[node_type] }}
+{% endif %}
 {% endfor %}
 
 {% for node_type in machine_types %}
   OvercloudCompute{{ node_type }}Flavor: compute{{ node_type }}
 {% endfor %}
+

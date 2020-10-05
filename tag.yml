@@ -1,25 +1,27 @@
 - hosts: localhost
   gather_facts: yes
   tasks:
-      - name: check if instackenv file exists
-        stat: path=/home/stack/instackenv.json
-        register: st
-        delegate_to: "{{ groups.undercloud|first }}"
+      - block:
+          - name: check if instackenv file exists
+            stat: path=/home/stack/instackenv.json
+            register: st
+            delegate_to: "{{ groups.undercloud|first }}"
 
-      - name: copy instack file to /home/stack/instackenv.json for infrared tagging
-        copy:
-            src: "{{ overcloud_instackenv_path }}"
-            dest: "/home/stack/instackenv.json"
-        delegate_to: "{{ groups.undercloud|first }}"
-        vars:
-            ansible_python_interpreter: "{{ python_interpreter }}"
-            ansible_user: "stack"
-        when: not st.stat.exists
+          - name: copy instack file to /home/stack/instackenv.json for infrared tagging
+            copy:
+              src: "{{ overcloud_instackenv_path }}"
+              dest: "/home/stack/instackenv.json"
+            delegate_to: "{{ groups.undercloud|first }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
+            when: not st.stat.exists
 
-      - name: run tripleo-overcloud tagging
-        shell: |
-            source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging yes > {{ log_directory }}/overcloud_tagging.log 2>&1
-        args:
-            chdir: "{{ infrared_dir }}"
-        changed_when: false
+          - name: run tripleo-overcloud tagging
+            shell: |
+              source .venv/bin/activate
+              infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-files {{ nic_configs }} --introspect no --tagging yes > {{ log_directory }}/overcloud_tagging.log 2>&1
+            args:
+              chdir: "{{ infrared_dir }}"
+            changed_when: false
+        when: composable_roles == false
