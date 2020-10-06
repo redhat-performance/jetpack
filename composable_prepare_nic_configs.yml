@@ -167,20 +167,17 @@
 
       - name: set controller facts
         set_fact:
-          controller_iface_index: "{{ (machine_count[item[0]]|int > controller_count|int)| ternary(item[1],false) }}"
-          controller_machine_type: "{{ (machine_count[item[0]]|int > controller_count|int)| ternary(item[0],false) }}"
-        with_together:
-          - "{{ machine_types }}"
-          - "{{ range(0, machine_types|length) | list }}"
+          controller_machine_type: "{{ (machine_count[machine_types[0]]|int > controller_count|int)| ternary(machine_types[0], false) }}"
         when: controller_ifaces is not defined
+
+      - debug:
+          msg: "{{ controller_machine_type }}"
 
       -  name: fail when controller_machine_type is false
          fail:
             msg: Not enough nodes of same machine_type for controller
          when: controller_machine_type == false
 
-      - debug:
-          msg: "{{ ctlplane_interfaces[controller_iface_index|int] }}"
 
       - block:
 
@@ -203,10 +200,10 @@
 
       - name: prepare controller.yaml.j2
         vars:
-          ctlplane_interface: "{{ controller_ctlplane_interface | default(ctlplane_interfaces[controller_iface_index|int]) }}"
-          external_interface: "{{ controller_external_interface | default(external_interfaces[controller_iface_index|int]) }}"
-          tenant_interface: "{{ controller_tenant_interface | default(tenant_interfaces[controller_iface_index|int]) }}"
-          isolated_interface: "{{ controller_isolated_interface | default(isolated_interfaces[controller_iface_index|int]) }}"
+          ctlplane_interface: "{{ controller_ctlplane_interface | default(ctlplane_interfaces[0]) }}"
+          external_interface: "{{ controller_external_interface | default(external_interfaces[0]) }}"
+          tenant_interface: "{{ controller_tenant_interface | default(tenant_interfaces[0]) }}"
+          isolated_interface: "{{ controller_isolated_interface | default(isolated_interfaces[0]) }}"
         template:
           src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', false) }}"
           dest: "{{ nic_config_path }}/controller.yaml.j2"
