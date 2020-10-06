@@ -31,9 +31,6 @@
           ext_iface: "{{ hostvars['localhost']['external_interfaces'][0] }}"
         when: composable_roles and lab_name in ['scale', 'alias']
 
-      - debug:
-          msg: "{{ ext_iface }}"
-
       - name: fail when both public_external_interface and external_network_vlan_id defined
         fail:
           msg: Both public_external_interface and external_network_vlan_id defined

@@ -55,16 +55,12 @@
             with_items: "{{ oc_instackenv_content.nodes }}"
             vars:
               oc_instackenv_content: "{{ lookup('file', '{{ overcloud_instackenv_path }}') | from_json }}"
-          - debug:
-              msg: "{{ machine_types }}"
 
           - name: set vendor
             set_fact:
               vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell')] }}"
             with_items:
               - "{{ machine_types }}"
-          - debug:
-              msg: "{{ vendors }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias'] and composable_roles

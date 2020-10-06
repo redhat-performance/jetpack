@@ -1,12 +1,6 @@
 ---
 - hosts: localhost
   tasks:
-    - debug:
-        var: machine_types
-
-    - debug:
-        var: machine_count
-
     - name: Template out nodes_data file
       template:
         src: nodes_data.yml.j2
