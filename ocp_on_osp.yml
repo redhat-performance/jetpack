@@ -8,14 +8,8 @@
         dir: vars
         files_matching: shift_stack_vars.yaml
 
-    - name: create flavor
-      os_nova_flavor:
-        cloud: "overcloud"
-        state: present
-        name: "m4.xlarge"
-        ram: 16384
-        vcpus: 4
-        disk: 40
+    - name: create flavors
+      include_tasks: tasks/create_flavors.yml
 
     - name: create new user and project
       include_tasks: tasks/create_project_and_user.yml
