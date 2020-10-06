@@ -8,15 +8,6 @@
         dir: vars
         files_matching: shift_stack_vars.yaml
 
-    - name: add MASQUERADE rule
-      iptables:
-        table: nat
-        chain: POSTROUTING
-        out_interface: '{{ ansible_default_ipv4.interface }}'
-        jump: MASQUERADE
-      become_user: root
-      become: yes
-
     - name: create flavor
       os_nova_flavor:
         cloud: "overcloud"
