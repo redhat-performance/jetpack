@@ -30,61 +30,67 @@
       delay: 10
       with_items: "{{ async_install }}"
 
-    - block:            
-        - name: list oc_instackenv_content
-          shell: |
-            echo "{{ oc_instackenv_content.nodes[item | int].pm_addr }}"
-          with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
-          register: host_list
+    - name: list oc_instackenv_content
+      shell: |
+        echo "{{ (oc_instackenv_content.nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+      with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
+      register: host_list
 
-        - name: Clear redfish job queues
-          shell: |
-            source {{ badfish_venv }}/bin/activate
-            python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} --clear-jobs --force
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          with_items: "{{ host_list.results }}"
-          when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
-          register: clear_jobs
-          until: clear_jobs is succeeded
-          retries: 3
-          delay: 30
+    - name: Clear redfish job queues
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        python3 badfish.py -H mgmt-{{ item[1].stdout }}  -u quads -p {{ chassis_password }} --clear-jobs --force
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: lab_name in ['scale', 'alias'] and vendors is defined and item[0] == "dell"
+      with_together:
+        - "{{ vendors }}"
+        - "{{ host_list.results }}"
+      register: clear_jobs
+      until: clear_jobs is succeeded
+      retries: 3
+      delay: 30
 
-        - name: Wait for iDrac to be responsive
-          shell: |
-            source {{ badfish_venv }}/bin/activate
-            python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" --check-boot
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          with_items: "{{ host_list.results }}"
-          when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
-          register: wait_for_idrac
-          until: wait_for_idrac is succeeded
-          retries: 20
-          delay: 30
+    - name: Wait for iDrac to be responsive
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        python3 badfish.py -H mgmt-{{ item[1].stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" --check-boot
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: lab_name in ['scale', 'alias'] and vendors is defined and item[0] == "dell"
+      with_together:
+        - "{{ vendors }}"
+        - "{{ host_list.results }}"
+      register: wait_for_idrac
+      until: wait_for_idrac is succeeded
+      retries: 20
+      delay: 30
 
-        - name: Set the boot order to director mode (Dell)
-          shell: |
-            source {{ badfish_venv }}/bin/activate
-            python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t director
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          with_items: "{{ host_list.results }}"
-          when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
-          retries: 5
-          delay: 3
-          register: result
-          until: result.rc == 0
+    - name: Set the boot order to director mode (Dell)
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        python3 badfish.py -H mgmt-{{ item[1].stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t director
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: lab_name in ['scale', 'alias'] and vendors is defined and item[0] == "dell"
+      with_together:
+        - "{{ vendors }}"
+        - "{{ host_list.results }}"
+      retries: 5
+      delay: 3
+      register: result
+      until: result.rc == 0
 
-        - name: power cycle overcloud nodes (Dell)
-          shell: |
-            source {{ badfish_venv }}/bin/activate
-            python3 badfish.py -H {{ item.stdout }}  -u quads -p {{ chassis_password }} --power-cycle
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
-          with_items: "{{ host_list.results }}"
-          when: lab_name in ['scale', 'alias'] and vendor is defined and vendor == "dell"
-      when: composable_roles ==false
+    - name: power cycle overcloud nodes (Dell)
+      shell: |
+        source {{ badfish_venv }}/bin/activate
+        python3 badfish.py -H mgmt-{{ item[1].stdout }}  -u quads -p {{ chassis_password }} --power-cycle
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: lab_name in ['scale', 'alias'] and vendors is defined and item[0] == "dell"
+      with_together:
+        - "{{ vendors }}"
+        - "{{ host_list.results }}"
 
     - name: Check if stack user exists
       shell: |

@@ -28,8 +28,6 @@
           - name: set undercloud_local_interface
             set_fact:
               undercloud_local_interface: "{{ local_interface.stdout }}"
-          - debug:
-              msg: "{{ undercloud_local_interface }}"
         when: virtual_uc != true
 
       - name: set undercloud_local_interface

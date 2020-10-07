@@ -199,5 +199,7 @@ scale_compute_vms: false
 #Specify the controller ifaces for composable roles explicitly in
 #case you need specific machines as controllers. Else default controllers
 # are the machines with highest machine count in instackenv.json
-composable_roles: true
+composable_roles: false
 # controller_ifaces: []
+#controller_machine_type: "1029p"
+

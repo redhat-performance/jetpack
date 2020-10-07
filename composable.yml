@@ -1,11 +1,6 @@
 ---
 - hosts: localhost
   tasks:
-    - name: Template out nodes_data file
-      template:
-        src: nodes_data.yml.j2
-        dest: ~/virt/nodes_data.yaml
-
     - name: override the overcloud_deploy.sh.j2 for composable roles
       vars:
         oc_deploy_template: "{{ ansible_user_dir }}/jetpack/templates/composable_roles_overcloud_deploy.sh.j2"
@@ -32,7 +27,7 @@
       command: |
         cp -r /usr/share/openstack-tripleo-heat-templates/roles /home/stack
 
-    - name: copy roles directory 
+    - name: copy roles directory
       command:  |
         cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}.yaml
       with_items: "{{ machine_types }}"
@@ -61,7 +56,7 @@
     - name: generate roles_data
       shell: |
         source ~/stackrc
-        openstack overcloud roles generate -o ~/roles_data.yaml --roles-path ~/roles {{ roles }} 
+        openstack overcloud roles generate -o ~/roles_data.yaml --roles-path ~/roles {{ roles }}
       args:
         chdir: "/home/stack"
 

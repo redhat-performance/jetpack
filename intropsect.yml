@@ -1,5 +1,6 @@
 ---
 - hosts: localhost
+  vars:
   tasks:
       - name: set instackenv_file
         set_fact:
@@ -14,7 +15,7 @@
             args:
               chdir: "{{ infrared_dir }}"
             changed_when: false
-            async: 2400	
+            async: 2400
             poll: 60
             ignore_errors: true
         when: scale_compute_vms == false

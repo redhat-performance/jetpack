@@ -22,12 +22,6 @@
         with_items: "{{ machine_types }}"
 
       - block:
-          - name: list oc_instackenv_content
-            shell: |
-              echo "{{ (oc_instackenv_content.nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
-            with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
-            register: host_list 
-  
           - name: Get Product Name of 1029u
             shell: |
               dmidecode -t system | grep "Product Name" | cut -d '-' -f3
@@ -39,7 +33,7 @@
               ansible_user: "root"
 
           - name: set_fact for rhel8_interfaces
-            set_fact: 
+            set_fact:
               rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', (item.stdout == 'TRTP') | ternary('rhel8_interfaces_tn10rt','rhel8_interfaces')))] }}"
             with_items: "{{ product_name.results }}"
 
@@ -59,7 +53,7 @@
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias']
 
-      #todo for non non scale/alias machines
+      #todo for non scale/alias machines
 
       - name: interfaces is empty
         fail:
@@ -154,7 +148,7 @@
           - name: set fact for controller tenant ifaces
             set_fact:
               controller_tenant_interface: "{{ controller_ifaces[2] }}"
-            when: controller_ifaces|length > 2 
+            when: controller_ifaces|length > 2
 
           - name: set fact for controller isolated_interface
             set_fact:
@@ -183,8 +177,8 @@
         template:
           src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', false) }}"
           dest: "{{ nic_config_path }}/compute_{{ item.0 }}.yaml.j2"
-          force: yes       
-        with_together: 
+          force: yes
+        with_together:
          - "{{ machine_types }}"
          - "{{ ctlplane_interfaces }}"
          - "{{ external_interfaces }}"
