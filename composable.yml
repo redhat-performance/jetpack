@@ -8,11 +8,10 @@
 
     - name: override the overcloud_deploy.sh.j2 for composable roles
       vars:
-        oc_deploy_template: "{{ ansible_user_dir }}/jetpack/templates/overcloud_deploy.sh.j2"
+        oc_deploy_template: "{{ ansible_user_dir }}/jetpack/templates/composable_roles_overcloud_deploy.sh.j2"
         infrared_oc_deploy_template:  "{{ ansible_user_dir }}/.infrared/plugins/tripleo-overcloud/templates/overcloud_deploy.sh.j2"
       shell: |
         cp   {{ oc_deploy_template }} {{ infrared_oc_deploy_template }}
-
 
 - hosts: undercloud
   vars:
@@ -37,7 +36,6 @@
       command:  |
         cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}.yaml
       with_items: "{{ machine_types }}"
-
 
     - name: replace control plane interface
       lineinfile:
@@ -77,4 +75,3 @@
           fi
         done
       with_items: "{{ machine_types }}"
-

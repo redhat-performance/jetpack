@@ -70,7 +70,6 @@
       # br-tenant and br-external. br-external and br-ctlplane will be shared if
       # no separate nic avaialble for external interface.
 
-
       - name: set control interfaces for custom roles
         set_fact:
           ctlplane_interfaces: "{{  ctlplane_interfaces|default([]) +[(item|length > 1)| ternary(item[1], item[0])]  }}"
@@ -130,17 +129,23 @@
             dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
             force: yes
 
-      - name: set facts about controller machine type
+      - name: set fact controller machine type
         set_fact:
           controller_machine_type: "{{ (machine_count[machine_types[0]]|int > controller_count|int)| ternary(machine_types[0], false) }}"
         when: controller_ifaces is not defined
+
+      - name: set fact controller machine type
+        set_fact:
+          controller_machine_type: "{{ (machine_count[controller_machine_type]|int > controller_count|int) | ternary(controller_machine_type, false) }}"
+        when: controller_ifaces is defined
 
       -  name: fail when controller_machine_type is false
          fail:
             msg: Not enough nodes of same machine_type for controller
          when: controller_machine_type == false
 
-      - block:
+      - name: Executed when user specifies controller_ifaces
+        block:
           - name: set fact for controller ifaces ctlplane and external
             set_fact:
               controller_ctlplane_interface: "{{ (controller_ifaces|length > 1) | ternary(controller_ifaces[1], controller_ifaces[0]) }}"
@@ -168,7 +173,6 @@
           src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', false) }}"
           dest: "{{ nic_config_path }}/controller.yaml.j2"
           force: yes
-
 
       - name: prepare compute.yaml.j2
         vars:

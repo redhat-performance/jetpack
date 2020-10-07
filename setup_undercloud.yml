@@ -30,8 +30,7 @@
       delay: 10
       with_items: "{{ async_install }}"
 
-    - block:
-            
+    - block:            
         - name: list oc_instackenv_content
           shell: |
             echo "{{ oc_instackenv_content.nodes[item | int].pm_addr }}"
@@ -98,7 +97,6 @@
       set_fact:
         create_user: True
       when: test_user.stdout != "success"
-
 
 - import_playbook: prepare_undercloud.yml
   when: hostvars['localhost']['create_user'] is defined
