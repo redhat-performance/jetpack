@@ -146,3 +146,13 @@ To run jetpack inside a container you need to update the group_vars/all.yml in y
 
 Execute jetpack_container.sh script to build and run jetpack container.
    `./jetpack_container.sh`
+
+## scale up compute nodes
+
+To scale up the compute nodes of OSP deployments deployed by Jetpack, you have to follow the below steps.
+
+1) Add the new nodes in new instack file
+2) Provide the new instack file location on `new_nodes_instack` variable on group_vars file
+3) Run the upscale.yml play to complete the scaleup
+     `ansible-playbook upscale.yml`
+Note: The udercloud will be fetched from the old `instackenv` file. if the file is not available, it will be downloaded from the server using the `cloud_name` and `lab_name` properties.

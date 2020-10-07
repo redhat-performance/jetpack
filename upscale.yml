@@ -1,0 +1,98 @@
+---
+- hosts: localhost
+  tasks:
+    - name: load instackenv
+      include_tasks: tasks/load_instackenv.yml
+
+    - name: get intrepeter
+      include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "stack"
+
+    - name: add undercloud
+      add_host:
+        name: "undercloud"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_user: "stack"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+
+- hosts: undercloud
+  vars:
+    new_instack: /home/stack/newnodes.json
+  tasks:
+    - name: get the new nodes file
+      copy:
+        src: "{{ new_nodes_instack }}"
+        dest: "{{ new_instack }}"
+        force: yes
+
+    - name: register new nodes
+      shell: |
+        source /home/stack/stackrc
+        openstack overcloud node import {{ new_instack }}
+
+    - name: get the new nodes detail
+      shell: |
+        source /home/stack/stackrc
+        openstack baremetal node list -f yaml
+      register: new_nodes_detail
+
+    - name: set new nodes fact
+      set_fact:
+        new_nodes_list: "{{ new_nodes_detail.stdout | from_yaml }}"
+
+    - name: filter manageable nodes
+      set_fact:
+        new_nodes: "{{ (new_nodes | default([])) + [ item['UUID'] ] }}"
+      with_items: "{{ new_nodes_list | default([]) }}"
+      when:
+        item.get('Provisioning State') == 'manageable'
+
+    - name: introspect new nodes
+      shell: |
+        source /home/stack/stackrc
+        openstack overcloud node introspect {{ item }} --provide
+      with_items: "{{ new_nodes | default([]) }}"
+      ignore_errors: true
+      changed_when: false
+
+    - name: Configure the image properties
+      shell: |
+        source /home/stack/stackrc
+        openstack overcloud node configure {{ item }}
+      with_items: "{{ new_nodes | default([]) }}"
+      ignore_errors: true
+      changed_when: false
+
+    - name: set profile
+      shell: |
+        source /home/stack/stackrc
+        openstack baremetal node set --property capabilities='profile:compute,boot_option:local' {{ item }}
+      with_items: "{{ new_nodes | default([]) }}"
+      ignore_errors: true
+      changed_when: false
+
+    - name: get all nodes count
+      shell: |
+        source /home/stack/stackrc
+        openstack baremetal node list -c UUID -f value
+      register: all_nodes
+
+    - name: set fact compute count
+      set_fact:
+        compute_node_count: "{{ all_nodes.stdout_lines|length - controller_count }}"
+
+    - name: change compute count
+      lineinfile:
+        path: /home/stack/virt/nodes_data.yaml
+        regexp: 'ComputeCount:'
+        line: '    ComputeCount: {{ compute_node_count }}'
+
+    - name: execute the overcloud deploy
+      shell: |
+        source /home/stack/stackrc
+        ./overcloud_deploy.sh
+      args:
+        chdir: /home/stack/
