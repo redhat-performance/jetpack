@@ -1,6 +1,6 @@
 #jinja2: trim_blocks:True, lstrip_blocks:True
 apiVersion: v1
-baseDomain: "shiftstack.com"
+baseDomain: "{{ ocp_base_domain }}"
 clusterID: "{{ ocp_cluster_id }}"
 compute:
 - name: worker
@@ -23,7 +23,7 @@ controlPlane:
   platform: {}
   {% endif %}
 metadata:
-  name: "ostest"
+  name: "{{ ocp_cluster_name }}"
 networking:
   clusterNetworks:
   - cidr:             10.128.0.0/14

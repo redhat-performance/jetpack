@@ -1,6 +1,8 @@
 ocp_release: 4.4.6
 ocp_puddle: latest
 install_client: true
+ocp_cluster_name: ostest
+ocp_base_domain: rdu2.scalelab.redhat.com
 
 external_ocp_vlan_id: 300
 external_ocp_net_cidr: 172.17.5.0/24

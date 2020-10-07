@@ -2,8 +2,6 @@
 - hosts: undercloud
   become: yes
   become_user: stack
-  environment:
-    KUBECONFIG: /home/stack/ostest/auth/kubeconfig
   tasks:
     - name: set ocp vars
       include_vars:
