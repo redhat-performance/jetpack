@@ -119,9 +119,9 @@
       blockinfile:
         path: "/etc/hosts"
         block: |
-            {{ api_floating_ip }} api.ostest.shiftstack.com
-            {{ ingress_floating_ip }} console-openshift-console.apps.ostest.shiftstack.com
-            {{ ingress_floating_ip }} openshift-authentication-openshift-authentication.apps.ostest.shiftstack.com
+            {{ api_floating_ip }} api.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
+            {{ ingress_floating_ip }} console-openshift-console.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
+            {{ ingress_floating_ip }} openshift-authentication-openshift-authentication.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
         insertafter: "EOF"
       become: yes
       become_user: root
@@ -129,7 +129,7 @@
 
     - name: create install dir
       file:
-        path: /home/stack/ostest
+        path: /home/stack/{{ ocp_cluster_name }}
         state: directory
 
     - name: prepare install-config
@@ -140,7 +140,7 @@
     - name: copy the install-config to metadata dir
       copy:
         src: "/home/stack/install-config.yaml"
-        dest: "/home/stack/ostest/"
+        dest: "/home/stack/{{ ocp_cluster_name }}/"
         remote_src: yes
 
     - name: get the latest installer
@@ -157,7 +157,7 @@
 
     - name: run installer
       shell: |
-        ./openshift-install --log-level=debug create cluster --dir=ostest > ocp_install.log 2>&1
+        ./openshift-install --log-level=debug create cluster --dir={{ ocp_cluster_name }} > ocp_install.log 2>&1
       args:
         chdir: /home/stack/
 
@@ -190,7 +190,7 @@
 
     - name: copy the kubeconfig file
       copy:
-        src: /home/stack/ostest/auth/kubeconfig
+        src: /home/stack/{{ ocp_cluster_name }}/auth/kubeconfig
         dest: /home/stack/.kube/config
         mode: a+rx
         remote_src: yes

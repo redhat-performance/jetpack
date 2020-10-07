@@ -105,7 +105,7 @@ heat_configs:
   - NeutronServicePlugins=qos,ovn-router,trunk
   - NeutronDhcpAgentDnsmasqDnsServers=10.1.32.3
   - NeutronEnableForceMetadata=true
-  - NeutronDnsDomain=shiftstack.com
+  - NeutronDnsDomain=rdu2.scalelab.redhat.com
   - NeutronPluginExtensions=qos,port_security,dns_domain_ports
   - ControllerExtraConfig.neutron::agents::dhcp::dnsmasq_local_resolv=true
 
