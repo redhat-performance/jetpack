@@ -164,3 +164,5 @@ scale_compute_vms: false
 composable_roles: false
 # controller_ifaces: []
 #controller_machine_type: "1029p"
+
+new_nodes_instack: "{{ playbook_dir }}/newnodes.json"

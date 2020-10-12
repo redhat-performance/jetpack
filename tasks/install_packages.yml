@@ -21,23 +21,25 @@
   become: true
   failed_when: false
 
-- name: clone badfish
-  git:
-    repo: "https://github.com/redhat-performance/badfish.git"
-    dest: "{{ ansible_user_dir }}/badfish"
+- block:
+  - name: clone badfish
+    git:
+      repo: "https://github.com/redhat-performance/badfish.git"
+      dest: "{{ ansible_user_dir }}/badfish"
 
-- name: set badfish venv path
-  set_fact:
-    badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
+  - name: set badfish venv path
+    set_fact:
+      badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
 
-- name: Create badfish virtualenv
-  command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
+  - name: Create badfish virtualenv
+    command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
 
-- name: Install badfish requirements
-  pip:
-    requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
-    virtualenv_command: /usr/bin/python3 -m venv
-    virtualenv: "{{ badfish_venv }}"
+  - name: Install badfish requirements
+    pip:
+      requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
+      virtualenv_command: /usr/bin/python3 -m venv
+      virtualenv: "{{ badfish_venv }}"
+  when: virtual_uc == false or scale_compute_vms == true
 
 - block:
   - include_tasks: tasks/copykeys.yml
