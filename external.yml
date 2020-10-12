@@ -54,9 +54,6 @@
         ignore_errors: true
         when: public_external_interface is defined
 
-      - debug:
-          msg: "{{ ext_iface }}"
-
       - name: create vlan interface on external interface
         vars:
             vlan_interface: "{{ ext_iface }}.{{ external_network_vlan_id }}"
