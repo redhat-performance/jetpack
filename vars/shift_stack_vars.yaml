@@ -1,3 +1,6 @@
+osp_project_name: shiftstack
+osp_user_name: shiftstack_user
+
 ocp_release: 4.4.6
 ocp_puddle: latest
 install_client: true
@@ -34,7 +37,7 @@ ssh_key_file: '/home/stack/.ssh/id_rsa.pub'
 
 # when pull secret is not enabled it will try to read from the value
 # from OPENSHIFT_INSTALL_PULL_SECRET env variable
-#pull_secret: ""
+#pull_secret: ''
 
 ocp_create_infra_nodes: true
 ocp_create_workload_nodes: true
