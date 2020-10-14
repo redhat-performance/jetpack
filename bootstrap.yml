@@ -47,3 +47,20 @@
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias']
+
+      - block:
+          - name: set machines_types of overcloud nodes
+            set_fact:
+              machine_types: "{{ machine_types|default([]) + [item.pm_addr.split('.')[0].split('-')[4]] }}"
+            with_items: "{{ oc_instackenv_content.nodes }}"
+            vars:
+              oc_instackenv_content: "{{ lookup('file', '{{ overcloud_instackenv_path }}') | from_json }}"
+
+          - name: set vendors of overcloud nodes
+            set_fact:
+              vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell')] }}"
+            with_items:
+              - "{{ machine_types }}"
+        vars:
+          lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+        when: lab_name in ['scale', 'alias']

@@ -29,6 +29,31 @@
   tags:
       - skip_ansible_lint
 
+- block:
+    - name: get ipmi addr of failed nodes
+      shell: |
+        source ~/stackrc
+        openstack baremetal node show {{ item }} --fields driver_info -f json | jq '.driver_info.ipmi_address'
+      with_items: "{{ failed_nodes_uuids | default([]) }}"
+      register: failed_nodes_ipmi_addr
+
+    - name: get the machine type of introspection failed nodes
+      set_fact:
+        failed_nodes_machine_type: "{{ failed_nodes_machine_type|default([]) + [((lab_name == 'scale')|ternary(item.stdout.split('.')[0].split('-')[4], item.stdout.split('.')[0].split('-')[3])) ] }}"
+      with_items: "{{ failed_nodes_ipmi_addr.results }}"
+
+    - name: set machine count of failed nodes
+      set_fact:
+        failed_nodes_machine_count: {}
+
+    - name: get machine count of failed nodes
+      set_fact:
+        failed_nodes_machine_count: "{{ failed_nodes_machine_count | combine({item: (item in failed_nodes_machine_count)|ternary(failed_nodes_machine_count[item], 0)|int + 1 }, recursive=True) }}"
+      with_items: "{{ failed_nodes_machine_type }}"
+      when: failed_nodes_machine_type is defined
+
+  when: composable_roles
+
 - name: delete failed nodes
   shell: |
       source ~/stackrc

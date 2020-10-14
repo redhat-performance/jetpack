@@ -64,6 +64,19 @@
             msg: "Failing as compute count is less than 1"
         when: compute_count|int < 1
 
+      - name: set facts about failed nodes
+        set_fact:
+          failed_nodes_machine_type: "{{  hostvars['undercloud']['failed_nodes_machine_type'] }}"
+          failed_nodes_machine_count: "{{ hostvars['undercloud']['failed_nodes_machine_count'] }}"
+        when: composable_roles
+        ignore_errors: true
+
+      - name: Template out nodes_data file
+        template:
+          src: nodes_data.yml.j2
+          dest: ~/virt/nodes_data.yaml
+        when: composable_roles
+
       - name: set nvme parameter_defaults
         vars:
           nvme_params: {

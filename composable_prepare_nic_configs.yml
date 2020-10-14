@@ -1,0 +1,186 @@
+---
+- hosts: localhost
+  vars:
+      undercloud_host: "{{ groups.undercloud|first }}"
+  tasks:
+      - name: get subnet mask
+        shell: |
+            echo {{ cidr }} | cut -d '/' -f2
+        register: prefix
+
+      - name: set subnet mask
+        set_fact:
+            subnet_mask: "{{ prefix.stdout }}"
+
+      - name: set machine count
+        set_fact:
+          machine_count: {}
+
+      - name: get machine count
+        set_fact:
+          machine_count: "{{ machine_count | combine({item: (item in machine_count)|ternary(machine_count[item], 0)|int + 1 }, recursive=True) }}"
+        with_items: "{{ machine_types }}"
+
+      - block:
+          - name: Get Product Name of 1029u
+            shell: |
+              dmidecode -t system | grep "Product Name" | cut -d '-' -f3
+            register: product_name
+            delegate_to: "{{ item.stdout }}"
+            with_items: "{{ host_list.results }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "root"
+
+          - name: set_fact for rhel8_interfaces
+            set_fact:
+              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', (item.stdout == 'TRTP') | ternary('rhel8_interfaces_tn10rt','rhel8_interfaces')))] }}"
+            with_items: "{{ product_name.results }}"
+
+          - name: set fact for iface_rhel_version
+            set_fact:
+              iface_rhel_version: "{{ iface_rhel_version|default([]) + [(osp_release|int > 14)| ternary( item, 'rhel7_interfaces')] }}"
+            with_items: "{{ rhel8_interfaces }}"
+
+          - name: set interfaces
+            set_fact:
+              ifaces: "{{ (ifaces|default([]) + [lab_vars['machine_types'][item[0]][item[1]][item[2]]]) | unique }}"
+            with_together:
+              - "{{ vendors }}"
+              - "{{ machine_types }}"
+              - "{{ iface_rhel_version }}"
+        vars:
+          lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+        when: lab_name in ['scale', 'alias']
+
+      #todo for non scale/alias machines
+
+      - name: interfaces is empty
+        fail:
+            msg: other lab types should specify interfaces
+        when: (ifaces is defined) and (ifaces|length == 0)
+
+      # br-isolated will be always first interface, followed by br-ctlplane,
+      # br-tenant and br-external. br-external and br-ctlplane will be shared if
+      # no separate nic avaialble for external interface.
+
+      - name: set control interfaces for custom roles
+        set_fact:
+          ctlplane_interfaces: "{{  ctlplane_interfaces|default([]) +[(item|length > 1)| ternary(item[1], item[0])]  }}"
+        with_items:
+          - "{{ ifaces }}"
+
+      - name: set external interface for custom roles
+        set_fact:
+          external_interfaces: "{{ external_interfaces|default([]) + [(item|length > 3) | ternary(item[3], item[1] )] }}"
+        when: item|length > 1
+        with_items:
+          - "{{ ifaces }}"
+
+      - name: set external interface for custom roles
+        set_fact:
+          external_interfaces: "{{ external_interfaces|default([]) + [(item|length > 3) | ternary(item[3], item[0] )] }}"
+        when: item|length == 1
+        with_items:
+          - "{{ ifaces }}"
+
+      - name: set tenant interface for custom roles
+        set_fact:
+          tenant_interfaces: "{{ tenant_interfaces|default([]) + [item[2]] }}"
+        when: item|length > 2
+        with_items:
+          - "{{ ifaces }}"
+
+      - name: set isolated interface for custom roles
+        set_fact:
+          isolated_interfaces: "{{ isolated_interfaces|default([])+ [item[0]] }}"
+        when: item|length > 1
+        with_items:
+          - "{{ ifaces }}"
+
+      - name: remove duplicates from machine types
+        set_fact:
+          machine_types: "{{ machine_types | unique }}"
+
+      - name: set nic configs
+        set_fact:
+          nic_configs: "{{ ansible_user_dir }}/virt"
+
+      - name: create nic-configs directory structure in infrared format
+        file:
+          path: "{{ ansible_user_dir }}/virt/network/vlans/legacy"
+          state: directory
+
+      # infrared uses nic configs under 'legacy' directory for osp release version 10
+      - name: set nic-config path
+        set_fact:
+          nic_config_path: "{{ ansible_user_dir }}/virt/network/vlans{{ ((osp_release|int > 10) | ternary('', '/legacy')) }}"
+
+
+      - name: prepare network-environment.yaml.j2
+        template:
+            src: "network-environment.yaml.j2"
+            dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
+            force: yes
+
+      - name: set fact controller machine type
+        set_fact:
+          controller_machine_type: "{{ (machine_count[machine_types[0]]|int > controller_count|int)| ternary(machine_types[0], false) }}"
+        when: controller_ifaces is not defined
+
+      - name: set fact controller machine type
+        set_fact:
+          controller_machine_type: "{{ (machine_count[controller_machine_type]|int > controller_count|int) | ternary(controller_machine_type, false) }}"
+        when: controller_ifaces is defined
+
+      -  name: fail when controller_machine_type is false
+         fail:
+            msg: Not enough nodes of same machine_type for controller
+         when: controller_machine_type == false
+
+      - name: Executed when user specifies controller_ifaces
+        block:
+          - name: set fact for controller ifaces ctlplane and external
+            set_fact:
+              controller_ctlplane_interface: "{{ (controller_ifaces|length > 1) | ternary(controller_ifaces[1], controller_ifaces[0]) }}"
+              controller_external_interface: "{{ (controller_ifaces|length > 3) | ternary(controller_ifaces[3], controller_ctlplane_interface) }}"
+
+          - name: set fact for controller tenant ifaces
+            set_fact:
+              controller_tenant_interface: "{{ controller_ifaces[2] }}"
+            when: controller_ifaces|length > 2
+
+          - name: set fact for controller isolated_interface
+            set_fact:
+              controller_isolated_interface: "{{ controller_ifaces[0] }}"
+            when: controller_ifaces|length > 1
+
+        when: controller_ifaces is defined
+
+      - name: prepare controller.yaml.j2
+        vars:
+          ctlplane_interface: "{{ controller_ctlplane_interface | default(ctlplane_interfaces[0]) }}"
+          external_interface: "{{ controller_external_interface | default(external_interfaces[0]) }}"
+          tenant_interface: "{{ controller_tenant_interface | default(tenant_interfaces[0]) }}"
+          isolated_interface: "{{ controller_isolated_interface | default(isolated_interfaces[0]) }}"
+        template:
+          src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', false) }}"
+          dest: "{{ nic_config_path }}/controller.yaml.j2"
+          force: yes
+
+      - name: prepare compute.yaml.j2
+        vars:
+          ctlplane_interface: "{{ item.1 }}"
+          external_interface: "{{ item.2 }}"
+          tenant_interface: "{{ item.3 }}"
+          isolated_interface: "{{ item.4 }}"
+        template:
+          src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', false) }}"
+          dest: "{{ nic_config_path }}/compute_{{ item.0 }}.yaml.j2"
+          force: yes
+        with_together:
+         - "{{ machine_types }}"
+         - "{{ ctlplane_interfaces }}"
+         - "{{ external_interfaces }}"
+         - "{{ tenant_interfaces }}"
+         - "{{ isolated_interfaces }}"

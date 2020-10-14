@@ -9,7 +9,7 @@
               for i in /sys/class/net/*
               do
                 udevcontent=`udevadm info -p $i --query property`
-                if [[ $udevcontent =~ {{ ctlplane_interface }} ]]
+                if [[ $udevcontent =~ {{ uc_ctlplane_interface }} ]]
                 then
                   undercloud_local_interface=`echo $i | cut -d '/' -f 5`
                   break
@@ -19,9 +19,11 @@
             register: local_interface
             delegate_to: "{{ undercloud_hostname }}"
             vars:
+              uc_ctlplane_interface: "{{ (composable_roles == false) | ternary(ctlplane_interface, ctlplane_interfaces[0]) }}"
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
             become: true
+            when: lab_name in ['scale', 'alias']
 
           - name: set undercloud_local_interface
             set_fact:
@@ -31,7 +33,7 @@
       - name: set undercloud_local_interface
         set_fact:
           undercloud_local_interface: "{{ undercloud_local_interface }}"
-        when: virtual_uc == true
+        when: (virtual_uc == true) or (lab_name not in ['scale', 'alias'])
 
       - name: Setup undercloud.conf
         template:

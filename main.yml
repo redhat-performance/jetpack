@@ -22,7 +22,13 @@
 
 - import_playbook: prepare_nic_configs.yml
   tags:
-    - always
+    - prepare_nic_configs
+  when: composable_roles == false
+
+- import_playbook: composable_prepare_nic_configs.yml
+  tags:
+    - composable_prepare_nic_configs
+  when: composable_roles
 
 - import_playbook: undercloud.yml
   tags:
@@ -35,6 +41,11 @@
 - import_playbook: tag.yml
   tags:
     - tag
+
+- import_playbook: composable.yml
+  tags:
+    - composable
+  when: composable_roles
 
 - import_playbook: external.yml
   tags:

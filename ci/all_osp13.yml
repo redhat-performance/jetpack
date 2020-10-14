@@ -155,4 +155,14 @@ shift_stack: false
 #For Nova-less provisioning enable the variable
 novaless_prov: false
 scale_compute_vms: false
+
+# Enables composable_roles
+# If lab_name not in [scale, alias] set undercloud_local_interface.
+#Specify the controller ifaces for composable roles explicitly in
+#case you need specific machines as controllers. Else default controllers
+# are the machines with highest machine count in instackenv.json
+composable_roles: false
+# controller_ifaces: []
+#controller_machine_type: "1029p"
+
 new_nodes_instack: "{{ playbook_dir }}/newnodes.json"

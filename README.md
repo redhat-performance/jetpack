@@ -156,3 +156,10 @@ To scale up the compute nodes of OSP deployments deployed by Jetpack, you have t
 3) Run the upscale.yml play to complete the scaleup
      `ansible-playbook upscale.yml`
 Note: The udercloud will be fetched from the old `instackenv` file. if the file is not available, it will be downloaded from the server using the `cloud_name` and `lab_name` properties.
+
+##  Usage of Composable roles (Non-uniform set of nodes)
+Requirements
+1) Undercloud and Controller nodes should be of same machine type
+   Example:
+   controller_count = 3, then it will consider the first node in instackenv.json as  undercloud and the next three nodes as controllers
+2) set composable_roles: true true in group_vars/all.yml
