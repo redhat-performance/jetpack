@@ -33,7 +33,7 @@ networking:
   type: "{{ ocp_network_type }}"
 platform:
   openstack:
-    cloud:             "shiftstack"
+    cloud:             "{{ osp_project_name }}"
     externalNetwork:   "{{ public_net_name }}"
     region:            "regionOne"
     computeFlavor:     "m4.xlarge"

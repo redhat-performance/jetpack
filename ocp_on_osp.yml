@@ -12,10 +12,13 @@
       include_tasks: tasks/create_flavors.yml
 
     - name: create new user and project
+      vars:
+        project_name: "{{ osp_project_name }}"
+        user_name: "{{ osp_user_name }}"
       include_tasks: tasks/create_project_and_user.yml
 
-    - name: get shiftstack teneant id
-      shell: source /home/stack/overcloudrc && openstack project show shiftstack -f value -c id
+    - name: get "{{ osp_project_name }}" teneant id
+      shell: source /home/stack/overcloudrc && openstack project show {{ osp_project_name }} -f value -c id
       register: shiftstack_id
       args:
         chdir: /home/stack
@@ -47,18 +50,20 @@
         router: -1
         rbac_policy: -1
 
-    - name: create shiftstackrc
+    - name: create {{ osp_project_name }}rc
       shell: |
-        sed -e 's/OS_USERNAME=.*/OS_USERNAME=shiftstack_user/' \
-        -e 's/OS_PROJECT_NAME=.*/OS_PROJECT_NAME=shiftstack/' \
-        -e 's/OS_CLOUDNAME=.*/OS_CLOUDNAME=shiftstack/' \
-        -e 's/OS_PASSWORD=.*/OS_PASSWORD=redhat/' overcloudrc > shiftstackrc
+        sed -e 's/OS_USERNAME=.*/OS_USERNAME={{ osp_user_name }}/' \
+        -e 's/OS_PROJECT_NAME=.*/OS_PROJECT_NAME={{ osp_project_name }}/' \
+        -e 's/OS_CLOUDNAME=.*/OS_CLOUDNAME={{ osp_project_name }}/' \
+        -e 's/OS_PASSWORD=.*/OS_PASSWORD=redhat/' overcloudrc > {{ osp_project_name }}rc
+      args:
+        chdir: /home/stack
 
     - name: get cloud.yaml variables
       shell: |
         for key in $( set | awk '{FS="="}  /^OS_/ {print $1}' ); do unset $key ; done
-        source /home/stack/shiftstackrc
-        echo -n " shiftstack: \
+        source /home/stack/"{{ osp_project_name }}"rc
+        echo -n " {{ osp_project_name }}: \
           {'auth': \
             { 'auth_url': '$OS_AUTH_URL', \
               'username': '$OS_USERNAME', \

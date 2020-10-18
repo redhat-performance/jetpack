@@ -1,3 +1,6 @@
+osp_project_name: "{{ lookup('env', 'OSP_PROJECT_NAME')|default('shiftstack', true) }}"
+osp_user_name: "{{ lookup('env', 'OSP_USER_NAME')|default('shiftstack_user', true) }}"
+
 ocp_release: "{{ lookup('env', 'OPENSHIFT_RELEASE')|default('4.4.6', true) }}"
 ocp_puddle: latest
 install_client: true
