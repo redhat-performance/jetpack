@@ -181,6 +181,7 @@ browbeat: true
 
 #For Nova-less provisioning enable the variable
 novaless_prov: false
+
 new_nodes_instack: "{{ playbook_dir }}/newnodes.json"
 
 # This feature creates VMs on hypervisors and uses them as overcloud
@@ -198,8 +199,8 @@ scale_compute_vms: false
 # Enables composable_roles
 # If lab_name not in [scale, alias] set undercloud_local_interface.
 #Specify the controller ifaces for composable roles explicitly in
-#case you need specific machines as controllers. Else default controllers
-# are the machines with highest machine count in instackenv.json
+#case you need specific machines as controllers. Else default controller
+#machine type is the first node in overcloud_instackenv.json
 composable_roles: false
 # controller_ifaces: []
 #controller_machine_type: "1029p"
