@@ -51,7 +51,7 @@
       - block:
           - name: set machines_types of overcloud nodes
             set_fact:
-              machine_types: "{{ machine_types|default([]) + [item.pm_addr.split('.')[0].split('-')[4]] }}"
+              machine_types: "{{ machine_types|default([]) + [ (lab_name == 'scale') | ternary(item.pm_addr.split('.')[0].split('-')[4], item.pm_addr.split('.')[0].split('-')[3]) ] }}"
             with_items: "{{ oc_instackenv_content.nodes }}"
             vars:
               oc_instackenv_content: "{{ lookup('file', '{{ overcloud_instackenv_path }}') | from_json }}"
