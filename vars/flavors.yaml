@@ -1,9 +1,8 @@
 flavors:
   - { name: 'm4.xlarge', ram: 16348, vcpus: 4, disk: 40 }
-  - { name: 'm5.4xlarge', ram: 65280, vcpus: 16, disk: 200 }
   - { name: 'm1.small', ram: 1740, vcpus: 1, disk: 71 }
   - { name: 'm5.xlarge', ram: 16128, vcpus: 4, disk: 96 }
-  - { name: 'm5.4xlarge', ram: 65280, vcpus: 16, disk: 500 }
+  - { name: 'm5.4xlarge', ram: 65280, vcpus: 16, disk: 300 }
   - { name: 'm5.2xlarge', ram: 31488, vcpus: 8, disk: 128 }
   - { name: 'm5.large', ram: 7936, vcpus: 2, disk: 96 }
 nvme_flavors:
