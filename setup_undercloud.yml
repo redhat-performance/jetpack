@@ -21,7 +21,7 @@
         hypervisor_password: "{{ ansible_ssh_pass }}"
       include_tasks: tasks/install_os.yml
 
-    - name: Wait for undercloud to be avaialable
+    - name: Wait for undercloud to be available
       async_status:
         jid: "{{ item }}"
       register: install_uc

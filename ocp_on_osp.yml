@@ -17,7 +17,7 @@
         user_name: "{{ osp_user_name }}"
       include_tasks: tasks/create_project_and_user.yml
 
-    - name: get "{{ osp_project_name }}" teneant id
+    - name: get "{{ osp_project_name }}" tenant id
       shell: source /home/stack/overcloudrc && openstack project show {{ osp_project_name }} -f value -c id
       register: shiftstack_id
       args:
