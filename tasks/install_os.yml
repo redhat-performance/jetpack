@@ -5,9 +5,12 @@
 
 - name: check redhat release in hypervsior as root and stack users
   shell: |
-    sshpass -p {{ hypervisor_password }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q {{ item }}@{{ hypervisor_host }} 'cat /etc/redhat-release'
+    sshpass -p {{ item[0] }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q {{ item[1] }}@{{ hypervisor_host }} 'cat /etc/redhat-release'
   register: rhel_release
-  loop: ['root', 'stack']
+  with_together:
+    - [ "{{ hypervisor_password }}", 'stack']
+    - ['root', 'stack']
+
   ignore_errors: true
 
 - name: set os_install when installed OS version not matching with the needed
