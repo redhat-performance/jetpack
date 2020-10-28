@@ -107,8 +107,8 @@
 
     - name: get the public ips
       set_fact:
-        api_floating_ip: "{{ ((external_interface_default_route | ipaddr('int')) + 2) | ipaddr }}"
-        ingress_floating_ip: "{{ ((external_interface_default_route | ipaddr('int')) + 3) | ipaddr }}"
+        api_floating_ip: "{{ external_net_cidr | next_nth_usable(3) }}"
+        ingress_floating_ip: "{{ external_net_cidr | next_nth_usable(4) }}"
 
     - name: create api floating ip
       shell: |
