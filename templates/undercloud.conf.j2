@@ -11,6 +11,7 @@ container_insecure_registries={{ registry_mirror }},{{ insecure_registries }}
 undercloud_timezone = UTC
 undercloud_public_host = {{ undercloud_public_host }}
 undercloud_admin_host = {{ undercloud_admin_host }}
+clean_nodes = true
 {% endif %}
 
 {% if osp_release <= 12 %}
