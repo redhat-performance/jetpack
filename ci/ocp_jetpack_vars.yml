@@ -126,7 +126,7 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 # undercloud to access overcloud resources
 external_gateway: "{{ lookup('env', 'OSP_EXTERNAL_GATEWAY')|default('172.17.5.1/24', true) }}"
 #external_network_vlan_id: 300
-clean_debug: False
+clean_nodes: True
 #adding changes 
 external_net_cidr: "{{ lookup('env', 'OSP_EXTERNAL_NET_CIDR')|default('172.17.5.0/24', true) }}"
 external_allocation_pools_start: "{{ lookup('env', 'OSP_EXTERNAL_ALLOCATION_POOLS_START')|default('172.17.5.50', true) }}"
