@@ -168,9 +168,14 @@ shift_stack: false
 #installs browbeat, if this variable is not defined or set true
 #skips browbeat installation, only if the variable set false
 browbeat: true
+
+# define mount_nvme to mount /var/lib/nova on nvme device
+# to use nvme storage for nova instances as ephemeral disk
+#mount_nvme: true
+
 # enable nvme parameters
 # README has details about how to get these values
-#nvme:
+#passthrough_nvme:
 #    vendor_id: '144d'
 #    product_id: 'a804'
 #    address: '01:00.0'
