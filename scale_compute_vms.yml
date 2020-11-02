@@ -46,7 +46,7 @@
       loop_control:
         loop_var: hyp
 
-    - name: Wait for hypervisors to be avaialable
+    - name: Wait for hypervisors to be available
       async_status:
         jid: "{{ item }}"
       register: install_tasks
