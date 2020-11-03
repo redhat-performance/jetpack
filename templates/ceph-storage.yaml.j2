@@ -225,9 +225,9 @@ resources:
                               vlan_id:
                                   get_param: StorageMgmtNetworkVlanID
                               addresses:
-                            - 
-                              ip_netmask:
-                                  get_param: StorageMgmtIpSubnet
+                              - 
+                                ip_netmask:
+                                    get_param: StorageMgmtIpSubnet
 
 
 {% if storage_interface is defined %}
@@ -246,9 +246,9 @@ resources:
                               vlan_id:
                                   get_param: StorageNetworkVlanID
                               addresses:
-                            - 
-                              ip_netmask:
-                                  get_param: StorageIpSubnet
+                              - 
+                                ip_netmask:
+                                    get_param: StorageIpSubnet
 outputs:
   OS::stack_id:
     description: The OsNetConfigImpl resource.

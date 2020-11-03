@@ -184,3 +184,8 @@
          - "{{ external_interfaces }}"
          - "{{ tenant_interfaces }}"
          - "{{ isolated_interfaces }}"
+
+      - name: copy internal.yml.j2
+        shell: |
+                cp ~/jetpack/templates/internal.yml.j2 ~/.infrared/plugins/tripleo-overcloud/templates/storage/
+        when: ceph_enabled
