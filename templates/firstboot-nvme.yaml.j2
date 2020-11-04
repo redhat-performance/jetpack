@@ -31,9 +31,18 @@ resources:
             set -x
             FORMAT='compute'
             if [[ $(hostname) == *$FORMAT* ]] ; then
-              sed "s/^\(GRUB_CMDLINE_LINUX=\".*\)\"/\1 $KERNEL_ARGS\"/g" -i /etc/default/grub ;
-              grub2-mkconfig -o /etc/grub2.cfg
-              reboot
+              {% if mount_nvme is not defined and passthrough_nvme is defined %} 
+                sed "s/^\(GRUB_CMDLINE_LINUX=\".*\)\"/\1 $KERNEL_ARGS\"/g" -i /etc/default/grub ;
+                grub2-mkconfig -o /etc/grub2.cfg
+                reboot
+              {% endif %}
+              {% if mount_nvme is defined and passthrough_nvme is not defined %} 
+                mkdir -p /var/lib/nova
+                mkfs -t xfs -f /dev/nvme0n1
+                mount /dev/nvme0n1 /var/lib/nova
+                chmod a+w /var/lib/nova
+                echo UUID=`sudo blkid -s UUID -o value /dev/nvme0n1` /var/lib/nova xfs discard,defaults,nofail 0 2 | sudo tee -a /etc/fstab
+              {% endif %}
             fi
           params:
             $KERNEL_ARGS: {get_param: ComputeKernelArgs}
