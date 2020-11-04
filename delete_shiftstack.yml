@@ -1,0 +1,112 @@
+---
+# Playbook to delete OCP cluster(s) and resources from OpenStack.
+#
+# Multiple clusters can be deleted at once by specifing what index to start and
+# the count of clusters to delete.
+#
+# Example Usage:
+#
+# time ansible-playbook delete_shiftstack.yml -e "ocp_cluster_index_start=0 ocp_cluster_index_count=8"
+#
+
+- name: Determine undercloud and allocate inventory
+  hosts: localhost
+  gather_facts: true
+  vars:
+    ocp_cluster_index_start: 0
+    ocp_cluster_index_count: 1
+  tasks:
+    - name: Load instackenv file
+      include_tasks: tasks/load_instackenv.yml
+
+    - name: Determine Python interpreter
+      include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "root"
+
+    - name: Add undercloud host to inventory for each cluster to be deleted
+      add_host:
+        name: "undercloud-{{item}}"
+        group: undercloud
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "stack"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+        ocp_cluster_index: "{{item}}"
+      with_sequence: "start={{ocp_cluster_index_start|int}} count={{ocp_cluster_index_count|int}} format=%04u"
+
+- name: Remove {{ocp_cluster_index_count}} OCP cluster(s)
+  hosts: undercloud
+  gather_facts: true
+  vars_files:
+    - vars/shift_stack_vars.yaml
+  tasks:
+    - name: Run openshift-installer destroy cluster
+      shell: |
+        ./openshift-install --log-level=debug destroy cluster --dir=/home/stack/ocp_clusters/{{osp_project_name}}/ > /home/stack/ocp_clusters/{{osp_project_name}}/ocp_destroy.log 2>&1
+      args:
+        chdir: /home/stack/
+      ignore_errors: true
+
+    - name: Delete shiftstack project
+      os_project:
+        cloud: "overcloud"
+        state: absent
+        name: "{{ osp_project_name }}"
+        domain: default
+    
+    - name: Delete shiftstack user
+      os_user:
+        cloud: "overcloud"
+        state: absent
+        name: "{{ osp_user_name }}"
+        domain: default
+
+    - name: Remove DNS detail in etc/hosts
+      blockinfile:
+        backup: true
+        path: "/etc/hosts"
+        marker: "# {mark} {{ ocp_cluster_name }} OCP CLUSTER MANAGED BLOCK"
+      become: yes
+      become_user: root
+      throttle: 1
+
+    - name: Remove cloud parameters
+      blockinfile:
+        dest: "/home/stack/clouds.yaml"
+        marker: "# {mark} {{ ocp_cluster_name }} OCP CLUSTER MANAGED BLOCK"
+      throttle: 1
+
+    - name: Get original OpenShift install-config
+      slurp:
+        src: "/home/stack/ocp_clusters/{{osp_project_name}}/install-config.yaml.orig"
+      register: install_config
+      ignore_errors: true
+    
+    - name: Convert install-config to json
+      set_fact:
+        install_config_json: "{{install_config['content'] | b64decode | from_yaml | to_json}}"
+      ignore_errors: true
+
+    - name: Read floating ips from install-config json
+      set_fact:
+        api_floating_ip: "{{install_config_json | from_json | json_query('platform.openstack.lbFloatingIP')}}"
+        ingress_floating_ip: "{{install_config_json | from_json | json_query('platform.openstack.ingressFloatingIP')}}"
+      ignore_errors: true
+    
+    - name: Delete api floating ip
+      shell: |
+        source /home/stack/overcloudrc
+        openstack floating ip delete {{api_floating_ip}}
+      ignore_errors: true
+    
+    - name: Delete ingress floating ip
+      shell: |
+        source /home/stack/overcloudrc
+        openstack floating ip delete {{ingress_floating_ip}}
+      ignore_errors: true
+
+    - name: Move directory of cluster artifacts
+      shell: |
+        mv /home/stack/ocp_clusters/{{osp_project_name}}/ /home/stack/ocp_clusters/{{osp_project_name}}-$(date +"%Y%m%d-%H%M%S")-deleted/
