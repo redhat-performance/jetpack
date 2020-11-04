@@ -187,16 +187,16 @@ composable_roles: false
 
 # define mount_nvme to mount /var/lib/nova on nvme device
 # to use nvme storage for nova instances as ephemeral disk
-#mount_nvme: true
+mount_nvme: true
 
 # enable nvme parameters
 # README has details about how to get these values
-passthrough_nvme:
-    vendor_id: '144d'
-    product_id: 'a804'
-    address: '01:00.0'
-    flavor:
-      name: 'nvme'
-      ram: 16384
-      disk: 40
-      vcpus: 4
+#passthrough_nvme:
+#    vendor_id: '144d'
+#    product_id: 'a804'
+#    address: '01:00.0'
+#    flavor:
+#      name: 'nvme'
+#      ram: 16384
+#      disk: 40
+#      vcpus: 4
