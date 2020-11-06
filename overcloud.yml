@@ -40,7 +40,7 @@
   tasks:
       - name: Set compute count fact
         set_fact:
-            compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int)) }}"
+          compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int) - (ceph_node_count|int)) }}"
 
       - name: get nodes
         shell: |
@@ -56,13 +56,13 @@
       - block:
         - name: check registered nodes with requested node count
           debug:
-            msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
-          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+            msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int + ceph_node_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
+          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int + ceph_node_count|int)
 
         - name: Adjust compute count
           set_fact:
             compute_count: "{{ compute_count|int - 1 }}"
-          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int + ceph_node_count|int)
           with_items: "{{ nodes_uuids }}"
         when: scale_compute_vms == false
 

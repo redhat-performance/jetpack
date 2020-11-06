@@ -48,7 +48,7 @@
 
     - name: set roles
       vars:
-        roles: "Controller"
+        roles: "{{ ("Controller" + "CephStorage") if ceph_enabled else "Controller" }}"
       set_fact:
         roles: "{{ roles + ' Compute' + item }}"
       with_items: "{{ machine_types }}"
