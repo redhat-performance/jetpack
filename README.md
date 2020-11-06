@@ -109,10 +109,10 @@ resource_registry:
 In the above case, jetpack copies firstboot-nvme.yaml from jetpack/files/firstboot-nvme.yaml to undercloud's /home/stack folder, if it doesn't exit in the undercloud at /home/stack/firstboot-nvme.yaml.
 
 
-*nvme* need to be configured to pass overcloud compute node's non-volatile memory express device directly to overcloud VM. Read [1] for details. ```flavor``` is used to create openstack flavor after the deployment in Jetpack's post module. We can get the nvme device details with the [get_nvme_details.sh](scripts/get_nvme_details.sh) script
+*passthrough_nvme* need to be configured to pass overcloud compute node's non-volatile memory express device directly to overcloud VM. Read [1] for details. ```flavor``` is used to create openstack flavor after the deployment in Jetpack's post module. We can get the nvme device details with the [get_nvme_details.sh](scripts/get_nvme_details.sh) script
 
 Set the parameters in group_vars like below
-nvme:
+passthrough_nvme:
     vendor_id: '144d'
     product_id: 'a804'
     address: '01:00.0'

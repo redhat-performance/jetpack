@@ -20,6 +20,10 @@ external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
 
 public_net_name: nova
 
+# by enabling random_ip, the ocp will choose randomly availble fips
+# for api and apps for ocp deployment.
+random_fip: false
+
 ocp_master_flavor: nvme
 ocp_worker_flavor: ""
 ocp_cluster_id: "{{ ansible_date_time.epoch | to_uuid }}"

@@ -4,7 +4,7 @@
       chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
       osp_rhel_mapping:
         10: 7.7
-        13: 7.7
+        13: 7.9
         14: 7.7
         15: 8.0
         16: 8.1
@@ -21,7 +21,7 @@
         hypervisor_password: "{{ ansible_ssh_pass }}"
       include_tasks: tasks/install_os.yml
 
-    - name: Wait for undercloud to be avaialable
+    - name: Wait for undercloud to be available
       async_status:
         jid: "{{ item }}"
       register: install_uc
@@ -29,6 +29,25 @@
       retries: 300
       delay: 10
       with_items: "{{ async_install }}"
+
+    - block:
+        - name: preapare RHEL79.repo (OSP13)
+          template:
+            src: RHEL.repo.j2
+            dest: /etc/yum.repos.d/RHEL79.repo
+          delegate_to: "{{ undercloud_hostname }}"
+          vars:
+            ansible_python_interpreter: "{{ python_interpreter }}"
+            ansible_user: "root"
+
+        - name: update os to RHEL 7.9
+          shell: |
+             yum update -y
+          delegate_to: "{{ undercloud_hostname }}"
+          vars:
+            ansible_python_interpreter: "{{ python_interpreter }}"
+            ansible_user: "root"
+      when: osp_release == 13
 
     - name: list oc_instackenv_content
       shell: |

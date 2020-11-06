@@ -126,7 +126,7 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 # undercloud to access overcloud resources
 external_gateway: "{{ lookup('env', 'OSP_EXTERNAL_GATEWAY')|default('172.17.5.1/24', true) }}"
 #external_network_vlan_id: 300
-clean_debug: False
+clean_nodes: True
 #adding changes 
 external_net_cidr: "{{ lookup('env', 'OSP_EXTERNAL_NET_CIDR')|default('172.17.5.0/24', true) }}"
 external_allocation_pools_start: "{{ lookup('env', 'OSP_EXTERNAL_ALLOCATION_POOLS_START')|default('172.17.5.50', true) }}"
@@ -185,14 +185,18 @@ composable_roles: false
 # controller_ifaces: []
 #controller_machine_type: "1029p"
 
+# define mount_nvme to mount /var/lib/nova on nvme device
+# to use nvme storage for nova instances as ephemeral disk
+mount_nvme: true
+
 # enable nvme parameters
 # README has details about how to get these values
-nvme:
-    vendor_id: '144d'
-    product_id: 'a804'
-    address: '01:00.0'
-    flavor:
-      name: 'nvme'
-      ram: 16384
-      disk: 40
-      vcpus: 4
+#passthrough_nvme:
+#    vendor_id: '144d'
+#    product_id: 'a804'
+#    address: '01:00.0'
+#    flavor:
+#      name: 'nvme'
+#      ram: 16384
+#      disk: 40
+#      vcpus: 4

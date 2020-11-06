@@ -34,6 +34,12 @@
   - name: Create badfish virtualenv
     command: python3 -m venv {{ badfish_venv }} creates={{ badfish_venv }}
 
+  - name: Upgrade pip
+    pip:
+      name: pip
+      extra_args: --upgrade
+      virtualenv: "{{ badfish_venv }}"
+
   - name: Install badfish requirements
     pip:
       requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"

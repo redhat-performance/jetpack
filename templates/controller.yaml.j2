@@ -197,6 +197,15 @@ resources:
               params:
                    $network_config:
                        network_config:
+{% if external_network_vlan_id is not defined %}
+                        - type: interface
+                          name: eno1
+                          dns_servers:
+                              get_param: DnsServers
+                          use_dhcp: false
+                          defroute: false
+                          onboot: false
+{% endif %}
                         -
                           type: ovs_bridge
                           name: br-ex
@@ -219,11 +228,17 @@ resources:
                             -
                               type: interface
                               name: {{ external_interface }}
+                              primary: true
 {% if external_network_vlan_id is not defined %}
                           addresses:
                             -
                               ip_netmask:
                                   get_param: ExternalIpSubnet
+                          routes:
+                            -
+                              default: true
+                              next_hop:
+                                  get_param: ExternalInterfaceDefaultRoute
 {% else %}
                             -
                               type: vlan
@@ -243,6 +258,7 @@ resources:
                             -
                               type: interface
                               name: {{ ctlplane_interface }}
+                              primary: true
                           addresses:
                             -
                               ip_netmask:
@@ -265,6 +281,7 @@ resources:
                             -
                               type: interface
                               name: {{ isolated_interface }}
+                              primary: true
 {% endif %}
                             -
                               type: vlan
@@ -299,6 +316,7 @@ resources:
                             -
                               type: interface
                               name: {{ tenant_interface }}
+                              primary: true
 {% endif %}
                             -
                               type: vlan

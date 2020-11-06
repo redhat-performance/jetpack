@@ -28,12 +28,12 @@
     - name: set heat_template_version
       set_fact:
         heat_template_version: "{{ tht_version.stdout }}"
-
+        
     - name: generate firstboot-nvme.yaml
       template:
         src: "firstboot-nvme.yaml.j2"
         dest: "/home/stack/firstboot-nvme.yaml"
-      when: nvme is defined
+      when: passthrough_nvme is defined or mount_nvme is defined
 
 - hosts: localhost
   gather_facts: yes
@@ -112,14 +112,14 @@
           }
         set_fact:
           parameter_defaults: "{{ parameter_defaults|default({}) | combine(nvme_params) }}"
-        when: nvme is defined
+        when: passthrough_nvme is defined
 
       - name: set resource_registry nvme parameters
         vars:
           res_reg: "{{ resource_registry|default([]) }}"
         set_fact:
           resource_registry: "{{ res_reg + ['OS::TripleO::NodeUserData=/home/stack/firstboot-nvme.yaml'] }}"
-        when: nvme is defined
+        when: passthrough_nvme is defined or mount_nvme is defined
 
       - name: add tripleo_heat_templates to template
         set_fact:
