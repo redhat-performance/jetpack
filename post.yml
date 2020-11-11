@@ -6,7 +6,7 @@
     - name: create nvme flavor
       shell: |
         source /home/stack/overcloudrc
-        openstack flavor create --ram {{ nvme.flavor.ram }} --disk {{ nvme.flavor.disk }} --vcpus {{ nvme.flavor.vcpus }} --public {{ nvme.flavor.name }}
+        openstack flavor create --ram {{ passthrough_nvme.flavor.ram }} --disk {{ passthrough_nvme.flavor.disk }} --vcpus {{ passthrough_nvme.flavor.vcpus }} --public {{ passthrough_nvme.flavor.name }}
       changed_when: false
       ignore_errors: true
       when: passthrough_nvme is defined
@@ -14,7 +14,7 @@
     - name: set pci passthough for flavor
       shell: |
         source /home/stack/overcloudrc
-        openstack flavor set {{ nvme.flavor.name }} --property "pci_passthrough:alias"="nvme:1"
+        openstack flavor set {{ passthrough_nvme.flavor.name }} --property "pci_passthrough:alias"="nvme:1"
       changed_when: false
       when: passthrough_nvme is defined
 
