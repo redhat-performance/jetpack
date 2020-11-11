@@ -42,8 +42,14 @@ parameter_defaults:
 {% endfor %}
 {% endfor %}
 {% endif %}
-
+{% if ceph_enabled %}
+  CephStorageCount: {{ ceph_node_count }}
+{% endif %}
 
 {% for node_type in machine_types %}
-  OvercloudCompute{{ node_type }}Flavor: compute{{ node_type }}
+  OvercloudCompute{{ node_type }}Flavor: baremetal{{ node_type }}
 {% endfor %}
+{% if ceph_enabled %}
+  OvercloudCephStorageFlavor: baremetal{{ ceph_machine_type }}
+{% endif %}
+

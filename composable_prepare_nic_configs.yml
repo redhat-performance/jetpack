@@ -22,6 +22,10 @@
         with_items: "{{ machine_types }}"
 
       - block:
+          - name: Sleep for 300 seconds
+            wait_for:
+              timeout: 300
+
           - name: Get Product Name of 1029u
             shell: |
               dmidecode -t system | grep "Product Name" | cut -d '-' -f3
@@ -34,7 +38,7 @@
 
           - name: set_fact for rhel8_interfaces
             set_fact:
-              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', (item.stdout == 'TRTP') | ternary('rhel8_interfaces_tn10rt','rhel8_interfaces')))] }}"
+              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', (item.stdout == 'TRTP') | ternary('rhel8_interfaces_trtp','rhel8_interfaces')))] }}"
             with_items: "{{ product_name.results }}"
 
           - name: set fact for iface_rhel_version
@@ -130,12 +134,12 @@
 
       - name: set fact controller machine type
         set_fact:
-          controller_machine_type: "{{ (machine_count[machine_types[0]]|int > controller_count|int)| ternary(machine_types[0], false) }}"
+          controller_machine_type: "{{ (machine_count[machine_types[0]]|int >= controller_count|int)| ternary(machine_types[0], false) }}"
         when: controller_ifaces is not defined
 
       - name: set fact controller machine type
         set_fact:
-          controller_machine_type: "{{ (machine_count[controller_machine_type]|int > controller_count|int) | ternary(controller_machine_type, false) }}"
+          controller_machine_type: "{{ (machine_count[controller_machine_type]|int >= controller_count|int) | ternary(controller_machine_type, false) }}"
         when: controller_ifaces is defined
 
       -  name: fail when controller_machine_type is false
@@ -190,9 +194,11 @@
          - "{{ tenant_interfaces }}"
          - "{{ isolated_interfaces }}"
 
-      - name: copy internal.yml.j2
-        shell: |
-                cp ~/jetpack/templates/internal.yml.j2 ~/.infrared/plugins/tripleo-overcloud/templates/storage/
+      - name: generate internal.yml.j2
+        template:
+          src: ~/jetpack/templates/internal.yml.j2
+          dest: ~/.infrared/plugins/tripleo-overcloud/templates/storage/internal.yml.j2
+          force: yes
         when: ceph_enabled
 
       - block:
@@ -203,7 +209,7 @@
 
           - name: set fact ceph machine type
             set_fact:
-              ceph_machine_type: "{{ (machine_count[ceph_machine_type]|int > ceph_node_count|int) | ternary(ceph_machine_type, false) }}"
+              ceph_machine_type: "{{ (machine_count[ceph_machine_type]|int >= ceph_node_count|int) | ternary(ceph_machine_type, false) }}"
 
           - name: fail when insufficient nodes for ceph
             fail:
@@ -213,6 +219,7 @@
           - name: set fact for ceph ext iface
             set_fact:
               ceph_external_interface: "{{ (ceph_ifaces|length > 1) | ternary(ceph_ifaces[1], ceph_ifaces[0]) }}"
+              ceph_ctlplane_interface: "{{ (ceph_ifaces|length > 1) | ternary(ceph_ifaces[1], ceph_ifaces[0]) }}"
 
           - name: set fact for ceph storage iface
             set_fact:
@@ -221,6 +228,7 @@
 
           - name: prepare ceph-storage.yaml.j2
             vars:
+              ctlplane_interface: "{{ ceph_ctlplane_interface }}"
               external_interface: "{{ ceph_external_interface }}"
               storage_interface: "{{ ceph_storage_interface }}"
             template:

@@ -1,18 +1,17 @@
-Parameter_defaults:
+parameter_defaults:
   LocalCephAnsibleFetchDirectoryBackup: /tmp/fetch_dir
-  CephPoolDefaultSize: "{{ ceph_node_count }}"
+  CephPoolDefaultSize: {{ ceph_node_count }}
   # when deploying a small number of osd's - < 12), it's necessary to decrease the default pg_num from 128 to get past the max 200pgs/per osd  limitation
   CephPoolDefaultPgNum: 32
   CephAnsiblePlaybookVerbosity: 1
   CephAnsibleDisksConfig:
 {% for disk in storage_node_disks %}
     devices:
-      - '/dev/{{ disk }}'
+      - /dev/{{ disk }}
 {% endfor %}
 
 # the following two parameters are the defaults. Just included them here for info
-#todo parameterize
-    osd_scenario: lvm
-    osd_objectstore: bluestore
+    osd_scenario: {{ osd_scenario }}
+    osd_objectstore: {{ osd_objectstore }}
   CephAnsibleExtraConfig:
     osd_pool_default_autoscale_mode: on

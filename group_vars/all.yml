@@ -120,7 +120,7 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 # undercloud to access overcloud resources
 external_gateway: 172.17.5.1/24
 external_network_vlan_id: 300
-clean_nodes: True
+clean_nodes: False
 #adding changes 
 external_net_cidr: 172.17.5.0/24
 external_allocation_pools_start: 172.17.5.50
@@ -217,4 +217,6 @@ composable_roles: false
 #Ceph deployment
 ceph_enabled: false
 storage_node_disks: []
+osd_scenario: lvm
+osd_objectstore: bluestore
 
