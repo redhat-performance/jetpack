@@ -28,6 +28,28 @@
           dest: "/home/stack/firstboot-nvme.yaml"
         when: passthrough_nvme is defined or mount_nvme is defined
 
+      - block:
+          - name: adjust max number of concurrent builds to default (override infrared)
+            ini_file:
+                path: /var/lib/config-data/puppet-generated/nova/etc/nova/nova.conf
+                section: DEFAULT
+                option: max_concurrent_builds
+                value: 10
+            become: yes
+
+          - name:  get nova services
+            shell: systemctl list-units | grep 'nova.*.service' |  awk {'print$1'}
+            register: nova_services
+            become: yes
+
+          - name: restart nova services
+            systemd:
+              name: "{{ item }}"
+              state: restarted
+            with_items: "{{ nova_services.stdout_lines }}"
+            become: yes
+        when: osp_release >= 12
+
 - hosts: localhost
   gather_facts: yes
   tasks:
@@ -84,21 +106,21 @@
             NovaSchedulerAvailableFilters: ['nova.scheduler.filters.all_filters'],
             NovaSchedulerMaxAttempts: "{{ compute_count }}",
             NovaPCIPassthrough: [{
-                vendor_id: "{{ nvme.vendor_id }}",
-                product_id: "{{ nvme.product_id }}",
-                address: "{{ nvme.address }}" }],
+                vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                product_id: "{{ passthrough_nvme.product_id }}",
+                address: "{{ passthrough_nvme.address }}" }],
             ControllerExtraConfig: {
                 "nova::pci::aliases": [{
                     name: 'nvme',
-                    vendor_id: "{{ nvme.vendor_id }}",
-                    product_id: "{{ nvme.product_id }}",
+                    vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                    product_id: "{{ passthrough_nvme.product_id }}",
                     device_type: 'type-PCI'}]
             },
             ComputeExtraConfig: {
                 "nova::pci::aliases": [{
                     name: 'nvme',
-                    vendor_id: "{{ nvme.vendor_id }}",
-                    product_id: "{{ nvme.product_id }}",
+                    vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                    product_id: "{{ passthrough_nvme.product_id }}",
                     device_type: 'type-PCI'}]
              },
              ComputeKernelArgs: "intel_iommu=on iommu=pt",
