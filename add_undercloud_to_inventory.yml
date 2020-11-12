@@ -8,6 +8,8 @@
       vars:
         hostname: "{{ undercloud_hostname }}"
         user: "stack"
+      tags: undercloud, tag, overcloud
+
     - name: add localhost to inventory file
       add_host:
         name: "localhost"

@@ -14,7 +14,14 @@
         when: sshkey.stat.exists == False
 
       - name: load instackenv file
-        include_tasks: tasks/load_instackenv.yml
+        import_tasks: tasks/load_instackenv.yml
+        tags:
+          - undercloud
+          - introspect
+          - tag
+          - composable
+          - external
+          - overcloud
 
       - name: setup infrared
         include_tasks: tasks/setup_infrared.yml
@@ -53,6 +60,7 @@
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias']
+        tags: undercloud, introspect, tag, composable, external, overcloud
 
       - block:
           - name: set machines_types of overcloud nodes
@@ -70,6 +78,7 @@
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias'] and virtual_uc != true
+        tags: undercloud, introspect, tag, composable, external, overcloud
 
       # use of a local time server is essential or at least a good idea for Ceph, Kerberos, Redis,
       # maybe Kubernetes, and other components sensitive to server time skew
