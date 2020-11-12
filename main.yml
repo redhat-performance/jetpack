@@ -22,19 +22,19 @@
 
 - import_playbook: prepare_nic_configs.yml
   tags:
-    - prepare_nic_configs
+    - always
   when: composable_roles == false
 
 - import_playbook: composable_prepare_nic_configs.yml
   tags:
-    - composable_prepare_nic_configs
+    - always
   when: composable_roles
 
 - import_playbook: undercloud.yml
   tags:
     - undercloud
 
-- import_playbook: intropsect.yml
+- import_playbook: introspect.yml
   tags:
     - introspect
 
