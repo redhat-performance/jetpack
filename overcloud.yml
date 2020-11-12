@@ -238,6 +238,13 @@
             include_tasks: tasks/provisioning_baremetal_nodes.yml
         when: novaless_prov
 
+      - name: generate internal.yml.j2
+        template:
+          src: ~/jetpack/templates/internal.yml.j2
+          dest: ~/.infrared/plugins/tripleo-overcloud/templates/storage/internal.yml.j2
+          force: yes
+        when: ceph_enabled
+
       - name: set facts for ceph deployment
         set_fact:
           ceph_params: "--storage-backend ceph --storage-external no"

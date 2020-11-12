@@ -194,13 +194,6 @@
          - "{{ tenant_interfaces }}"
          - "{{ isolated_interfaces }}"
 
-      - name: generate internal.yml.j2
-        template:
-          src: ~/jetpack/templates/internal.yml.j2
-          dest: ~/.infrared/plugins/tripleo-overcloud/templates/storage/internal.yml.j2
-          force: yes
-        when: ceph_enabled
-
       - block:
           - name: fail if ceph_machine_type or ceph_ifaces are not defined
             fail:
