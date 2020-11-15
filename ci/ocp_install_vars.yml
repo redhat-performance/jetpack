@@ -2,22 +2,9 @@ osp_project_name: "{{ lookup('env', 'OSP_PROJECT_NAME')|default('shiftstack', tr
 osp_user_name: "{{ lookup('env', 'OSP_USER_NAME')|default('shiftstack_user', true) }}"
 
 ocp_release: "{{ lookup('env', 'OPENSHIFT_RELEASE')|default('4.4.6', true) }}"
-ocp_puddle: latest
 install_client: true
 ocp_cluster_name: "{{ lookup('env', 'OPENSHIFT_CLUSTER_NAME')|default('vlan609', true) }}"
 ocp_base_domain: "{{ lookup('env', 'OPENSHIFT_BASE_DOMAIN')|default('rdu2.scalelab.redhat.com', true) }}"
-
-external_ocp_net_cidr: 172.17.5.0/24
-external_ocp_allocation_pools_start: 172.17.5.210
-external_ocp_allocation_pools_end: 172.17.5.250
-external_ocp_gateway: 172.17.5.1
-
-external_ipv6_gateway: 2620:52:0:13b8::fe
-external_ipv6_net_cidr: 2620:52:0:13b8::/64
-external_ipv6_allocation_pools_start: 2620:52:0:13b8::1000:1
-external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
-
-public_net_name: nova
 
 # by enabling random_ip, the ocp will choose randomly availble fips
 # for api and apps for ocp deployment.
@@ -26,11 +13,6 @@ random_fip: false
 ocp_master_flavor: "{{ lookup('env', 'OPENSHIFT_MASTER_INSTANCE_TYPE')|default('nvme', true) }}"
 ocp_worker_flavor: "{{ lookup('env', 'OPENSHIFT_WORKER_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
 ocp_cluster_id: "{{ ansible_date_time.epoch | to_uuid }}"
-ocp_tasks:
-  - create_external_network
-  - forward_overcloud_dashboard
-  - network_time
-  - tempest_deployer_input
 master_nodes: "{{ lookup('env', 'OPENSHIFT_MASTER_COUNT')|default(3, true) }}"
 worker_nodes: "{{ lookup('env', 'OPENSHIFT_WORKER_COUNT')|default(5, true) }}"
 # specify the openshift SDN name, OpenShiftSDN or Kuryr
