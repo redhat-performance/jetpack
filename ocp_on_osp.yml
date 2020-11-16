@@ -183,6 +183,21 @@
         dest: /home/stack/
         remote_src: yes
 
+    - name: create ignition-configs
+      shell: |
+        ./openshift-install --log-level=debug create ignition-configs --dir={{ ocp_cluster_name }} > ocp_ignition_configs.log 2>&1
+      args:
+        chdir: /home/stack/
+      when: passthrough_nvme is defined
+
+    - name: Update master ignition config to mount etcd on nvme
+      shell: |
+        python3 -c 'import json, sys; j = json.load(sys.stdin); j[u"storage"] = {}; j[u"storage"][u"filesystems"] = [{u"mount":  {u"device": u"/dev/nvme0n1",  u"format": u"xfs", u"wipeFilesystem": True}, u"name": u"ephemeral1"}]; j[u"systemd"] = {}; j[u"systemd"][u"units"] = [{u"contents": "[Unit]\nDescription=Mount nvme0n1 to /var/lib/etcd\nBefore=local-fs.target\n[Mount]\n What=/dev/nvme0n1\nWhere=/var/lib/etcd\nType=xfs\n[Install]\nWantedBy=local-fs.target", u"enabled": True, u"name":u"var-lib-etcd.mount"}]; json.dump(j, sys.stdout)' <{{ ocp_cluster_name }}/master.ign   >{{ ocp_cluster_name }}/master.ign.out
+        mv {{ ocp_cluster_name }}/master.ign.out {{ ocp_cluster_name }}/master.ign
+      args:
+        chdir: /home/stack/
+      when: passthrough_nvme is defined
+
     - name: run installer
       shell: |
         ./openshift-install --log-level=debug create cluster --dir={{ ocp_cluster_name }} > ocp_install.log 2>&1
