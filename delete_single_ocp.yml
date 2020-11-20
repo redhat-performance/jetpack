@@ -1,0 +1,37 @@
+---
+# This playbook is used to destroy single OCP cluster and fips.
+# this playbook is usefull when you want to re create the OCP without
+# redeploying the OSP
+#
+# Example usage
+#
+# ansible-playbook -i host delete_single_ocp.yml
+#
+
+- hosts: undercloud
+  become: yes
+  become_user: stack
+  tasks:
+    - name: set OCP vars
+      include_vars:
+        dir: vars
+        files_matching: shift_stack_vars.yaml
+
+    - name: destroy the OCP deployment
+      shell: |
+        ./openshift-install --log-level=debug destroy cluster --dir={{ ocp_cluster_name }} > ocp_install.log 2>&1
+      args:
+        chdir: /home/stack/
+      ignore_errors: true
+
+    - name: get floating ips
+      shell: |
+        source /home/stack/overcloudrc && openstack floating ip list -c ID -f value
+      register: floating_ips
+      ignore_errors: true
+
+    - name: delete floating ips
+      shell: |
+        source /home/stack/overcloudrc && openstack floating ip delete {{ item }}
+      with_items: "{{ floating_ips.stdout_lines }}"
+      ignore_errors: true
