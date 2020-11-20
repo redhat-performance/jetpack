@@ -16,7 +16,6 @@
       pip install --upgrade pip
       pip install --upgrade setuptools
       pip install .
-      rm -rf {{ ansible_user_dir }}/.infrared
   args:
     chdir: "{{ infrared_dir }}"
   changed_when: false

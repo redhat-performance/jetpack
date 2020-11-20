@@ -16,8 +16,19 @@
       - name: load instackenv file
         include_tasks: tasks/load_instackenv.yml
 
+      - name: check if the infrared dir exists
+        stat:
+          path: "{{ infrared_dir }}"
+        register: infrared_directory
+
+      - name: check if the infrared workspace dir exist
+        stat:
+          path: "{{ infrared_workspaces_dir }}"
+        register: infrared_workspaces_directory
+
       - name: setup infrared
         include_tasks: tasks/setup_infrared.yml
+        when: infrared_directory.stat.exists == False or infrared_workspaces_directory.stat.exists == False
 
       - name: add localhost to inventory file
         add_host:
