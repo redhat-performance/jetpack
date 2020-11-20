@@ -236,3 +236,9 @@
               force: yes
 
         when: ceph_enabled
+
+      - name: subtract the pci nodes from the the machine count
+        set_fact:
+          machine_count: "{{ machine_count | combine({item.key: (item.value |int - ((item.key == pci_node_type)|ternary(pci_node_count, 0)))}) }}"
+        with_dict: "{{ machine_count }}"
+        when: passthrough_nvme is defined and pci_node_count is defined

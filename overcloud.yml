@@ -100,10 +100,12 @@
             NovaSchedulerDefaultFilters: ['RetryFilter','AvailabilityZoneFilter','ComputeFilter','ComputeCapabilitiesFilter','ImagePropertiesFilter','ServerGroupAntiAffinityFilter','ServerGroupAffinityFilter','PciPassthroughFilter'],
             NovaSchedulerAvailableFilters: ['nova.scheduler.filters.all_filters'],
             NovaSchedulerMaxAttempts: "{{ compute_count }}",
-            NovaPCIPassthrough: [{
-                vendor_id: "{{ passthrough_nvme.vendor_id }}",
-                product_id: "{{ passthrough_nvme.product_id }}",
-                address: "{{ passthrough_nvme.address }}" }],
+            ControllerParameters: {
+                NovaPCIPassthrough: [{
+                    vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                    product_id: "{{ passthrough_nvme.product_id }}",
+                    address: "{{ passthrough_nvme.address }}" }]
+            },
             ControllerExtraConfig: {
                 "nova::pci::aliases": [{
                     name: 'nvme',
@@ -111,6 +113,12 @@
                     product_id: "{{ passthrough_nvme.product_id }}",
                     device_type: 'type-PCI'}]
             },
+            ComputeParameters: {
+                NovaPCIPassthrough: [{
+                    vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                    product_id: "{{ passthrough_nvme.product_id }}",
+                    address: "{{ passthrough_nvme.address }}" }]
+             },
             ComputeExtraConfig: {
                 "nova::pci::aliases": [{
                     name: 'nvme',
@@ -146,6 +154,20 @@
             dest: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
             content: "{{ config_template | to_nice_yaml }}"
         when: config_template is defined
+
+      - name: update extra.yml
+        lineinfile:
+          path: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+          regexp: 'ComputeExtraConfig'
+          line: "{{ '        Compute' + pci_node_type + 'PCIExtraConfig:' }}"
+        when: passthrough_nvme is defined
+
+      - name: update extra.yml
+        lineinfile:
+          path: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+          regexp: 'ComputeParameters'
+          line: "{{ '        Compute' + pci_node_type + 'PCIParameters:' }}"
+        when: passthrough_nvme is defined
 
       # tripleo_heat_templates and resource_registry will define the files.
       # Check if these exist in the undercloud and copy them from jetpack/files
