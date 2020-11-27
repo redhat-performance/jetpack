@@ -9,7 +9,7 @@ cloud_name: cloud00
 lab_name: beaker
 ansible_ssh_pass: "{{ lookup('env', 'ANSIBLE_SSH_PASSWORD')|default('', true) }}"
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
-osp_release: 16
+osp_release: 13
 osp_puddle: passed_phase2
 baseurl: http://download.eng.pek2.redhat.com/released/RHEL-7/7.9/Server/x86_64/os/
 controller_count: 1
