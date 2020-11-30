@@ -151,6 +151,7 @@
             {{ ingress_floating_ip }} console-openshift-console.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
             {{ ingress_floating_ip }} openshift-authentication-openshift-authentication.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
         insertafter: "EOF"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK FOR OCP CLUSTER {{ ocp_cluster_name }}"
       become: yes
       become_user: root
       when: public_external_interface is not defined or public_external_interface == false or random_fip == true
