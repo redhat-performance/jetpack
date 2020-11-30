@@ -40,6 +40,12 @@
           - name: set machine_type
             set_fact:
               machine_type: "{{ (lab_name == 'scale') | ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
+            when: virtual_uc != true
+
+          - name: set machine type for virtual undercloud
+            set_fact:
+              machine_type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
+            when: virtual_uc
 
           - name: set vendor
             set_fact:
@@ -63,4 +69,4 @@
               - "{{ machine_types }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
-        when: lab_name in ['scale', 'alias']
+        when: lab_name in ['scale', 'alias'] and virtual_uc != true
