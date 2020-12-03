@@ -126,12 +126,12 @@
 
       - name: set fact controller machine type
         set_fact:
-          controller_machine_type: "{{ (machine_count[machine_types[0]]|int > controller_count|int)| ternary(machine_types[0], false) }}"
+          controller_machine_type: "{{ (machine_count[machine_types[0]]|int >= controller_count|int)| ternary(machine_types[0], false) }}"
         when: controller_ifaces is not defined
 
       - name: set fact controller machine type
         set_fact:
-          controller_machine_type: "{{ (machine_count[controller_machine_type]|int > controller_count|int) | ternary(controller_machine_type, false) }}"
+          controller_machine_type: "{{ (machine_count[controller_machine_type]|int >= controller_count|int) | ternary(controller_machine_type, false) }}"
         when: controller_ifaces is defined
 
       -  name: fail when controller_machine_type is false
