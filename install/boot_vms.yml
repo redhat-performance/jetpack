@@ -1,0 +1,108 @@
+---
+
+# Playbook to create client and server vm on Openstack
+#
+# ansible-playbook boot_vms.yml
+
+- hosts: undercloud
+  gather_facts: yes
+  become: true
+  vars:
+    vm_password: centos
+    external_network: public
+  pre_tasks:
+    - name: generate pass_auth.sh
+      template:
+        src: pass_auth.sh.j2
+        dest: "{{ user_dir }}/pass_auth.sh"
+        mode: a+rwx
+
+    - name: install packages
+      package:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - wget
+        - libguestfs-tools
+        - sshpass
+        - libvirt
+
+    - name: restart libvirt service
+      service:
+        name: libvirtd
+        state: restarted
+
+  roles:
+    - images
+    - flavors
+    - network
+    - create_vm
+
+  post_tasks:
+    - name: check router exists
+      shell: |
+        . {{ overcloudrc }}
+        openstack router list | grep 'r1'
+      register: router_exists
+      ignore_errors: yes
+
+    - name: router
+      shell: |
+        . {{ overcloudrc }}
+        openstack router create r1
+        cidr=10.0.0.0
+        subnet_id=`openstack subnet list -c ID -c Subnet -f value | grep $cidr | cut -d' ' -f1`
+        neutron router-interface-add r1 $subnet_id
+        neutron router-gateway-set r1 {{ external_network }}
+      when: router_exists.stdout == ""
+
+    - name: create floating ip for client and server
+      shell: |
+        . {{ overcloudrc }}
+        client_port_id=`openstack port show {{ ports[0] }} -c id -f value`
+        server_port_id=`openstack port show {{ ports[1] }} -c id -f value`
+        neutron floatingip-create --port-id $client_port_id {{ external_network }}
+        neutron floatingip-create --port-id $server_port_id {{ external_network }}
+      ignore_errors: yes
+
+    - name: get floating ip of server and client
+      shell: |
+        . {{ overcloudrc }}
+        openstack server list | grep {{ item }} | cut -d \| -f 5 | cut -d \, -f 2 | awk '{$1=$1;print}'
+      register: vms_fip
+      with_items:
+        - "{{ vm_names }}"
+
+    - name: get computes ip
+      shell: |
+        . {{ stackrc }}
+        nova list | grep {{ item }} | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
+      register: computes_ip
+      with_items:
+        - "{{ compute_names }}"
+
+    - name: update user to root
+      lineinfile:
+        path: "{{ user_dir}}/.ssh/config"
+        regexp: '  User heat-admin'
+        line: '  User root'
+
+    - name: copy the ssh keys
+      shell: |
+        . {{ overcloudrc }}
+        echo '{{ vm_password }}' | sshpass ssh-copy-id -i {{ user_dir }}/.ssh/id_rsa -o 'StrictHostKeyChecking no' -f root@{{ item.stdout }}
+      with_items: "{{  vms_fip.results }}"
+      changed_when: false
+
+    - name: get default route
+      shell: |
+        ip r | grep default | cut -d ' ' -f5
+      register: default_route
+    
+    - name: flush iptables on undercloud and add masquerade rule
+      become: true
+      shell: |
+        iptables -F
+        iptables -t nat -L --line-numbers
+        iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
+        iptables -t nat -A POSTROUTING -o br-ctlplane -j MASQUERADE

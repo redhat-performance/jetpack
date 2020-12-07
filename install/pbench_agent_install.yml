@@ -1,0 +1,96 @@
+---
+#
+# Playbook for pbench agent installations
+# Usage:
+# ansible-playbook pbench_agent_install.yml
+
+- hosts: compute
+  gather_facts: yes
+  tasks:
+    - name: install latest epel-release
+      yum:
+        name: "{{ epel_repo.el7 }}"
+        state: present
+      become: yes
+      loop:
+        - "{{ epel_repo.el7 }}"
+        - perl-Data-UUID
+      when: ansible_distribution_major_version < '8'
+
+    - name: install perl-Data-UUID on Compute nodes
+      become: true
+      dnf:
+        name: perl-Data-UUID
+        state: present
+      when: ansible_distribution_major_version == '8'
+
+- hosts: undercloud
+  vars:
+    pbench_agent_install: true
+
+  tasks:
+    - block:
+        - name: remove old epel-release
+          yum:
+            name: "{{item }}"
+            state: absent
+          become: yes
+          ignore_errors: yes
+          loop:
+            - epel-release
+            - ansible
+
+        - name: install latest epel-release
+          yum:
+            name: "{{ epel_repo.el7 }}"
+            state: present
+          become: yes
+
+        - name: install ansible 2.9
+          yum:
+            name: ansible
+            state: present
+          become: yes
+
+      when: ansible_distribution_major_version < '8'
+
+
+    - name: Install the pbench-agent roles from Galaxy
+      shell: |
+        ansible-galaxy collection install pbench.agent
+        export ANSIBLE_ROLES_PATH=$HOME/.ansible/collections/ansible_collections/pbench/agent/roles:$ANSIBLE_ROLES_PATH
+
+    - name: generate pbench agent playbook
+      template:
+        src: pbench_agent_install.yml.j2
+        dest: "{{ user_dir }}/.ansible/collections/ansible_collections/pbench/agent/roles/pbench_agent_install.yml"
+
+    - name: get computes ip
+      shell: |
+        . {{ stackrc }}
+        nova list | grep {{ item }} | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
+      register: computes_ip
+      with_items:
+        - "{{ compute_names }}"
+
+    - name: get floating ip of server and client
+      shell: |
+        . {{ overcloudrc }}
+        openstack server list | grep {{ item }} | cut -d \| -f 5 | cut -d \, -f 2 | awk '{$1=$1;print}'
+      register: vms_fip
+      with_items:
+        - "{{ vm_names }}"
+
+    - name: create a inventory file
+      template:
+        src: repo_bootstrap.hosts.j2
+        dest: "{{ user_dir }}/.config/myhosts.inv"
+
+    - name: run the playbook pbench_agent_install.yml
+      shell: |
+        ansible-playbook -i ~/.config/myhosts.inv pbench_agent_install.yml
+      register: agent_install
+      args:
+        chdir: "{{ user_dir }}/.ansible/collections/ansible_collections/pbench/agent/roles/"
+    - debug:
+        msg: "{{ agent_install }}"

@@ -1,0 +1,59 @@
+---
+#
+# Playbook for installing pbench_bootstrap
+#
+# Usage:
+#   ansible-playbook pbench_agent_bootstrap.yml -e "repos=<perf-dept-repo>"
+
+- hosts: compute
+  tasks:
+    - name: copy the keys
+      shell: |
+        sudo cp -r ~/.ssh /root/
+ 
+- hosts: undercloud
+  gather_facts: yes
+  tasks:
+    - name: clone perf-dept
+      shell: |
+        GIT_SSL_NO_VERIFY=true git clone {{ repos }}
+      ignore_errors: yes
+
+    - name: get computes ip
+      shell: |
+        . {{ stackrc }}
+        nova list | grep {{ item }} | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
+      register: computes_ip
+      with_items:
+        - "{{ compute_names }}"
+
+    - name: get floating ip of server and client
+      shell: |
+        . {{ overcloudrc }}
+        openstack server list | grep {{ item }} | cut -d \| -f 5 | cut -d \, -f 2 | awk '{$1=$1;print}'
+      register: vms_fip
+      with_items:
+        - "{{ vm_names }}"
+
+    - name: copy the keys
+      shell: |
+        sudo cp -r ~/.ssh /root/
+
+    - name: create inventories
+      file:
+        path: "{{ user_dir }}/.config/Inventories/"
+        state: directory
+
+    - name: generate a inventory
+      template:
+        src: repo_bootstrap.hosts.j2
+        dest: "{{ user_dir }}/.config/Inventories/repo-bootstrap.hosts"
+
+    - name: run repo-bootstrap.yml
+      shell: |
+        ansible-playbook  --user=root -i "{{ user_dir}}/.config/Inventories/repo-bootstrap.hosts" repo-bootstrap.yml
+      register: repo_bootstrap
+      args:
+        chdir: "{{ user_dir }}/perf-dept/sysadmin/Ansible"
+    - debug:
+        msg: "{{ repo_bootstrap }}"

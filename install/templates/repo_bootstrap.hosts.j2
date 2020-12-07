@@ -1,0 +1,19 @@
+[servers]
+
+{% if (pbench_agent_install is defined) or pbench_image_rhel %}
+{% for item in vms_fip.results %}
+{{ item.stdout }}
+{% endfor %}
+{% endif %}
+{% for item in computes_ip.results %}
+{{ item.stdout }}
+{% endfor %}
+
+{% if pbench_agent_install|default(false) %}
+[servers:vars]
+# where to get the key
+pbench_key_url = {{ pbench_key_url }}
+
+# where to get the config file
+pbench_config_url = {{ pbench_config_url }}
+{% endif %}

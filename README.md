@@ -184,3 +184,21 @@ For OSP deploy with Ceph using Composable Roles, After setting the above specifi
 
 Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
       requirement if needed
+2) set composable_roles: true true in group_vars/all.yml
+
+## Pbench agent Installations
+To install Pbench agent on the compute nodes and vm's (i.e client and server),you have to follow the below steps and set the below params install/group_vars/all.yml
+
+`pbench_key_url: <pbench_key_url>
+ pbench_config_url: <pbench_config_url>
+ pbench_configuration_environment: <pbench_configuration_environment>`
+
+`cd  {{ ansible_user_dir}}/jetpack/install`
+
+1) To create the client and server
+     `ansible-playbook boot.yml`
+2) Install Pbench agent bootstrapping
+     `ansible-playbook pbench_agent_bootstrap.yml -e "repos=<perf-dept-repo>" `
+3) Install Pbench agent install
+     `ansible-playbook pbench_agent_install.yml`
+     

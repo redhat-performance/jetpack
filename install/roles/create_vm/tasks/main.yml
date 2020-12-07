@@ -1,0 +1,19 @@
+---
+- name: create a vm's
+  shell: . {{ overcloudrc }}; openstack server create --flavor pbench_flavor --image {{ guest_image_name }} --nic port-id={{ item[0].stdout }} --user-data {{ user_dir }}/pass_auth.sh {{ item[1] }}
+  with_together:
+    - "{{ port_ids.results }}"
+    - "{{ vm_names }}"
+  ignore_errors: yes
+
+- name: create a vm's
+  shell: . {{ overcloudrc }}; openstack server create --flavor pbench_flavor --image {{ guest_image_name }} --nic port-id={{ item[0].stdout }} --user-data {{ user_dir }}/pass_auth.sh {{ item[1] }}
+  with_together:
+    - "{{ get_port_ids.results }}"
+    - "{{ vm_names }}"
+  ignore_errors: yes
+
+
+- name: wait for vm to boot
+  wait_for:
+     timeout: "{{ timeout }}"

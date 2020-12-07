@@ -1,0 +1,34 @@
+---
+guest_image_name: pbench_image
+# user can add the guest_image url required below
+guest_images:
+  pbench_image:
+    name: pbench_image
+    url_centos8: http://cloud.centos.org/centos/8/x86_64/images/CentOS-8-GenericCloud-8.2.2004-20200611.2.x86_64.qcow2
+    url_centos7: http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
+    type: qcow2
+    convert_to_raw: false
+
+# rhel 8
+epel_repo:
+  el8: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+  el7: https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+
+pbench_image_rhel: false
+
+compute_names: ['compute-0', 'compute-1' ]
+
+#name for the client and server
+vm_names: [ client, server ]
+
+user_dir: /home/stack
+overcloudrc: /home/stack/overcloudrc
+stackrc: /home/stack/stackrc
+# port names
+ports: [ 'client_port', 'server_port']
+timeout: 30
+
+# update the values to install pbench agent
+#pbench_key_url:
+#pbench_config_url:
+#pbench_configuration_environment: "production"

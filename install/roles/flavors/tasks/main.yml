@@ -1,0 +1,8 @@
+--- 
+# Add flavors to OpenStack Cloud
+# Ignore errors here incase the flavors already exist.
+
+- name: Add flavors to overcloud
+  shell: . {{ overcloudrc }}; openstack flavor create --public {{ item.name }} --id auto --ram {{ item.ram }} --disk {{ item.disk }} --vcpus {{ item.cpu }}
+  with_items: "{{ pbench_flavors }}"
+  ignore_errors: true

@@ -1,0 +1,47 @@
+---
+
+#Create a network, subnet, ports for client and server vms
+
+- name: Determine if network exists
+  shell: . {{ overcloudrc }}; openstack network list | grep '{{ network_name }}'
+  register: network_exists
+  ignore_errors: true
+
+- name: create a network
+  shell: . {{ overcloudrc }}; neutron net-create '{{ network_name }}' | egrep '\sid\s' | awk '{print $4}'
+  register: network_id
+
+- name: get dns server
+  shell: |
+    cat /etc/resolv.conf | grep nameserver | head -n1 | cut -d ' ' -f2
+  register: dns_server
+
+- name: create subnet
+  shell: . {{ overcloudrc }}; neutron subnet-create --dns-nameserver {{ dns_server.stdout }} {{ network_id.stdout }} 10.0.0.0/24
+  ignore_errors: yes
+
+- name: Determine if ports exists
+  shell: . {{ overcloudrc }}; openstack port list | grep '{{ item }}'
+  register: port_exists
+  with_items: "{{ ports }}"
+  ignore_errors: true
+
+- name: Create ports for client and server
+  shell: |
+    . {{ overcloudrc }}
+    openstack port create --no-security-group --disable-port-security --network {{ network_id.stdout }} {{ item.0 }} | egrep '\sid\s' | awk '{print $4}'
+  register: port_ids
+  when: item.1.stdout == ""
+  with_together:
+    - "{{ ports }}"
+    -  "{{ port_exists.results }}"
+
+- name: get port ids for client and server
+  shell: |
+    . {{ overcloudrc }}
+    openstack port list | grep "{{ item.0 }}" | cut -d \| -f 2 | awk '{$1=$1;print}'
+  register: get_port_ids
+  when: item.1.stdout != ""
+  with_together:
+    - "{{ ports }}"
+    -  "{{ port_exists.results }}"
