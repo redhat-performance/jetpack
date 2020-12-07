@@ -23,14 +23,14 @@ insecure_registries: <insecure_registry>
 
 Currently supported distros for ansible jump host are:
 
-* Fedora 25,26,27
-* RHEL 7.3,7.4,7.5,7.6,7.7
+* > RHEL 7.7
 
 
 # Requirements
 
 * Ansible >= 2.8
-* Python 3.6+ 
+* Python 3.6+
+* > RHEL 7.7 for ansible jump host
 * A host for running hammer cli/ipmitool/badfish operations referenced by the variable *hammer_host*
 * Passwordless sudo for user running the playbook on the ansible control node (host where the playbooks are being run from)
 
