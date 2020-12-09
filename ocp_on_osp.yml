@@ -183,6 +183,43 @@
         dest: /home/stack/
         remote_src: yes
 
+    - name: Create ignition-configs with openshift-installer
+      shell: |
+        ./openshift-install --log-level=debug create ignition-configs --dir=/home/stack/{{ ocp_cluster_name }}/ > /home/stack/{{ ocp_cluster_name }}/create_ignition_configs.log 2>&1
+      args:
+        chdir: /home/stack/
+
+    - name: Backup the ignition-configs
+      copy:
+        src: "/home/stack/{{ ocp_cluster_name }}/{{ item }}.ign"
+        dest: "/home/stack/{{ ocp_cluster_name }}/{{ item }}.ign.orig"
+        remote_src: yes
+      with_items:
+        - master
+        - worker
+        - bootstrap
+
+    - name: Read original master.ign config file
+      slurp:
+        src: "/home/stack/{{ ocp_cluster_name }}/master.ign.orig"
+      register: master_ign
+      when: ocp_master_etcd_nvme
+
+    - name: Get master etcd on nvme ignition configuration
+      set_fact:
+        master_ign_config_base: "{{ master_ign['content'] | b64decode }}"
+        master_etcd_nvme_config: "{{ lookup('template', 'master-etcd.ign.json') }}"
+      when: ocp_master_etcd_nvme
+
+    - name: Dump new version of master.ign file
+      copy:
+        content: "{{ master_ign_config_base | combine(master_etcd_nvme_config) | to_json }}"
+        dest: "/home/stack/{{ ocp_cluster_name }}/{{ item }}"
+      with_items:
+        - master.ign
+        - master.ign.etcd
+      when: ocp_master_etcd_nvme
+
     - name: run installer
       shell: |
         ./openshift-install --log-level=debug create cluster --dir={{ ocp_cluster_name }} > ocp_install.log 2>&1
