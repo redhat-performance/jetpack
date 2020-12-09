@@ -35,6 +35,18 @@
         dest: "/home/stack/firstboot-nvme.yaml"
       when: passthrough_nvme is defined or mount_nvme is defined
 
+    - name: generate wipe-disks.yaml
+      template:
+        src: "firstboot-wipe-disks.yaml.j2"
+        dest: "/home/stack/wipe-disks.yaml"
+      when: ceph_enabled
+
+    - name: generate wipe-disk.sh
+      template:
+        src: "wipe-disk.sh.j2"
+        dest: "/home/stack/wipe-disk.sh"
+      when: ceph_enabled
+
 - hosts: localhost
   gather_facts: yes
   tasks:

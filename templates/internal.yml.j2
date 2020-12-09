@@ -1,12 +1,19 @@
+resource_registry:
+  OS::TripleO::NodeUserData: /home/stack/wipe-disks.yaml
+
 parameter_defaults:
   LocalCephAnsibleFetchDirectoryBackup: /tmp/fetch_dir
+{% if ceph_node_count < 3 %}
   CephPoolDefaultSize: {{ ceph_node_count }}
+{% else %}
+CephPoolDefaultSize: 3
+{% endif %}
   # when deploying a small number of osd's - < 12), it's necessary to decrease the default pg_num from 128 to get past the max 200pgs/per osd  limitation
   CephPoolDefaultPgNum: 32
   CephAnsiblePlaybookVerbosity: 1
   CephAnsibleDisksConfig:
-{% for disk in storage_node_disks %}
     devices:
+{% for disk in storage_node_disks %}
       - /dev/{{ disk }}
 {% endfor %}
 
