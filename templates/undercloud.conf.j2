@@ -1,7 +1,7 @@
 [DEFAULT]
 local_interface = {{ undercloud_local_interface }}
 local_ip = {{ gateway }}/{{ subnet_mask }}
-undercloud_ntp_servers = clock.redhat.com,clock2.redhat.com
+undercloud_ntp_servers = {{ time_servers | join(",") }}
 {% if clean_nodes %}
 clean_nodes = True
 {% endif %}
