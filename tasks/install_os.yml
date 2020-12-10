@@ -38,6 +38,27 @@
       ignore_errors: true
       when: hypervisor_host == undercloud_hostname
 
+    - name: get all nodes
+      shell: |
+        source ~/stackrc
+        openstack baremetal node list -f value -c UUID
+      register: get_nodes
+      changed_when: false
+      when: clean_nodes
+      ignore_errors: true
+
+    - name: wait for nodes to be in available state
+      shell: |
+        source ~/stackrc;
+        export PROV_STATE=$(openstack baremetal node show {{ item }} -c provision_state -f value);
+        if [[ $PROV_STATE != *"available"* ]]; then
+            sleep 180
+        fi
+      with_items: "{{ get_nodes.stdout_lines | default([]) }}"
+      changed_when: false
+      when: clean_nodes
+      ignore_errors: true
+
     - name: set hammer build command
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"

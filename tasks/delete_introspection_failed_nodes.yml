@@ -88,6 +88,11 @@
   register: total_nodes
   changed_when: false
 
+- name: wait for 360 seconds before checking the nodes are available
+  wait_for:
+     timeout: 360
+  when: clean_nodes
+
 - name: set provision state of all nodes to available
   shell: |
       source ~/stackrc;

@@ -119,6 +119,8 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 # undercloud to access overcloud resources
 external_gateway: 172.17.5.1/24
 external_network_vlan_id: 300
+#Note:when clean_nodes: true it takes longer time to move to available
+#state( specially during introspection and when overcloud is deleted)
 clean_nodes: False
 #adding changes 
 external_net_cidr: 172.17.5.0/24
