@@ -39,13 +39,13 @@
       template:
         src: "firstboot-wipe-disks.yaml.j2"
         dest: "/home/stack/wipe-disks.yaml"
-      when: ceph_enabled
+      when: ceph_enabled and (clean_nodes != true)
 
     - name: generate wipe-disk.sh
       template:
         src: "wipe-disk.sh.j2"
         dest: "/home/stack/wipe-disk.sh"
-      when: ceph_enabled
+      when: ceph_enabled and (clean_nodes != true)
 
 - hosts: localhost
   gather_facts: yes
@@ -250,9 +250,14 @@
             include_tasks: tasks/provisioning_baremetal_nodes.yml
         when: novaless_prov
 
+      - name: set fact for storage nodes
+        set_fact:
+          storage_node_disks: "{{ hostvars['undercloud']['storage_node_disks']|unique }}"
+        when: ceph_enabled and storage_node_disks is not defined
+
       - name: generate internal.yml.j2
         template:
-          src: ~/jetpack/templates/internal.yml.j2
+          src: internal.yml.j2
           dest: ~/.infrared/plugins/tripleo-overcloud/templates/storage/internal.yml.j2
           force: yes
         when: ceph_enabled

@@ -216,7 +216,8 @@ composable_roles: false
 
 #Ceph deployment
 ceph_enabled: false
-storage_node_disks: []
 osd_scenario: lvm
 osd_objectstore: bluestore
-
+#storage_node_disks: [nvme0n1]
+#osd_pool_default_pg_num:
+#osd_pool_default_pgp_num:
