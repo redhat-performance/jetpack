@@ -1,24 +1,18 @@
-osp_project_name: shiftstack
+# Depending on cluster "type"
+# Hub cluster / Default
+osp_project_name: ostest
 osp_user_name: shiftstack_user
+# Spoke cluster(s):
+# osp_project_name: "shiftstack{{ocp_cluster_index}}"
+# osp_user_name: "shiftstack{{ocp_cluster_index}}"
 
-ocp_release: 4.4.6
-ocp_puddle: latest
+ocp_release: 4.6.1
 install_client: true
-ocp_cluster_name: ostest
+# Do not allow ocp_cluster_name to exceed 14 characters!!!!
+ocp_cluster_name: "{{osp_project_name}}"
 ocp_base_domain: rdu2.scalelab.redhat.com
 
-external_ocp_vlan_id: 300
-external_ocp_net_cidr: 172.17.5.0/24
-external_ocp_allocation_pools_start: 172.17.5.210
-external_ocp_allocation_pools_end: 172.17.5.250
-external_ocp_gateway: 172.17.5.1
-
-external_ipv6_gateway: 2620:52:0:13b8::fe
-external_ipv6_net_cidr: 2620:52:0:13b8::/64
-external_ipv6_allocation_pools_start: 2620:52:0:13b8::1000:1
-external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
-
-public_net_name: nova
+public_net_name: public
 
 # by enabling random_ip, the ocp will choose randomly availble fips
 # for api and apps for ocp deployment.
@@ -27,15 +21,14 @@ random_fip: false
 ocp_master_flavor: nvme
 ocp_worker_flavor: ""
 ocp_cluster_id: "{{ ansible_date_time.epoch | to_uuid }}"
-ocp_tasks:
-  - create_external_network
-  - forward_overcloud_dashboard
-  - network_time
-  - tempest_deployer_input
 master_nodes: 3
 worker_nodes: 3
 # specify the openshift SDN name, OpenShiftSDN or Kuryr
 ocp_network_type: Kuryr
+
+# if the master has a passthrough nvme, set to true to use this device for etcd
+ocp_master_etcd_nvme: true
+passthrough_nvme_device: /dev/nvme0n1
 
 ssh_key_file: '/home/stack/.ssh/id_rsa.pub'
 

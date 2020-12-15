@@ -138,4 +138,5 @@
 - name: show the storage_node_disks
   debug:
     msg: "{{ storage_node_disks|unique }}"
+  when: ceph_enabled
 

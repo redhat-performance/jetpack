@@ -214,7 +214,7 @@ composable_roles: false
 # ceph_ifaces: []
 # ceph_machine_type:
 
-#Ceph deployment
+#Ceph deployment params
 ceph_enabled: false
 osd_scenario: lvm
 osd_objectstore: bluestore

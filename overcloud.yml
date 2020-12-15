@@ -9,16 +9,14 @@
             path: /home/stack/containers-prepare-parameter.yaml
             insertafter: "- push_destination: true"
             line: '    excludes:'
-          when: osp_release > 13
 
         - name: exclude ceph images
           lineinfile:
             path: /home/stack/containers-prepare-parameter.yaml
             insertafter: "    excludes:"
             line: '    - ceph'
-          when: osp_release > 13
 
-      when: ceph_enabled != true
+      when: (ceph_enabled != true) and (osp_release > 13)
 
     - name: get tht version
       shell: |
@@ -103,21 +101,21 @@
             NovaSchedulerAvailableFilters: ['nova.scheduler.filters.all_filters'],
             NovaSchedulerMaxAttempts: "{{ compute_count }}",
             NovaPCIPassthrough: [{
-                vendor_id: "{{ nvme.vendor_id }}",
-                product_id: "{{ nvme.product_id }}",
-                address: "{{ nvme.address }}" }],
+                vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                product_id: "{{ passthrough_nvme.product_id }}",
+                address: "{{ passthrough_nvme.address }}" }],
             ControllerExtraConfig: {
                 "nova::pci::aliases": [{
                     name: 'nvme',
-                    vendor_id: "{{ nvme.vendor_id }}",
-                    product_id: "{{ nvme.product_id }}",
+                    vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                    product_id: "{{ passthrough_nvme.product_id }}",
                     device_type: 'type-PCI'}]
             },
             ComputeExtraConfig: {
                 "nova::pci::aliases": [{
                     name: 'nvme',
-                    vendor_id: "{{ nvme.vendor_id }}",
-                    product_id: "{{ nvme.product_id }}",
+                    vendor_id: "{{ passthrough_nvme.vendor_id }}",
+                    product_id: "{{ passthrough_nvme.product_id }}",
                     device_type: 'type-PCI'}]
              },
              ComputeKernelArgs: "intel_iommu=on iommu=pt",

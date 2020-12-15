@@ -30,16 +30,17 @@
             shell: |
               dmidecode -t system | grep "Product Name" | cut -d '-' -f3
             register: product_name
-            delegate_to: "{{ item.stdout }}"
-            with_items: "{{ host_list.results }}"
-            vars:
-              ansible_python_interpreter: "{{ python_interpreter }}"
-              ansible_user: "root"
+            delegate_to: "{{ item.1.stdout }}"
+            when: item.0 == "1029u"
+            with_together:
+              - "{{ machine_types }}"
+              - "{{ host_list.results }}"
 
-          - name: set_fact for rhel8_interfaces
+          - name: set fact rhel8_interfaces
             set_fact:
-              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', (item.stdout == 'TRTP') | ternary('rhel8_interfaces_trtp','rhel8_interfaces')))] }}"
-            with_items: "{{ product_name.results }}"
+              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.changed == False) | ternary('rhel8_interfaces', ( item.changed == true and item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', 'rhel8_interfaces_trtp')))] }}"
+            with_items:
+              - "{{ product_name.results }}"
 
           - name: set fact for iface_rhel_version
             set_fact:

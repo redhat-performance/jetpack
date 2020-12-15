@@ -7,7 +7,7 @@ undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
 log_directory: "{{ playbook_dir }}/jetpack/logs"
 cloud_name: cloud00
 lab_name: beaker
-ansible_ssh_pass: 100yard-
+ansible_ssh_pass: "{{ lookup('env', 'ANSIBLE_SSH_PASSWORD')|default('', true) }}"
 ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
 osp_puddle: passed_phase2

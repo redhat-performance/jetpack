@@ -1,23 +1,16 @@
+# Depending on cluster "type"
+# Hub cluster / Default
 osp_project_name: "{{ lookup('env', 'OSP_PROJECT_NAME')|default('shiftstack', true) }}"
 osp_user_name: "{{ lookup('env', 'OSP_USER_NAME')|default('shiftstack_user', true) }}"
+# Spoke cluster(s):
+# osp_project_name: "shiftstack{{ocp_cluster_index}}"
+# osp_user_name: "shiftstack{{ocp_cluster_index}}"
 
 ocp_release: "{{ lookup('env', 'OPENSHIFT_RELEASE')|default('4.4.6', true) }}"
-ocp_puddle: latest
 install_client: true
+# Do not allow ocp_cluster_name to exceed 14 characters!!!!
 ocp_cluster_name: "{{ lookup('env', 'OPENSHIFT_CLUSTER_NAME')|default('vlan609', true) }}"
 ocp_base_domain: "{{ lookup('env', 'OPENSHIFT_BASE_DOMAIN')|default('rdu2.scalelab.redhat.com', true) }}"
-
-external_ocp_net_cidr: 172.17.5.0/24
-external_ocp_allocation_pools_start: 172.17.5.210
-external_ocp_allocation_pools_end: 172.17.5.250
-external_ocp_gateway: 172.17.5.1
-
-external_ipv6_gateway: 2620:52:0:13b8::fe
-external_ipv6_net_cidr: 2620:52:0:13b8::/64
-external_ipv6_allocation_pools_start: 2620:52:0:13b8::1000:1
-external_ipv6_allocation_pools_end:  2620:52:0:13b8::1000:aa
-
-public_net_name: nova
 
 # by enabling random_ip, the ocp will choose randomly availble fips
 # for api and apps for ocp deployment.
@@ -26,17 +19,19 @@ random_fip: false
 ocp_master_flavor: "{{ lookup('env', 'OPENSHIFT_MASTER_INSTANCE_TYPE')|default('nvme', true) }}"
 ocp_worker_flavor: "{{ lookup('env', 'OPENSHIFT_WORKER_INSTANCE_TYPE')|default('m4.xlarge', true) }}"
 ocp_cluster_id: "{{ ansible_date_time.epoch | to_uuid }}"
-ocp_tasks:
-  - create_external_network
-  - forward_overcloud_dashboard
-  - network_time
-  - tempest_deployer_input
 master_nodes: "{{ lookup('env', 'OPENSHIFT_MASTER_COUNT')|default(3, true) }}"
 worker_nodes: "{{ lookup('env', 'OPENSHIFT_WORKER_COUNT')|default(5, true) }}"
 # specify the openshift SDN name, OpenShiftSDN or Kuryr
 ocp_network_type: "{{ lookup('env', 'OPENSHIFT_NETWORK_TYPE')|default('Kuryr', true) }}"
 
+# if the master has a passthrough nvme, set to true to use this device for etcd
+ocp_master_etcd_nvme: false
+passthrough_nvme_device: /dev/nvme0n1
+
 ssh_key_file: "{{ lookup('env', 'OPENSHIFT_INSTALL_SSH_PUB_KEY_FILE')|default('~/.ssh/id_rsa.pub', true) }}"
+
+# when pull secret is not enabled it will try to read from the value
+# from OPENSHIFT_INSTALL_PULL_SECRET env variable
 #ocp_pull_secret: "{{ lookup('env', 'OPENSHIFT_INSTALL_PULL_SECRET')| to_yaml }}"
 
 ocp_create_infra_nodes: "{{ lookup('env', 'OPENSHIFT_TOGGLE_INFRA_NODE')|default(true, true) }}"

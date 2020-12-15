@@ -40,6 +40,12 @@
           - name: set machine_type
             set_fact:
               machine_type: "{{ (lab_name == 'scale') | ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
+            when: virtual_uc != true
+
+          - name: set machine type for virtual undercloud
+            set_fact:
+              machine_type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
+            when: virtual_uc
 
           - name: set vendor
             set_fact:
@@ -63,4 +69,21 @@
               - "{{ machine_types }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
-        when: lab_name in ['scale', 'alias']
+        when: lab_name in ['scale', 'alias'] and virtual_uc != true
+
+      # use of a local time server is essential or at least a good idea for Ceph, Kerberos, Redis,
+      # maybe Kubernetes, and other components sensitive to server time skew
+
+      - name: default to corporate time server if lab not recognized
+        set_fact:
+          time_servers: ["clock.redhat.com", "clock2.redhat.com"]
+
+      - name: use bos.redhat.com time servers for Alias lab in Westford
+        set_fact:
+          time_servers: ["clock1.bos.redhat.com", "clock2.bos.redhat.com"]
+        when: lab_name == "alias"
+
+      - name: use rdu2.redhat.com time servers for Scale Lab in Raleigh NC USA
+        set_fact:
+          time_servers: ["clock1.rdu2.redhat.com"]
+        when: lab_name == "scale"
