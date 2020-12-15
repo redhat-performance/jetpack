@@ -50,21 +50,49 @@
       register: cluster_dir_check
       failed_when: cluster_dir_check.stat.exists
 
-    - name: Get Binaries (Once)
+    - name: Get/Build Binaries Installer and Clients (Once)
       run_once: true
       block:
-      - name: Get the latest installer
+      - name: Get the openshift installer
         get_url:
           validate_certs: no
           force: true
           url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ ocp_release }}/openshift-install-linux.tar.gz
           dest: /home/stack/openshift-install-linux.tar.gz
+        when: not build_ocp_installer
 
       - name: Untar installer
         unarchive:
           src: /home/stack/openshift-install-linux.tar.gz
           dest: /home/stack/
           remote_src: yes
+        when: not build_ocp_installer
+
+      - name: Get installer from repo and branch
+        git:
+          repo: "{{ ocp_installer_repo }}"
+          dest: /home/stack/installer
+          version: "{{ ocp_installer_branch }}"
+        when: build_ocp_installer
+
+      - name: Setup golang and Build installer
+        become: true
+        shell: |
+          curl -O https://storage.googleapis.com/golang/go1.15.3.linux-amd64.tar.gz && tar -C /usr/local -xzf go1.15.3.linux-amd64.tar.gz && export PATH=$PATH:/usr/local/go/bin
+          cd /home/stack/installer
+          TAGS=libvirt ./hack/build.sh
+        register: output
+        when: build_ocp_installer
+
+      - name: Output the build output
+        debug:
+          msg: "{{output.stdout}}"
+        when: build_ocp_installer
+
+      - name: Copy built installer to expected directory
+        shell: |
+          cp /home/stack/installer/bin/openshift-install /home/stack/openshift-install
+        when: build_ocp_installer
 
       - name: Get the ocp client
         get_url:
@@ -84,7 +112,9 @@
         become: true
         shell: |
           cp /home/stack/oc /usr/local/bin
+          cp /home/stack/kubectl /usr/local/bin
           chmod a+x /usr/local/bin/oc
+          chmod a+x /usr/local/bin/kubectl
     # End block
 
     - name: Create ocp_clusters directories
@@ -262,7 +292,11 @@
 
     - name: Create ignition-configs with openshift-installer
       shell: |
+        {% if ocp_release_image_override is defined %}
+        OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="{{ocp_release_image_override}}" ./openshift-install --log-level=debug create ignition-configs --dir=/home/stack/ocp_clusters/{{ocp_cluster_name}}/ > /home/stack/ocp_clusters/{{ocp_cluster_name}}/create_ignition_configs.log 2>&1
+        {% else %}
         ./openshift-install --log-level=debug create ignition-configs --dir=/home/stack/ocp_clusters/{{ocp_cluster_name}}/ > /home/stack/ocp_clusters/{{ocp_cluster_name}}/create_ignition_configs.log 2>&1
+        {% endif %}
       args:
         chdir: /home/stack/
 
@@ -299,7 +333,11 @@
 
     - name: Run openshift-installer
       shell: |
+        {% if ocp_release_image_override is defined %}
+        OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE="{{ocp_release_image_override}}" ./openshift-install --log-level=debug create cluster --dir=/home/stack/ocp_clusters/{{ocp_cluster_name}}/ > /home/stack/ocp_clusters/{{ocp_cluster_name}}/ocp_install.log 2>&1
+        {% else %}
         ./openshift-install --log-level=debug create cluster --dir=/home/stack/ocp_clusters/{{ocp_cluster_name}}/ > /home/stack/ocp_clusters/{{ocp_cluster_name}}/ocp_install.log 2>&1
+        {% endif %}
       args:
         chdir: /home/stack/
 

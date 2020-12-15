@@ -7,6 +7,14 @@ osp_user_name: shiftstack_user
 # osp_user_name: "shiftstack{{ocp_cluster_index}}"
 
 ocp_release: 4.6.1
+
+# Single Node OpenShift requires building the installer from a specific repo and
+# branch and using an override image
+build_ocp_installer: false
+ocp_installer_repo:  https://github.com/eranco74/installer.git
+ocp_installer_branch: libvirt_single_node
+# ocp_release_image_override: "quay.io/openshift-release-dev/ocp-release:4.6.4-x86_64"
+
 install_client: true
 # Do not allow ocp_cluster_name to exceed 14 characters!!!!
 ocp_cluster_name: "{{osp_project_name}}"
