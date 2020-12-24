@@ -189,14 +189,28 @@ Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template f
 ## Pbench agent Installations
 To install Pbench agent on the compute nodes and vm's (i.e client and server),you have to follow the below steps and set the below params install/group_vars/all.yml
 
-`pbench_key_url: <pbench_key_url>
+```
+ pbench_key_url: <pbench_key_url>
  pbench_config_url: <pbench_config_url>
- pbench_configuration_environment: <pbench_configuration_environment>`
+
+ #check the infrared inv to update the value
+ id_rsa_overcloud: ~/.infrared/.workspaces/<update_value>/id_rsa_overcloud
+ undercloud_hostname: <undercloud hostname>
+```
 
 `cd  {{ ansible_user_dir}}/jetpack/install`
 
 1) To create the client and server
-     `ansible-playbook boot.yml`
+     `ansible-playbook boot_vms.yml`
+
+To install Pbench agent on Trafficgen host, set the below params
+
+```
+trafficgen_host:
+  ip: <ip>
+  ssh_pass: password
+  ssh_user: root
+```
 2) Install Pbench agent bootstrapping
      `ansible-playbook pbench_agent_bootstrap.yml -e "repos=<perf-dept-repo>" `
 3) Install Pbench agent install

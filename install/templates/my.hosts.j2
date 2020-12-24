@@ -1,0 +1,25 @@
+[vms]
+{% for item in vm_names %}
+{{ item }}
+{% endfor %}
+
+{% if trafficgen_host is defined %}
+[trafficgen_host]
+{{ trafficgen_host.ip }}
+{% endif %}
+
+[servers:children]
+compute
+vms
+{% if trafficgen_host is defined %}
+trafficgen_host
+{% endif %}
+
+{% if pbench_agent_install|default(false) %}
+[servers:vars]
+# where to get the key
+pbench_key_url = {{ pbench_key_url }}
+
+# where to get the config file
+pbench_config_url = {{ pbench_config_url }}
+{% endif %}

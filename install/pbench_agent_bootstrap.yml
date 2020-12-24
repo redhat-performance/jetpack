@@ -19,13 +19,19 @@
         GIT_SSL_NO_VERIFY=true git clone {{ repos }}
       ignore_errors: yes
 
+    - name: copy keys to trafficgen host
+      shell: |
+        echo '{{ trafficgen_host.ssh_pass }}' | sshpass ssh-copy-id -i ~/.ssh/id_rsa -o 'StrictHostKeyChecking no' -f {{ trafficgen_host.ssh_user }}@{{ trafficgen_host.ip }}
+      register: ssh_result
+      changed_when: false
+      ignore_errors: true
+      when: trafficgen_host is defined
+
     - name: get computes ip
       shell: |
         . {{ stackrc }}
-        nova list | grep {{ item }} | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
+        nova list | grep -i "compute" | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
       register: computes_ip
-      with_items:
-        - "{{ compute_names }}"
 
     - name: get floating ip of server and client
       shell: |

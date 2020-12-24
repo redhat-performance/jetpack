@@ -73,14 +73,6 @@
       with_items:
         - "{{ vm_names }}"
 
-    - name: get computes ip
-      shell: |
-        . {{ stackrc }}
-        nova list | grep {{ item }} | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
-      register: computes_ip
-      with_items:
-        - "{{ compute_names }}"
-
     - name: update user to root
       lineinfile:
         path: "{{ user_dir}}/.ssh/config"

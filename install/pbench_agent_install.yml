@@ -1,13 +1,9 @@
----
-#
-# Playbook for pbench agent installations
-# Usage:
 # ansible-playbook pbench_agent_install.yml
 
 - hosts: compute
   gather_facts: yes
   tasks:
-    - name: install latest epel-release
+    - name: install latest epel and perl-Data-UUID
       yum:
         name: "{{ epel_repo.el7 }}"
         state: present
@@ -25,35 +21,31 @@
       when: ansible_distribution_major_version == '8'
 
 - hosts: undercloud
+  gather_facts: yes
+  tasks:
+    - name: get floating ip of server and client
+      shell: |
+        . {{ overcloudrc }}
+        openstack server list | grep {{ item }} | cut -d \| -f 5 | cut -d \, -f 2 | awk '{$1=$1;print}'
+      register: vms_fip
+      with_items:
+        - "{{ vm_names }}"
+
+- hosts: localhost
   vars:
     pbench_agent_install: true
+    vms_fip: "{{ hostvars['undercloud']['vms_fip'] }}"
+    host_file: "{{ ansible_user_dir }}/.config/hosts"
+    infrared_inv: "{{ ansible_user_dir }}/.infrared/.workspaces/active/hosts"
 
   tasks:
-    - block:
-        - name: remove old epel-release
-          yum:
-            name: "{{item }}"
-            state: absent
-          become: yes
-          ignore_errors: yes
-          loop:
-            - epel-release
-            - ansible
-
-        - name: install latest epel-release
-          yum:
-            name: "{{ epel_repo.el7 }}"
-            state: present
-          become: yes
-
-        - name: install ansible 2.9
-          yum:
-            name: ansible
-            state: present
-          become: yes
-
-      when: ansible_distribution_major_version < '8'
-
+    - name: copy keys to trafficgen host
+      shell: |
+        echo '{{ trafficgen_host.ssh_pass }}' | sshpass ssh-copy-id -i ~/.ssh/id_rsa -o 'StrictHostKeyChecking no' -f {{ trafficgen_host.ssh_user }}@{{ trafficgen_host.ip }}
+      register: ssh_result
+      changed_when: false
+      ignore_errors: true
+      when: trafficgen_host is defined
 
     - name: Install the pbench-agent roles from Galaxy
       shell: |
@@ -63,34 +55,44 @@
     - name: generate pbench agent playbook
       template:
         src: pbench_agent_install.yml.j2
-        dest: "{{ user_dir }}/.ansible/collections/ansible_collections/pbench/agent/roles/pbench_agent_install.yml"
+        dest: "{{ ansible_user_dir }}/.ansible/collections/ansible_collections/pbench/agent/roles/pbench_agent_install.yml"
 
-    - name: get computes ip
-      shell: |
-        . {{ stackrc }}
-        nova list | grep {{ item }} | cut -d \| -f 7 |cut -d \= -f 2 | awk '{$1=$1;print}'
-      register: computes_ip
-      with_items:
-        - "{{ compute_names }}"
+    - name: create .config dir
+      file:
+        path: "{{ ansible_user_dir }}/.config/"
+        state: directory
 
-    - name: get floating ip of server and client
+    - name: copy the infrared inv in ~/.config
       shell: |
-        . {{ overcloudrc }}
-        openstack server list | grep {{ item }} | cut -d \| -f 5 | cut -d \, -f 2 | awk '{$1=$1;print}'
-      register: vms_fip
-      with_items:
+        cp {{ infrared_inv }} {{ host_file }}
+
+    - name: Add client and server in inventory
+      blockinfile:
+        path: "{{ host_file }}"
+        marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item[0] }}"
+        regexp: "[local]"
+        block: |
+          {{ item[0] }} original_name= ansible_host={{ item[1].stdout }} ansible_connection=ssh ansible_user=root ansible_ssh_private_key_file={{ id_rsa_overcloud }} ansible_ssh_common_args='-o ProxyCommand="ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -W %h:%p -i {{ ansible_user_dir }}/.ssh/id_rsa stack@{{ undercloud_hostname }}"'
+      with_together:
         - "{{ vm_names }}"
+        - "{{ vms_fip.results }}"
 
     - name: create a inventory file
       template:
-        src: repo_bootstrap.hosts.j2
-        dest: "{{ user_dir }}/.config/myhosts.inv"
+        src: my.hosts.j2
+        dest: "{{ ansible_user_dir }}/.config/myhosts.inv"
+
+    - name: generate a pbench_agent_install inv
+      shell: |
+        cat "{{ ansible_user_dir }}/.config/myhosts.inv" >> {{ host_file }}
 
     - name: run the playbook pbench_agent_install.yml
       shell: |
-        ansible-playbook -i ~/.config/myhosts.inv pbench_agent_install.yml
+        export ANSIBLE_HOST_KEY_CHECKING=False
+        ansible-playbook -i {{ host_file }} pbench_agent_install.yml -T {{ timeout }} --user=root
       register: agent_install
       args:
-        chdir: "{{ user_dir }}/.ansible/collections/ansible_collections/pbench/agent/roles/"
+        chdir: "{{ ansible_user_dir }}/.ansible/collections/ansible_collections/pbench/agent/roles/"
     - debug:
         msg: "{{ agent_install }}"
+

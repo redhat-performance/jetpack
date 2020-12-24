@@ -1,14 +1,14 @@
 ---
 # Obtain/Upload guest_images to OpenStack Cloud
 
-- name: Fetch image
+- name: Fetch image centos7
   get_url:
     url: "{{ guest_images[item].url_centos7 }}"
     dest: "/home/stack/{{ guest_images[item].name }}.{{ guest_images[item].type }}"
   with_items: "{{ guest_images }}"
   when: ansible_distribution_major_version < '8'
 
-- name: Fetch image
+- name: Fetch image centos8
   get_url:
     url: "{{ guest_images[item].url_centos8 }}"
     dest: "/home/stack/{{ guest_images[item].name }}.{{ guest_images[item].type }}"

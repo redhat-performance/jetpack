@@ -16,19 +16,26 @@ epel_repo:
 
 pbench_image_rhel: false
 
-compute_names: ['compute-0', 'compute-1' ]
-
 #name for the client and server
 vm_names: [ client, server ]
+# port names
+ports: [ 'client_port', 'server_port']
+timeout: 15
+
+# trafficgen host ip address
+#trafficgen_host:
+#  ip: <ip>
+#  ssh_pass: password
+#  ssh_user: root
 
 user_dir: /home/stack
 overcloudrc: /home/stack/overcloudrc
 stackrc: /home/stack/stackrc
-# port names
-ports: [ 'client_port', 'server_port']
-timeout: 30
 
 # update the values to install pbench agent
+#check the infrared inv
+#id_rsa_overcloud: ~/.infrared/.workspaces/<update_value>/id_rsa_overcloud
+#undercloud_hostname:
 #pbench_key_url:
 #pbench_config_url:
-#pbench_configuration_environment: "production"
+pbench_configuration_environment: "production"
