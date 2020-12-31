@@ -2,38 +2,55 @@
 - hosts: undercloud
   gather_facts: yes
   tasks:
-      # RHBZ 1756492
-      - name: exclude ceph images
-        lineinfile:
-          path: /home/stack/containers-prepare-parameter.yaml
-          insertafter: "- push_destination: true"
-          line: '    excludes:'
-        when: osp_release > 13
-      - name: exclude ceph images
-        lineinfile:
-          path: /home/stack/containers-prepare-parameter.yaml
-          insertafter: "    excludes:"
-          line: '    - ceph'
-        when: osp_release > 13
-      - name: get tht version
-        shell: |
-          grep  "heat_template_version" /usr/share/openstack-tripleo-heat-templates/overcloud.j2.yaml | cut -d ':' -f2
-        register: tht_version
-      - name: set heat_template_version
-        set_fact:
-          heat_template_version: "{{ tht_version.stdout }}"
-      - name: generate firstboot-nvme.yaml
-        template:
-          src: "firstboot-nvme.yaml.j2"
-          dest: "/home/stack/firstboot-nvme.yaml"
-        when: passthrough_nvme is defined or mount_nvme is defined
+    - block:
+        # RHBZ 1756492
+        - name: exclude ceph images
+          lineinfile:
+            path: /home/stack/containers-prepare-parameter.yaml
+            insertafter: "- push_destination: true"
+            line: '    excludes:'
+
+        - name: exclude ceph images
+          lineinfile:
+            path: /home/stack/containers-prepare-parameter.yaml
+            insertafter: "    excludes:"
+            line: '    - ceph'
+
+      when: (ceph_enabled != true) and (osp_release > 13)
+
+    - name: get tht version
+      shell: |
+        grep  "heat_template_version" /usr/share/openstack-tripleo-heat-templates/overcloud.j2.yaml | cut -d ':' -f2
+      register: tht_version
+
+    - name: set heat_template_version
+      set_fact:
+        heat_template_version: "{{ tht_version.stdout }}"
+
+    - name: generate firstboot-nvme.yaml
+      template:
+        src: "firstboot-nvme.yaml.j2"
+        dest: "/home/stack/firstboot-nvme.yaml"
+      when: passthrough_nvme is defined or mount_nvme is defined
+
+    - name: generate wipe-disks.yaml
+      template:
+        src: "firstboot-wipe-disks.yaml.j2"
+        dest: "/home/stack/wipe-disks.yaml"
+      when: ceph_enabled and (clean_nodes != true)
+
+    - name: generate wipe-disk.sh
+      template:
+        src: "wipe-disk.sh.j2"
+        dest: "/home/stack/wipe-disk.sh"
+      when: ceph_enabled and (clean_nodes != true)
 
 - hosts: localhost
   gather_facts: yes
   tasks:
       - name: Set compute count fact
         set_fact:
-            compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int)) }}"
+          compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int) - (ceph_node_count|int)) }}"
 
       - name: get nodes
         shell: |
@@ -49,13 +66,13 @@
       - block:
         - name: check registered nodes with requested node count
           debug:
-            msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
-          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+            msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int + ceph_node_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
+          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int + ceph_node_count|int)
 
         - name: Adjust compute count
           set_fact:
             compute_count: "{{ compute_count|int - 1 }}"
-          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int)
+          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int + ceph_node_count|int)
           with_items: "{{ nodes_uuids }}"
         when: scale_compute_vms == false
 
@@ -231,9 +248,26 @@
             include_tasks: tasks/provisioning_baremetal_nodes.yml
         when: novaless_prov
 
+      - name: set fact for storage nodes
+        set_fact:
+          storage_node_disks: "{{ hostvars['undercloud']['storage_node_disks']|unique }}"
+        when: ceph_enabled and storage_node_disks is not defined
+
+      - name: generate internal.yml.j2
+        template:
+          src: internal.yml.j2
+          dest: ~/.infrared/plugins/tripleo-overcloud/templates/storage/internal.yml.j2
+          force: yes
+        when: ceph_enabled
+
+      - name: set facts for ceph deployment
+        set_fact:
+          ceph_params: "--storage-backend ceph --storage-external no"
+        when: ceph_enabled
+
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout {{ deployment_timeout | default(240) }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} {{ oc_extra_templates | default('') }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true --public-network false {{ oc_heat_configs | default('') }} {{ oc_config_resource | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout {{ deployment_timeout | default(240) }} --build {{ osp_puddle }}  --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --storage-nodes {{ ceph_node_count }} {{ oc_extra_templates | default('') }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true {{ ceph_params | default('') }} --public-network false {{ oc_heat_configs | default('') }} {{ oc_config_resource | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"

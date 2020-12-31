@@ -97,3 +97,49 @@
       fi
   with_items: "{{ total_nodes.stdout_lines | default([]) }}"
   changed_when: false
+  register: prov_state
+  until: prov_state is succeeded
+  retries: 3
+  delay: 30
+
+- block:
+    - name: introspection data for a nodes
+      shell: |
+        source ~/stackrc
+        openstack baremetal introspection data save {{ item }} | jq . | grep by-path | cut -d \" -f 4
+      register: storage_disks_info
+      with_items: "{{ total_nodes.stdout_lines | default([]) }}"
+      when: composable_roles != true
+
+
+    - name: introspection data for a nodes
+      shell: |
+        source ~/stackrc
+        for i in $(openstack baremetal node list --format value -c UUID); do
+          if [[ `openstack baremetal node show $i --fields driver_info -f json | jq '.driver_info.ipmi_address'` =~ {{ ceph_machine_type }} ]]
+          then
+             openstack baremetal introspection data save $i | jq . | grep by-path | cut -d \" -f 4
+          fi
+        done
+      register: storage_disks_info_comp
+      with_items: "{{ total_nodes.stdout_lines | default([]) }}"
+      when: composable_roles
+
+    - name: set fact storage_node_disks
+      set_fact:
+        storage_node_disks: "{{ storage_node_disks|default([]) + item.stdout_lines }}"
+      with_items: "{{ storage_disks_info.results }}"
+      when: composable_roles != true
+
+    - name: set fact storage_node_disks
+      set_fact:
+        storage_node_disks: "{{ storage_node_disks|default([]) + item.stdout_lines }}"
+      with_items: "{{ storage_disks_info_comp.results }}"
+      when: composable_roles
+
+  when: ceph_enabled and storage_node_disks is not defined
+
+- name: show the storage_node_disks
+  debug:
+    msg: "{{ storage_node_disks|unique }}"
+  when: ceph_enabled

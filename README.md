@@ -162,4 +162,25 @@ Requirements
 1) Undercloud and Controller nodes should be of same machine type
    Example:
    controller_count = 3, then it will consider the first node in instackenv.json as  undercloud and the next three nodes as controllers
-2) set composable_roles: true true in group_vars/all.yml
+2) set composable_roles: true in group_vars/all.yml
+
+## Deployment with Ceph
+On homogeneous set of machine type to deploy OSP with Ceph, set the following variables in group_vars/all.yml
+   `ceph_node_count - to number ceph nodes`
+   `ceph_enabled set to true to enable Ceph based deployment`
+   `storage_node_disks- specify the disks for example storage_node_disks: ['/dev/nvme0n1'],
+                        if you do not specify it get set based on the introspection
+                        data`
+   `osd_pool_default_pg_num - user needs to calculate and set it based on storage_node_disks`
+   `osd_pool_default_pgp_num - user needs to calculate and set it based on storage_node_disks`
+   `osd_objectstore can be set to filestore or bluestore. By default set to filestore`
+   `osd_scenario can be set to collocated, non-collocated (for filestore) or lvm for (bluestore)`
+
+For OSP deploy with Ceph using Composable Roles, After setting the above specified vars you need to set two additional vars in group_vars/all.yml i.e ceph_ifaces, ceph_machine_type.
+   Example:
+   For OSP16.1,
+   `ceph_machine_type: '1029p'`
+   `ceph_ifaces: [ens2f0, ens2f1, ens2f2, ens2f3]`
+
+Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
+      requirement if needed
