@@ -67,7 +67,7 @@
       - name: set tenant interface
         set_fact:
           tenant_interface: "{{ ifaces[2] }}"
-        when: tenant_interface is not defined and ifaces|length > 2
+        when: tenant_interface is not defined and ifaces|length > 2 and vlan_provider_network == false
 
       - name: set isolated interface
         set_fact:
@@ -78,6 +78,11 @@
         set_fact:
           storage_interface: "{{ ifaces[0] }}"
         when: storage_interface is not defined and ifaces|length > 1
+
+      - name: set dedicated vlan based provider network
+        set_fact:
+          openshift_vlan_interface: "{{ ifaces[2] }}"
+        when: vlan_provider_network == true and ifaces|length > 2
 
       - name: set nic configs
         set_fact:
