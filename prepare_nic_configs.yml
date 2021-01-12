@@ -98,6 +98,14 @@
             src: "network-environment.yaml.j2"
             dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
             force: yes
+        when: network_protocol == "ipv4"
+
+      - name: prepare network-environment-v6.yaml.j2
+        template:
+            src: "network-environment-v6.yaml.j2"
+            dest: "{{ ansible_user_dir }}/virt/network/network-environment-v6.yaml.j2"
+            force: yes
+        when: network_protocol == "ipv6"
 
       - name: prepare controller.yaml.j2
         template:

@@ -184,3 +184,10 @@ For OSP deploy with Ceph using Composable Roles, After setting the above specifi
 
 Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
       requirement if needed
+
+## IPV6 based deployment
+Requirements: Set the below params in group_vars/all.yml
+#Enable ipv6 deployment
+network_protocol: ipv6
+ipv6_external_gateway: '2620:52:0:13b8::fe/64'
+ipv6_external_network_vlan_id: 10

@@ -183,4 +183,9 @@ osd_objectstore: bluestore
 #storage_node_disks: ['/dev/nvme0n1']
 #osd_pool_default_pg_num:
 #osd_pool_default_pgp_num:
+new_nodes_instack: "{{ playbook_dir }}/newnodes.json"
 
+#Enable ipv6 deployment
+network_protocol: ipv4
+##ipv6_external_gateway: '2620:52:0:13b8::fe/64'
+##ipv6_external_network_vlan_id: 10
