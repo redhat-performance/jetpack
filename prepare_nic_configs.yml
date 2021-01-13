@@ -74,6 +74,11 @@
           isolated_interface: "{{ ifaces[0] }}"
         when: isolated_interface is not defined and ifaces|length > 1
 
+      - name: set storage_interface
+        set_fact:
+          storage_interface: "{{ ifaces[0] }}"
+        when: storage_interface is not defined and ifaces|length > 1
+
       - name: set nic configs
         set_fact:
           nic_configs: "{{ ansible_user_dir }}/virt"
@@ -105,6 +110,13 @@
             src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', 'osp10_compute.yaml.j2') }}"
             dest: "{{ nic_config_path }}/compute.yaml.j2"
             force: yes
+
+      - name: prepare ceph-storage.yaml.j2
+        template:
+            src: ceph-storage.yaml.j2
+            dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
+            force: yes
+        when: ceph_enabled
 
       - name: prepare compute.yaml.j2
         template:

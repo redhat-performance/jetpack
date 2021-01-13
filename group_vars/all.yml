@@ -15,6 +15,7 @@ baseurl: http://download.eng.pek2.redhat.com/released/RHEL-7/7.9/Server/x86_64/o
 controller_count: 3
 # No need to set compute_count. This will be set to all remaining nodes, which is calclulated in overcloud.yml
 #compute_count: 1
+ceph_node_count: 0
 set_boot_order: false
 hammer_host: hwstore.example.com
 alias:
@@ -119,7 +120,7 @@ inspection_iprange: 192.168.24.110,192.168.24.250
 # undercloud to access overcloud resources
 external_gateway: 172.17.5.1/24
 external_network_vlan_id: 300
-clean_nodes: False
+clean_nodes: false
 #adding changes 
 external_net_cidr: 172.17.5.0/24
 external_allocation_pools_start: 172.17.5.50
@@ -208,6 +209,19 @@ scale_compute_vms: false
 #case you need specific machines as controllers. Else default controller
 #machine type is the first node in overcloud_instackenv.json
 composable_roles: false
-# controller_ifaces: []
+#controller_ifaces: []
 #controller_machine_type: "1029p"
+#ceph_ifaces: []
+#ceph_machine_type:
 
+
+#Ceph deployment params
+ceph_enabled: false
+osd_scenario: lvm
+osd_objectstore: bluestore
+
+#Note:By default storage_node_disks can be detected automatically
+#using introspection data
+#storage_node_disks: ['/dev/nvme0n1']
+#osd_pool_default_pg_num:
+#osd_pool_default_pgp_num:

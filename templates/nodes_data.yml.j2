@@ -3,8 +3,12 @@ parameter_defaults:
   ControllerCount: {{ controller_count }}
 {% if failed_nodes_machine_type is not defined %}
 {% for node_type in machine_types %}
-{% if node_type|string() == controller_machine_type|string() %}
+{% if (node_type|string() == controller_machine_type|string()) and (node_type|string() == ceph_machine_type|string()) %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int - ceph_node_count|int }}
+{% elif node_type|string() == controller_machine_type|string() %}
   Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int }}
+{% elif node_type|string() == ceph_machine_type|string() %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - ceph_node_count|int }}
 {% else %}
   Compute{{ node_type }}Count: {{ machine_count[node_type] }}
 {% endif %}
@@ -15,22 +19,36 @@ parameter_defaults:
 {% for failed_machine_type in failed_nodes_machine_type|unique %}
 {% for node_type in machine_types %}
 {% if node_type|string() == failed_machine_type|string() %}
-{% if failed_machine_type|string() == controller_machine_type|string() %}
+
+{% if (failed_machine_type|string() == controller_machine_type|string()) and  (failed_machine_type|string() == ceph_machine_type|string()) %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int - ceph_node_count|int - failed_nodes_machine_count[failed_machine_type]|int }}
+{% elif failed_machine_type|string() == controller_machine_type|string() %}
   Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int - failed_nodes_machine_count[failed_machine_type]|int }}
+{% elif failed_machine_type|string() == ceph_machine_type|string() %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - ceph_node_count|int - failed_nodes_machine_count[failed_machine_type]|int }}
 {% else %}
   Compute{{ node_type }}Count: {{ machine_count[node_type]|int - failed_nodes_machine_count[failed_machine_type]|int }}
 {% endif %}
+
+{% elif (node_type|string() == controller_machine_type|string()) and (node_type|string() == ceph_machine_type|string()) %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int - ceph_node_count|int }}
 {% elif node_type|string() == controller_machine_type|string() %}
   Compute{{ node_type }}Count: {{ machine_count[node_type]|int - controller_count|int }}
+{% elif node_type|string() == ceph_machine_type|string() %}
+  Compute{{ node_type }}Count: {{ machine_count[node_type]|int - ceph_node_count|int }}
 {% else %}
   Compute{{ node_type }}Count: {{ machine_count[node_type] }}
 {% endif %}
 {% endfor %}
 {% endfor %}
 {% endif %}
-
+{% if ceph_enabled %}
+  CephStorageCount: {{ ceph_node_count }}
+{% endif %}
 
 {% for node_type in machine_types %}
-  OvercloudCompute{{ node_type }}Flavor: compute{{ node_type }}
+  OvercloudCompute{{ node_type }}Flavor: baremetal{{ node_type }}
 {% endfor %}
-
+{% if ceph_enabled %}
+  OvercloudCephStorageFlavor: baremetal{{ ceph_machine_type }}
+{% endif %}

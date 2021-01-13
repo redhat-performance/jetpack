@@ -20,6 +20,10 @@ resource_registry:
   OS::TripleO::Compute::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/compute.yaml
 {% endif %}
   OS::TripleO::Controller::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/controller.yaml
+{% if ceph_enabled %}
+  OS::TripleO::CephStorage::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/ceph-storage.yaml
+{% endif %}
+
 
 parameter_defaults:
 {%raw%}{% if not install.network.render.templates|default(False) %} {%endraw%}

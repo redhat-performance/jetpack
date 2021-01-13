@@ -7,7 +7,6 @@
         infrared_oc_deploy_template:  "{{ ansible_user_dir }}/.infrared/plugins/tripleo-overcloud/templates/overcloud_deploy.sh.j2"
       shell: |
         cp   {{ oc_deploy_template }} {{ infrared_oc_deploy_template }}
-
 - hosts: undercloud
   vars:
     machine_types:  "{{ hostvars['localhost']['machine_types'] }}"
@@ -15,18 +14,17 @@
     - name: create flavors
       shell: |
         source ~/stackrc
-        openstack flavor create --id auto --ram 4096 --disk 40 --vcpus 1 compute{{ item }}
-        openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="compute{{ item }}" compute{{ item }}
-        openstack flavor set compute{{ item }} --property "resources:VCPU"="0"
-        openstack flavor set compute{{ item }} --property "resources:MEMORY_MB"="0"
-        openstack flavor set compute{{ item }} --property "resources:DISK_GB"="0"
-        openstack flavor set compute{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
+        openstack flavor create --id auto --ram 4096 --disk 40 --vcpus 1 baremetal{{ item }}
+        openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal{{ item }}" baremetal{{ item }}
+        openstack flavor set baremetal{{ item }} --property "resources:VCPU"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:MEMORY_MB"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:DISK_GB"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
       with_items: "{{ machine_types }}"
 
     - name: copy roles directory
       command: |
         cp -r /usr/share/openstack-tripleo-heat-templates/roles /home/stack
-
     - name: copy roles directory
       command:  |
         cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}.yaml
@@ -43,12 +41,12 @@
       lineinfile:
         path: "/home/stack/roles/Compute{{ item }}.yaml"
         regexp: '  HostnameFormatDefault:'
-        line: "  HostnameFormatDefault: '%stackname%-compute{{ item }}-%index%'"
+        line: "  HostnameFormatDefault: 'compute{{ item }}-%index%'"
       with_items: "{{ machine_types }}"
 
     - name: set roles
       vars:
-        roles: "Controller"
+        roles: "{{ ('Controller' + ' CephStorage') if ceph_enabled else 'Controller' }}"
       set_fact:
         roles: "{{ roles + ' Compute' + item }}"
       with_items: "{{ machine_types }}"
@@ -66,7 +64,7 @@
         for i in $(openstack baremetal node list --format value -c UUID); do
           if [[ `openstack baremetal node show $i --fields driver_info -f json | jq '.driver_info.ipmi_address'` =~ {{ item }} ]]
           then
-            openstack baremetal node set $i --property capabilities=profile:compute{{ item }},cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
+            openstack baremetal node set $i --property capabilities=profile:baremetal{{ item }},cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
           fi
         done
       with_items: "{{ machine_types }}"

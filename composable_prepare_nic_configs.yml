@@ -99,6 +99,11 @@
         with_items:
           - "{{ ifaces }}"
 
+      - name: set storage interface for custom roles
+        set_fact:
+          storage_interfaces: "{{ isolated_interfaces }}"
+        when: ceph_enabled and isolated_interfaces is defined
+
       - name: remove duplicates from machine types
         set_fact:
           machine_types: "{{ machine_types | unique }}"
@@ -185,3 +190,40 @@
          - "{{ external_interfaces }}"
          - "{{ tenant_interfaces }}"
          - "{{ isolated_interfaces }}"
+
+      - block:
+          - name: fail if ceph_machine_type or ceph_ifaces are not defined
+            fail:
+              msg: check if ceph_machine_type and ceph_ifaces are defined
+            when: ceph_machine_type is not defined or ceph_ifaces is  not defined
+
+          - name: set fact ceph machine type
+            set_fact:
+              ceph_machine_type: "{{ (machine_count[ceph_machine_type]|int >= ceph_node_count|int) | ternary(ceph_machine_type, false) }}"
+
+          - name: fail when insufficient nodes for ceph
+            fail:
+              msg: Not enough nodes of same machine_type for ceph
+            when: ceph_machine_type == false
+
+          - name: set fact for ceph ext iface
+            set_fact:
+              ceph_external_interface: "{{ (ceph_ifaces|length > 1) | ternary(ceph_ifaces[1], ceph_ifaces[0]) }}"
+              ceph_ctlplane_interface: "{{ (ceph_ifaces|length > 1) | ternary(ceph_ifaces[1], ceph_ifaces[0]) }}"
+
+          - name: set fact for ceph storage iface
+            set_fact:
+              ceph_storage_interface: "{{ ceph_ifaces[0] }}"
+            when: ceph_ifaces|length > 1
+
+          - name: prepare ceph-storage.yaml.j2
+            vars:
+              ctlplane_interface: "{{ ceph_ctlplane_interface }}"
+              external_interface: "{{ ceph_external_interface }}"
+              storage_interface: "{{ ceph_storage_interface }}"
+            template:
+              src: ceph-storage.yaml.j2
+              dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
+              force: yes
+
+        when: ceph_enabled
