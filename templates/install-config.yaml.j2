@@ -39,7 +39,7 @@ platform:
     computeFlavor:     "m4.xlarge"
     lbFloatingIP:      "{{ api_floating_ip }}"
     ingressFloatingIP: "{{ ingress_floating_ip }}"
-    externalDNS: ['{{ ansible_dns.nameservers[0] }}']
+    externalDNS: {{ ansible_dns.nameservers }}
     octaviaSupport: "1"
     trunkSupport: "1"
 pullSecret: {{ ocp_pull_secret }}
