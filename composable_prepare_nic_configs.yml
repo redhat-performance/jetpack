@@ -21,8 +21,17 @@
           machine_count: "{{ machine_count | combine({item: (item in machine_count)|ternary(machine_count[item], 0)|int + 1 }, recursive=True) }}"
         with_items: "{{ machine_types }}"
 
+      - include_tasks: tasks/copykeys.yml
+        vars:
+          hostname: "{{ item.stdout }}"
+          ssh_user: "root"
+        with_items:
+          - "{{ host_list.results }}"
+
       - block:
           - name: Get Product Name of 1029u
+            vars:
+              ansible_user: root
             shell: |
               dmidecode -t system | grep "Product Name" | cut -d '-' -f3
             register: product_name
