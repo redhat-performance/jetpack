@@ -102,6 +102,11 @@ interfaces:
 #extra_templates:
 
 #heat_configs:
+#if you need vlan tenant network enable the below lines
+# - NeutronNetworkType=vlan
+# - NeutronBridgeMappings=openshift:br-openshift,datacentre:br-ex
+# - NeutronNetworkVLANRanges=openshift:500:1000,datacentre:1:500
+# - ComputeParameters.NeutronBridgeMappings=openshift:br-openshift
 
 # containers params
 registry_mirror: redhat.com
@@ -165,6 +170,7 @@ vm_image_url:
 #neutron_backend: ovn
 #ocp installation
 shift_stack: false
+vlan_provider_network: false
 #browbeat installation
 #installs browbeat, if this variable is not defined or set true
 #skips browbeat installation, only if the variable set false

@@ -173,6 +173,7 @@ vm_image_url:
 #neutron_backend: ovn
 #ocp installation
 shift_stack: "{{ (lookup('env', 'OPENSHIFT_INSTALL')|default(true, true))|bool }}"
+vlan_provider_network: false
 #browbeat installation
 #installs browbeat, if this variable is not defined or set true
 #skips browbeat installation, only if the variable set false

@@ -142,6 +142,7 @@ vm_image_url:
 #neutron_backend: ovn
 #ocp installation
 shift_stack: false
+vlan_provider_network: false
 
 # define mount_nvme to mount /var/lib/nova on nvme device
 # to use nvme storage for nova instances as ephemeral disk

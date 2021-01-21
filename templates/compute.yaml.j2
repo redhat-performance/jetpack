@@ -274,7 +274,7 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: StorageIpSubnet
-{% if tenant_interface is defined %}
+{% if tenant_interface is defined  and vlan_provider_network == false %}
                         -
                           type: ovs_bridge
                           name: br-tenant
@@ -293,6 +293,17 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: TenantIpSubnet
+{% if vlan_provider_network == true and openshift_vlan_interface is defined %}
+                        -
+                          type: ovs_bridge
+                          name: br-openshift
+                          use_dhcp: false
+                          members:
+                            -
+                              type: interface
+                              name: {{ openshift_vlan_interface }}
+                              primary: true
+{% endif %}
 
 outputs:
   OS::stack_id:
