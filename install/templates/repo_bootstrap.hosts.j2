@@ -1,0 +1,14 @@
+[servers]
+
+{% if (pbench_agent_install is defined) or pbench_image_rhel %}
+{% for item in vms_fip.results %}
+{{ item.stdout }}
+{% endfor %}
+{% endif %}
+{% for item in computes_ip.stdout_lines%}
+{{ item }}
+{% endfor %}
+
+{% if trafficgen_host is defined %}
+{{ trafficgen_host.ip }}
+{% endif %}

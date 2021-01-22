@@ -1,0 +1,19 @@
+#!/bin/bash
+
+sed -i s/^PasswordAuthentication.*/PasswordAuthentication\ yes/ /etc/ssh/sshd_config
+systemctl restart sshd
+cat /etc/ssh/sshd_config
+echo "Enabled PasswordAuthentication"
+{% if ansible_distribution_major_version == '8' %}
+sudo dnf clean all
+sudo dnf install {{ epel_repo.el8 }}  -y
+sudo dnf module install -y python36
+sudo alternatives --set python /usr/bin/python3
+sudo dnf --enablerepo=PowerTools install perl-Data-UUID -y
+{% endif %}
+{% if ansible_distribution_major_version < '8' %}
+sudo yum clean all
+sudo yum install {{ epel_repo.el7 }}  -y
+sudo yum install centos-release-scl-rh -y
+sudo yum install rh-python36-python -y
+{% endif %}

@@ -1,0 +1,7 @@
+---
+pbench_flavors:
+  - name: pbench_flavor
+    cpu: 8
+    disk: 160 
+    ram: 16384
+
