@@ -23,10 +23,12 @@
 
       - include_tasks: tasks/copykeys.yml
         vars:
-          hostname: "{{ item.stdout }}"
+          hostname: "{{ item.0.stdout }}"
           ssh_user: "root"
-        with_items:
+        when: item.1 == "1029u"
+        with_together:
           - "{{ host_list.results }}"
+          - "{{ machine_types }}"
 
       - block:
           - name: Get Product Name of 1029u
