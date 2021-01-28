@@ -220,14 +220,17 @@ composable_roles: false
 #ceph_ifaces: []
 #ceph_machine_type:
 
-
 #Ceph deployment params
 ceph_enabled: false
 osd_scenario: lvm
 osd_objectstore: bluestore
-
 #Note:By default storage_node_disks can be detected automatically
 #using introspection data
 #storage_node_disks: ['/dev/nvme0n1']
 #osd_pool_default_pg_num:
 #osd_pool_default_pgp_num:
+
+#Enable ipv6 deployment, set network_protocol to ipv6
+network_protocol: ipv4
+#ipv6_external_gateway: '2620:52:0:13b8::fe/64'
+#ipv6_external_network_vlan_id: 10

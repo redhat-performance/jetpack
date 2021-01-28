@@ -49,40 +49,59 @@
       # public_external_interface i.e 4th interface
       - name: disable rp_filter
         shell: |
-            for f in $(find /proc/sys/net/ipv4 -name rp_filter) ; do echo 0 > $f ; done
+          for f in $(find /proc/sys/net/ipv4 -name rp_filter) ; do echo 0 > $f ; done
         become: true
         ignore_errors: true
         when: public_external_interface is defined
 
-      - name: create vlan interface on external interface
+      - name: create vlan interface on external interface (ipv4)
         vars:
             vlan_interface: "{{ ext_iface }}.{{ external_network_vlan_id }}"
         shell: |
-            ip link add link {{ ext_iface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
-            ip link set dev {{ ext_iface }} up
-            ip link set dev {{ vlan_interface }} up
-            ip a a {{ external_gateway }} dev {{ vlan_interface }}
+          ip link add link {{ ext_iface }} name {{ vlan_interface }} type vlan id {{ external_network_vlan_id }}
+          ip link set dev {{ ext_iface }} up
+          ip link set dev {{ vlan_interface }} up
+          ip a a {{ external_gateway }} dev {{ vlan_interface }}
         become: true
         ignore_errors: true
-        when: external_network_vlan_id is defined
+        when: external_network_vlan_id is defined and network_protocol == "ipv4"
 
       - name: add ip on when external interface is real public interface
         shell: |
-            ip a a {{ external_gateway }} dev {{ ext_iface }}
+          ip a a {{ external_gateway }} dev {{ ext_iface }}
         become: true
         ignore_errors: true
-        when: external_network_vlan_id is not defined
+        when: external_network_vlan_id is not defined and network_protocol == "ipv4"
+
+      - name: create vlan interface on external interface (ipv6)
+        vars:
+            vlan_interface: "{{ ext_iface }}.{{ ipv6_external_network_vlan_id }}"
+        shell: |
+          ip link add link {{ ext_iface }} name {{ vlan_interface }} type vlan id {{ ipv6_external_network_vlan_id }}
+          ip link set dev {{ ext_iface }} up
+          ip link set dev {{ vlan_interface }} up
+          ip a a {{ ipv6_external_gateway }} dev {{ vlan_interface }}
+        become: true
+        ignore_errors: true
+        when: ipv6_external_network_vlan_id is defined and network_protocol == "ipv6"
+
+      - name: iptables rule to allow icmp
+        shell: |
+          iptables --ipv6 -I INPUT -p icmp -j ACCEPT
+        become: true
+        ignore_errors: true
+        when: network_protocol == "ipv6"
 
       - name: get default route
         shell: |
-            ip r | grep default | cut -d ' ' -f5
+          ip r | grep default | cut -d ' ' -f5
         register: default_route
         become: true
-        when: external_network_vlan_id is defined
+        when: external_network_vlan_id is defined or ipv6_external_network_vlan_id is defined
 
       - name: masquerade on public interface
         shell: |
-            iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
+          iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
         become: true
-        when: external_network_vlan_id is defined
+        when: external_network_vlan_id is defined or ipv6_external_network_vlan_id is defined
 

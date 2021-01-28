@@ -132,13 +132,19 @@
       - name: set nic-config path
         set_fact:
           nic_config_path: "{{ ansible_user_dir }}/virt/network/vlans{{ ((osp_release|int > 10) | ternary('', '/legacy')) }}"
-
-
       - name: prepare network-environment.yaml.j2
         template:
             src: "network-environment.yaml.j2"
             dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
             force: yes
+        when: network_protocol == "ipv4"
+
+      - name: prepare network-environment-v6.yaml.j2
+        template:
+            src: "network-environment-v6.yaml.j2"
+            dest: "{{ ansible_user_dir }}/virt/network/network-environment-v6.yaml.j2"
+            force: yes
+        when: network_protocol == "ipv6"
 
       - name: set fact controller machine type
         set_fact:
