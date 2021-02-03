@@ -217,17 +217,19 @@ scale_compute_vms: false
 composable_roles: false
 #controller_ifaces: []
 #controller_machine_type: "1029p"
-#ceph_ifaces: []
-#ceph_machine_type:
-
 
 #Ceph deployment params
+#ceph_ifaces: []
+#ceph_machine_type:
 ceph_enabled: false
 osd_scenario: lvm
 osd_objectstore: bluestore
-
 #Note:By default storage_node_disks can be detected automatically
 #using introspection data
 #storage_node_disks: ['/dev/nvme0n1']
 #osd_pool_default_pg_num:
 #osd_pool_default_pgp_num:
+
+#Default value for introspection timeout is 2400s, but user can configure
+#the timeout for large cloud
+#introspection_timeout:
