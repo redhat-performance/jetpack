@@ -23,7 +23,9 @@ resource_registry:
 {% if ceph_enabled %}
   OS::TripleO::CephStorage::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/ceph-storage.yaml
 {% endif %}
-
+{% if composable_roles == true and passthrough_nvme is defined %}
+  OS::TripleO::Compute{{ pci_node_type }}PCI::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/compute_{{ pci_node_type }}.yaml
+{% endif %}
 
 parameter_defaults:
 {%raw%}{% if not install.network.render.templates|default(False) %} {%endraw%}

@@ -159,6 +159,8 @@ vlan_provider_network: false
 #      ram: 16384
 #      disk: 40
 #      vcpus: 4
+#pci_node_count: 0
+#pci_node_type: '1029u'
 
 #For Nova-less provisioning enable the variable
 novaless_prov: false

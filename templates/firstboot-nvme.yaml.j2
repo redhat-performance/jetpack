@@ -29,14 +29,18 @@ resources:
           template: |
             #!/bin/bash
             set -x
-            FORMAT='compute'
+            FORMAT='pci'
+            FORMAT_MOUNT='compute'
             if [[ $(hostname) == *$FORMAT* ]] ; then
-              {% if mount_nvme is not defined and passthrough_nvme is defined %} 
+              echo "passthrough_nvme"
+              {% if passthrough_nvme is defined %}
                 sed "s/^\(GRUB_CMDLINE_LINUX=\".*\)\"/\1 $KERNEL_ARGS\"/g" -i /etc/default/grub ;
                 grub2-mkconfig -o /etc/grub2.cfg
                 reboot
               {% endif %}
-              {% if mount_nvme is defined and passthrough_nvme is not defined %} 
+            elif [[ $(hostname) != *$FORMAT* ]] && [[ $(hostname) == *$FORMAT_MOUNT* ]] ; then
+              echo "mount_nvme"
+              {% if mount_nvme is defined %}
                 mkdir -p /var/lib/nova
                 mkfs -t xfs -f /dev/nvme0n1
                 mount /dev/nvme0n1 /var/lib/nova
@@ -51,4 +55,3 @@ resources:
 outputs:
   OS::stack_id:
     value: {get_resource: userdata}
-
