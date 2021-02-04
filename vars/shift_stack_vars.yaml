@@ -7,6 +7,7 @@ osp_user_name: shiftstack_user
 # osp_user_name: "shiftstack{{ocp_cluster_index}}"
 
 ocp_release: 4.6.1
+ocp_dev_preview: false
 install_client: true
 # Do not allow ocp_cluster_name to exceed 14 characters!!!!
 ocp_cluster_name: "{{osp_project_name}}"
@@ -19,7 +20,7 @@ public_net_name: public
 random_fip: false
 
 ocp_master_flavor: nvme
-ocp_worker_flavor: ""
+ocp_worker_flavor: m4.xlarge
 ocp_cluster_id: "{{ ansible_date_time.epoch | to_uuid }}"
 master_nodes: 3
 worker_nodes: 3
