@@ -77,6 +77,13 @@ scale:
         rhel7_interfaces_f04: [p3p1, p3p2, p2p1, p2p2]
         rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
         rhel8_interfaces_f04: [ens3f0, ens3f1, ens2f0, ens2f1]
+      fc640:
+        rhel8_interfaces: [eno2, ens2f0, ens2f1]
+        rhel7_interfaces: []
+#        rhel7_b01_interfaces: [em2, p8p1, p8p2]
+#        rhel7_b02_interfaces: [em2, p4p1, p4p2]
+#        rhel7_b03_interfaces: [em2, p6p1, p6p2]
+#        rhel7_b04_interfaces: [em2, p2p1, p2p2]
 
 # Other lab machines have to define their interfaces through below
 # 'interfaces' variable. prepare_nic_configs.yml will use that
