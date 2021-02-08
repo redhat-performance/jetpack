@@ -221,7 +221,7 @@ composable_roles: false
 #controller_ifaces: []
 #controller_machine_type: "1029p"
 #ceph_ifaces: []
-#ceph_machine_type:
+ceph_machine_type: ''
 
 
 #Ceph deployment params

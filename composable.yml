@@ -43,28 +43,29 @@
         regexp: '  HostnameFormatDefault:'
         line: "  HostnameFormatDefault: 'compute{{ item }}-%index%'"
       with_items: "{{ machine_types }}"
+    - block:
+        - name: copy role for computePCI
+          command: |
+            cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}PCI.yaml
+          when: item == pci_node_type
+          with_items: "{{ machine_types }}"
 
-    - name: copy role for computePCI
-      command: |
-        cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}PCI.yaml
-      when: item == pci_node_type and passthrough_nvme is defined
-      with_items: "{{ machine_types }}"
+        - name: replace control plane interface PCI
+          lineinfile:
+            path: "/home/stack/roles/Compute{{ item }}PCI.yaml"
+            regexp: '- name:'
+            line: "- name: Compute{{ item }}PCI"
+          when: item == pci_node_type
+          with_items: "{{ machine_types }}"
 
-    - name: replace control plane interface PCI
-      lineinfile:
-        path: "/home/stack/roles/Compute{{ item }}PCI.yaml"
-        regexp: '- name:'
-        line: "- name: Compute{{ item }}PCI"
-      when: item == pci_node_type and passthrough_nvme is defined
-      with_items: "{{ machine_types }}"
-
-    - name: replace control plane interface PCI
-      lineinfile:
-        path: "/home/stack/roles/Compute{{ item }}PCI.yaml"
-        regexp: '  HostnameFormatDefault:'
-        line: "  HostnameFormatDefault: '%stackname%-compute{{ item }}pci-%index%'"
-      when: item == pci_node_type and passthrough_nvme is defined
-      with_items: "{{ machine_types }}"
+        - name: replace control plane interface PCI
+          lineinfile:
+            path: "/home/stack/roles/Compute{{ item }}PCI.yaml"
+            regexp: '  HostnameFormatDefault:'
+            line: "  HostnameFormatDefault: '%stackname%-compute{{ item }}pci-%index%'"
+          when: item == pci_node_type
+          with_items: "{{ machine_types }}"
+      when: passthrough_nvme is defined and pci_node_type is defined
 
     - name: set roles
       vars:

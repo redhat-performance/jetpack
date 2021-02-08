@@ -44,6 +44,7 @@ parameter_defaults:
 {% endif %}
 {% if ceph_enabled %}
   CephStorageCount: {{ ceph_node_count }}
+{% endif %}
 {% if composable_roles == true and passthrough_nvme is defined %}
   Compute{{ pci_node_type }}PCICount: {{ pci_node_count }}
 {% endif %}
@@ -54,6 +55,6 @@ parameter_defaults:
 {% if ceph_enabled %}
   OvercloudCephStorageFlavor: baremetal{{ ceph_machine_type }}
 {% endif %}
-{% if composable_roles == true and passthrough_nvme is defined %}
+{% if composable_roles == true and passthrough_nvme is defined and pci_node_type is defined %}
   OvercloudCompute{{ pci_node_type }}PCIFlavor: baremetal{{ pci_node_type }}
 {% endif %}
