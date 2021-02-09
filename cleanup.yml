@@ -4,9 +4,9 @@
         file:
             path: "{{ infrared_dir }}"
             state: absent
-      - name: remove {{ infrared_workspaces_dir }}
+      - name: remove ~/.infrared
         file:
-            path: "{{ infrared_workspaces_dir }}"
+            path: ~/.infrared
             state: absent
       - name: remove {{ instackenv_file }}
         file:
