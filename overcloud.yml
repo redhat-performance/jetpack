@@ -160,14 +160,14 @@
           path: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
           regexp: 'ComputeExtraConfig'
           line: "{{ '        Compute' + pci_node_type + 'PCIExtraConfig:' }}"
-        when: passthrough_nvme is defined
+        when: passthrough_nvme is defined and pci_node_type is defined
 
       - name: update extra.yml
         lineinfile:
           path: "{{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
           regexp: 'ComputeParameters'
           line: "{{ '        Compute' + pci_node_type + 'PCIParameters:' }}"
-        when: passthrough_nvme is defined
+        when: passthrough_nvme is defined and pci_node_type is defined
 
       # tripleo_heat_templates and resource_registry will define the files.
       # Check if these exist in the undercloud and copy them from jetpack/files
