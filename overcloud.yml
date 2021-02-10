@@ -249,7 +249,7 @@
 
       - name: set extra template facts
         set_fact:
-          oc_extra_templates: "--overcloud-templates None"
+          oc_extra_templates: "--overcloud-templates none"
 
       - name: set extra template facts
         set_fact:
