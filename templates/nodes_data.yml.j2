@@ -44,6 +44,7 @@ parameter_defaults:
 {% endif %}
 {% if ceph_enabled %}
   CephStorageCount: {{ ceph_node_count }}
+{% endif %}
 {% if composable_roles == true and passthrough_nvme is defined %}
   Compute{{ pci_node_type }}PCICount: {{ pci_node_count }}
 {% endif %}
