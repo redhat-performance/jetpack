@@ -6,7 +6,7 @@
 
 - name: clone infrared
   git:
-      repo: "https://github.com/asyedham/infrared.git"
+      repo: "https://github.com/redhat-openstack/infrared"
       dest: "{{ infrared_dir }}"
       force: yes
 
