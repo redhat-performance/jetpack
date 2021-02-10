@@ -28,10 +28,20 @@
               rhel8_interfaces: "{{ (product_name_1029u.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', 'rhel8_interfaces_trtp') }}"
             when: osp_release|int > 14 and machine_type == '1029u'
 
+          - name: set fact for rhel7 ifaces (r640)
+            set_fact:
+              rhel7_interfaces: "{{ (undercloud_hostname.split('-')[0] == 'f04') | ternary('rhel7_interfaces_f04', 'rhel7_interfaces') }}"
+            when: machine_type == 'r640'
+
+          - name: set fact for rhel8 ifaces (r640)
+            set_fact:
+              rhel8_interfaces: "{{ (undercloud_hostname.split('-')[0] == 'f04') | ternary('rhel8_interfaces_f04', 'rhel8_interfaces') }}"
+            when: machine_type == 'r640'
+
           - name: set_fact iface_rhel_version
             set_fact:
               iface_rhel_version: "{{ (osp_release|int > 14)| ternary(rhel8_interfaces, 'rhel7_interfaces') }}"
-            when: machine_type == '1029u'
+            when: machine_type == '1029u' or machine_type == 'r640'
 
           - name: set interfaces
             set_fact:

@@ -45,14 +45,25 @@
 
           - name: set fact rhel8_interfaces
             set_fact:
-              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.changed == False) | ternary('rhel8_interfaces', ( item.changed == true and item.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', 'rhel8_interfaces_trtp')))] }}"
-            with_items:
+              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.0.changed == False) | ternary((item.1.stdout.split('-')[0] == 'f04' and item.2 == 'r640') | ternary ('rhel8_interfaces_f04', 'rhel8_interfaces'), (item.0.changed == true and item.0.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', 'rhel8_interfaces_trtp')))] }}"
+            with_together:
               - "{{ product_name.results }}"
+              - "{{ host_list.results }}"
+              - "{{ machine_types }}"
+
+          - name: set fact rhel7_interfaces
+            set_fact:
+              rhel7_interfaces: "{{  rhel7_interfaces|default([]) + [ (item.0.stdout.split('-')[0] == 'f04' and item.1 =='r640') | ternary('rhel7_interfaces_f04', 'rhel7_interfaces')] }}"
+            with_together:
+              - "{{ host_list.results }}"
+              - "{{ machine_types }}"
 
           - name: set fact for iface_rhel_version
             set_fact:
-              iface_rhel_version: "{{ iface_rhel_version|default([]) + [(osp_release|int > 14)| ternary( item, 'rhel7_interfaces')] }}"
-            with_items: "{{ rhel8_interfaces }}"
+              iface_rhel_version: "{{ iface_rhel_version|default([]) + [(osp_release|int > 14)| ternary( item.0, item.1)] }}"
+            with_together:
+              - "{{ rhel8_interfaces }}"
+              - "{{ rhel7_interfaces }}"
 
           - name: set interfaces
             set_fact:
