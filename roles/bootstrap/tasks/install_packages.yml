@@ -61,4 +61,3 @@
     set_fact:
       hammer_python_interpreter: "{{ python_interpreter }}"
   when: lab_name in ['scale', 'alias']
-
