@@ -7,6 +7,7 @@ osp_user_name: "{{ lookup('env', 'OSP_USER_NAME')|default('shiftstack_user', tru
 # osp_user_name: "shiftstack{{ocp_cluster_index}}"
 
 ocp_release: "{{ lookup('env', 'OPENSHIFT_RELEASE')|default('4.4.6', true) }}"
+ocp_dev_preview: false
 install_client: true
 # Do not allow ocp_cluster_name to exceed 14 characters!!!!
 ocp_cluster_name: "{{ lookup('env', 'OPENSHIFT_CLUSTER_NAME')|default('vlan609', true) }}"
