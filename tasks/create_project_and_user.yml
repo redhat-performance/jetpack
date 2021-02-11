@@ -22,6 +22,14 @@
     user: "{{ user_name }}"
     role: "member"
 
+- name: add admin role
+  os_user_role:
+    cloud: "overcloud"
+    state: present
+    project: "{{ project_name }}"
+    user: "{{ user_name }}"
+    role: "admin"
+
 - name: add swiftoperator role
   os_user_role:
     cloud: "overcloud"
