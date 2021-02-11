@@ -53,11 +53,21 @@
     - name: Get Binaries (Once)
       run_once: true
       block:
+      - name: Set url for installer
+        set_fact:
+          ocp_installer_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/
+        when: ocp_dev_preview == false
+
+      - name: Set url for installer
+        set_fact:
+          ocp_installer_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp-dev-preview/
+        when: ocp_dev_preview
+
       - name: Get the latest installer
         get_url:
           validate_certs: no
           force: true
-          url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ ocp_release }}/openshift-install-linux.tar.gz
+          url: "{{ ocp_installer_url }}{{ ocp_release }}/openshift-install-linux.tar.gz"
           dest: /home/stack/openshift-install-linux.tar.gz
 
       - name: Untar installer
@@ -70,7 +80,7 @@
         get_url:
           validate_certs: no
           force: true
-          url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ ocp_release }}/openshift-client-linux.tar.gz
+          url: "{{ ocp_installer_url }}{{ ocp_release }}/openshift-client-linux.tar.gz"
           dest: /home/stack/openshift-client-linux.tar.gz
 
       - name: Untar ocp client
@@ -84,7 +94,9 @@
         become: true
         shell: |
           cp /home/stack/oc /usr/local/bin
+          cp /home/stack/kubectl /usr/local/bin
           chmod a+x /usr/local/bin/oc
+          chmod a+x /usr/local/bin/kubectl
     # End block
 
     - name: Create ocp_clusters directories

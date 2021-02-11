@@ -172,10 +172,20 @@
         dest: "/home/stack/{{ ocp_cluster_name }}/"
         remote_src: yes
 
+    - name: Set url for installer
+      set_fact:
+        ocp_installer_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/
+      when: ocp_dev_preview == false
+
+    - name: Set url for installer
+      set_fact:
+        ocp_installer_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp-dev-preview/
+      when: ocp_dev_preview
+
     - name: get the latest installer
       get_url:
         validate_certs: no
-        url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ ocp_release }}/openshift-install-linux.tar.gz
+        url: "{{ ocp_installer_url }}{{ ocp_release }}/openshift-install-linux.tar.gz"
         dest: /home/stack/openshift-install-linux.tar.gz
 
     - name: untar installer
@@ -232,7 +242,7 @@
         - name: get the ocp client
           get_url:
             validate_certs: no
-            url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/{{ ocp_release }}/openshift-client-linux.tar.gz
+            url: "{{ ocp_installer_url }}{{ ocp_release }}/openshift-install-linux.tar.gz"
             dest: /home/stack/openshift-client-linux.tar.gz
 
         - name: untar ocp client

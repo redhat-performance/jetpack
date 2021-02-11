@@ -33,10 +33,11 @@ networking:
   type: "{{ ocp_network_type }}"
 platform:
   openstack:
+    defaultMachinePlatform:
+      type: {{ ocp_worker_flavor }}
     cloud:             "{{ osp_project_name }}"
     externalNetwork:   "{{ public_net_name }}"
     region:            "regionOne"
-    computeFlavor:     "m4.xlarge"
     lbFloatingIP:      "{{ api_floating_ip }}"
     ingressFloatingIP: "{{ ingress_floating_ip }}"
     externalDNS: ["{{ ansible_dns.nameservers| join('", "') }}"]
