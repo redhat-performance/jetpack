@@ -220,7 +220,7 @@
     - name: Get master etcd on nvme ignition configuration
       set_fact:
         master_ign_config_base: "{{ master_ign['content'] | b64decode }}"
-        master_etcd_nvme_config: "{{ lookup('template', 'master-etcd.ign.json') }}"
+        master_etcd_nvme_config: "{{ lookup('template', 'master-etcd.ign.json.j2') }}"
       when: ocp_master_etcd_nvme
 
     - name: Dump new version of master.ign file
@@ -231,6 +231,27 @@
         - master.ign
         - master.ign.etcd
       when: ocp_master_etcd_nvme
+
+    - name: Read original worker.ign config file
+      slurp:
+        src: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/worker.ign.orig"
+      register: worker_ign
+      when: worker_nvme_ephemeral
+
+    - name: Get worker nvme ephemeral storage ignition configuration
+      set_fact:
+        worker_ign_config_base: "{{ worker_ign['content'] | b64decode }}"
+        worker_nvme_config: "{{ lookup('template', 'worker-nvme.ign.json.j2') }}"
+      when: worker_nvme_ephemeral
+
+    - name: Dump new version of worker.ign file
+      copy:
+        content: "{{ worker_ign_config_base | combine(worker_nvme_config) | to_json }}"
+        dest: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/{{ item }}"
+      with_items:
+        - worker.ign
+        - worker.ign.nvme
+      when: worker_nvme_ephemeral
 
     - name: run installer
       shell: |
