@@ -189,5 +189,5 @@ osd_objectstore: bluestore
 
 #Default value for introspection timeout is 2400s, but user can configure
 #the timeout for large cloud
-#introspection_timeout:
+introspection_timeout: 2400
 
