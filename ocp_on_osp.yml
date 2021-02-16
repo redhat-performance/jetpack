@@ -242,7 +242,7 @@
         - name: get the ocp client
           get_url:
             validate_certs: no
-            url: "{{ ocp_installer_url }}{{ ocp_release }}/openshift-install-linux.tar.gz"
+            url: "{{ ocp_installer_url }}{{ ocp_release }}/openshift-client-linux.tar.gz"
             dest: /home/stack/openshift-client-linux.tar.gz
 
         - name: untar ocp client
