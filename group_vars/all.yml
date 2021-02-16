@@ -16,7 +16,7 @@ controller_count: 3
 # No need to set compute_count. This will be set to all remaining nodes, which is calclulated in overcloud.yml
 #compute_count: 1
 ceph_node_count: 0
-set_boot_order: false
+set_boot_order: true
 hammer_host: hwstore.example.com
 alias:
 #lab specific vars
