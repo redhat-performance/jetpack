@@ -25,6 +25,12 @@ Currently supported distros for ansible jump host are:
 
 * > RHEL 7.7
 
+# Unsupported machine types
+
+Jetpack doesn't support same machine type that have different set of interfaces. As some fc640 systems (the ones that have Mellanox cards) will have the device names eth2 and eth3 for the Intel interfaces, and the ens2f0 and ens2f1 names become associated with the Mellanox interfaces.
+
+* fc640
+Note: User can add support for fc640 in case your allocation has machines with same interface naming
 
 # Requirements
 
@@ -40,7 +46,6 @@ Passwordless sudo can be setup as below:
 echo "username ALL=(root) NOPASSWD:ALL" | tee -a /etc/sudoers.d/username
 chmod 0440 /etc/sudoers.d/username
 ```
-
 Below is the sequence of steps these playbooks run before deploying overcloud
 1) Clone and setup infrared environment
 2) Download instackenv file from the lab url (playbooks assume that undercloud is the first node in this instackenv file)
