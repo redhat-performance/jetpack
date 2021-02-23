@@ -27,6 +27,10 @@ ocp_network_type: "{{ lookup('env', 'OPENSHIFT_NETWORK_TYPE')|default('Kuryr', t
 
 # if the master has a passthrough nvme, set to true to use this device for etcd
 ocp_master_etcd_nvme: false
+worker_nvme_ephemeral: false
+worker_nvme_var_lib_size: 512000
+worker_nvme_localstorage_tp_lv_count: 5
+worker_nvme_localstorage_tp_lv_size: 90G
 passthrough_nvme_device: /dev/nvme0n1
 
 ssh_key_file: "{{ lookup('env', 'OPENSHIFT_INSTALL_SSH_PUB_KEY_FILE')|default('~/.ssh/id_rsa.pub', true) }}"

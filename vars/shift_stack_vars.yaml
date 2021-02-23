@@ -29,6 +29,10 @@ ocp_network_type: Kuryr
 
 # if the master has a passthrough nvme, set to true to use this device for etcd
 ocp_master_etcd_nvme: true
+worker_nvme_ephemeral: false
+worker_nvme_var_lib_size: 512000
+worker_nvme_localstorage_tp_lv_count: 5
+worker_nvme_localstorage_tp_lv_size: 90G
 passthrough_nvme_device: /dev/nvme0n1
 
 ssh_key_file: '/home/stack/.ssh/id_rsa.pub'

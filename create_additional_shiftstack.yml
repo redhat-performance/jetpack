@@ -29,14 +29,14 @@
 
     - name: Add undercloud host to inventory for each cluster to be created
       add_host:
-        name: "undercloud-{{item}}"
+        name: "undercloud-{{ item }}"
         group: undercloud
         ansible_host: "{{ undercloud_hostname }}"
         ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
         ansible_user: "stack"
         ansible_python_interpreter: "{{ python_interpreter }}"
-        ocp_cluster_index: "{{item}}"
-      with_sequence: "start={{ocp_cluster_index_start|int}} count={{ocp_cluster_index_count|int}} format=%04u"
+        ocp_cluster_index: "{{ item }}"
+      with_sequence: "start={{ ocp_cluster_index_start|int }} count={{ ocp_cluster_index_count|int }} format=%04u"
 
 - name: Create {{ocp_cluster_index_count}} OCP cluster(s)
   hosts: undercloud
@@ -46,7 +46,7 @@
   tasks:
     - name: Fail on cluster directory existing (Safeguard to prevent creating duplicate clusters)
       stat:
-        path: "/home/stack/ocp_clusters/{{ocp_cluster_name}}"
+        path: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}"
       register: cluster_dir_check
       failed_when: cluster_dir_check.stat.exists
 
@@ -105,7 +105,7 @@
         state: directory
       with_items:
         - /home/stack/ocp_clusters
-        - "/home/stack/ocp_clusters/{{ocp_cluster_name}}/"
+        - "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/"
 
     - name: Create project and user
       vars:
@@ -248,12 +248,13 @@
         backup: true
         block: |
             {{ api_floating_ip }} api.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
-            {{ ingress_floating_ip }} console-openshift-console.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
-            {{ ingress_floating_ip }} openshift-authentication-openshift-authentication.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
             {{ ingress_floating_ip }} oauth-openshift.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
+            {{ ingress_floating_ip }} console-openshift-console.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
+            {{ ingress_floating_ip }} downloads-openshift-console.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
+            {{ ingress_floating_ip }} alertmanager-main-openshift-monitoring.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
+            {{ ingress_floating_ip }} grafana-openshift-monitoring.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
             {{ ingress_floating_ip }} prometheus-k8s-openshift-monitoring.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
             {{ ingress_floating_ip }} thanos-querier-openshift-monitoring.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
-            {{ ingress_floating_ip }} grafana-openshift-monitoring.apps.{{ ocp_cluster_name }}.{{ ocp_base_domain }}
         insertafter: "EOF"
         marker: "# {mark} {{ ocp_cluster_name }} OCP CLUSTER MANAGED BLOCK"
       become: yes
@@ -264,24 +265,24 @@
     - name: Prepare install-config.yaml
       template:
         src: "{{ playbook_dir }}/templates/install-config.yaml.j2"
-        dest: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/install-config.yaml"
+        dest: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/install-config.yaml"
 
     - name: Backup the install-config.yaml
       copy:
-        src: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/install-config.yaml"
-        dest: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/install-config.yaml.orig"
+        src: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/install-config.yaml"
+        dest: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/install-config.yaml.orig"
         remote_src: yes
 
     - name: Create ignition-configs with openshift-installer
       shell: |
-        ./openshift-install --log-level=debug create ignition-configs --dir=/home/stack/ocp_clusters/{{ocp_cluster_name}}/ > /home/stack/ocp_clusters/{{ocp_cluster_name}}/create_ignition_configs.log 2>&1
+        ./openshift-install --log-level=debug create ignition-configs --dir=/home/stack/ocp_clusters/{{ ocp_cluster_name }}/ > /home/stack/ocp_clusters/{{ ocp_cluster_name }}/create_ignition_configs.log 2>&1
       args:
         chdir: /home/stack/
 
     - name: Backup the ignition-configs
       copy:
-        src: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/{{item}}.ign"
-        dest: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/{{item}}.ign.orig"
+        src: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/{{ item }}.ign"
+        dest: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/{{ item }}.ign.orig"
         remote_src: yes
       with_items:
         - master
@@ -290,28 +291,49 @@
 
     - name: Read original master.ign config file
       slurp:
-        src: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/master.ign.orig"
+        src: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/master.ign.orig"
       register: master_ign
       when: ocp_master_etcd_nvme
 
     - name: Get master etcd on nvme ignition configuration
       set_fact:
-        master_ign_config_base: "{{master_ign['content'] | b64decode}}"
-        master_etcd_nvme_config: "{{ lookup('template', 'master-etcd.ign.json') }}"
+        master_ign_config_base: "{{ master_ign['content'] | b64decode }}"
+        master_etcd_nvme_config: "{{ lookup('template', 'master-etcd.ign.json.j2') }}"
       when: ocp_master_etcd_nvme
 
     - name: Dump new version of master.ign file
       copy:
-        content: "{{master_ign_config_base | combine(master_etcd_nvme_config) | to_json}}"
-        dest: "/home/stack/ocp_clusters/{{ocp_cluster_name}}/{{item}}"
+        content: "{{ master_ign_config_base | combine(master_etcd_nvme_config) | to_json }}"
+        dest: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/{{ item }}"
       with_items:
         - master.ign
         - master.ign.etcd
       when: ocp_master_etcd_nvme
 
+    - name: Read original worker.ign config file
+      slurp:
+        src: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/worker.ign.orig"
+      register: worker_ign
+      when: worker_nvme_ephemeral
+
+    - name: Get worker nvme ephemeral storage ignition configuration
+      set_fact:
+        worker_ign_config_base: "{{ worker_ign['content'] | b64decode }}"
+        worker_nvme_config: "{{ lookup('template', 'worker-nvme.ign.json.j2') }}"
+      when: worker_nvme_ephemeral
+
+    - name: Dump new version of worker.ign file
+      copy:
+        content: "{{ worker_ign_config_base | combine(worker_nvme_config) | to_json }}"
+        dest: "/home/stack/ocp_clusters/{{ ocp_cluster_name }}/{{ item }}"
+      with_items:
+        - worker.ign
+        - worker.ign.nvme
+      when: worker_nvme_ephemeral
+
     - name: Run openshift-installer
       shell: |
-        ./openshift-install --log-level=debug create cluster --dir=/home/stack/ocp_clusters/{{ocp_cluster_name}}/ > /home/stack/ocp_clusters/{{ocp_cluster_name}}/ocp_install.log 2>&1
+        ./openshift-install --log-level=debug create cluster --dir=/home/stack/ocp_clusters/{{ ocp_cluster_name }}/ > /home/stack/ocp_clusters/{{ ocp_cluster_name }}/ocp_install.log 2>&1
       args:
         chdir: /home/stack/
 
