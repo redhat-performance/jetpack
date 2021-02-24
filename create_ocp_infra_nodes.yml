@@ -112,12 +112,14 @@
       block:
         - name: clone dittybopper
           git:
-            repo: 'https://github.com/cloud-bulldozer/dittybopper.git'
-            dest: "{{ ansible_user_dir }}/dittybopper"
+            repo: 'https://github.com/cloud-bulldozer/performance-dashboards.git'
+            dest: "{{ ansible_user_dir }}/performance-dashboards"
             force: yes
 
         - name: Deploy mutable Grafana
           command: ./deploy.sh
           args:
-            chdir: "{{ ansible_user_dir }}/dittybopper"
+            chdir: "{{ ansible_user_dir }}/performance-dashboards/dittybopper"
+          environment:
+            KUBECONFIG: "/home/stack/{{ ocp_cluster_name }}/auth/kubeconfig"
       when: dittybopper_enable|bool
