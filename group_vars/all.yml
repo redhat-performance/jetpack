@@ -24,15 +24,15 @@ alias:
   machine_types:
     dell:
       740xd: 
-        rhel7_interfaces: [em1, em2, p7p1, p7p2]
-        rhel8_interfaces: [eno1, eno2, ens7f0, ens7f1]
+        rhel7_interfaces: [em2, em1, p7p1, p7p2]
+        rhel8_interfaces: [eno2, eno1, ens7f0, ens7f1]
     supermicro:
       6029r:
-        rhel7_interfaces: [enp95s0f0, enp95s0f1, enp94s0f0, enp94s0f1]
-        rhel8_interfaces: [enp95s0f0, enp95s0f1, enp94s0f0, enp94s0f1]
+        rhel7_interfaces: [enp95s0f1, enp95s0f0, enp94s0f0, enp94s0f1]
+        rhel8_interfaces: [enp95s0f1, enp95s0f0, enp94s0f0, enp94s0f1]
       6048p:
-        rhel7_interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
-        rhel8_interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
+        rhel7_interfaces: [enp130s0f1, enp130s0f0, enp4s0f0, enp4s0f1]
+        rhel8_interfaces: [enp130s0f1, enp130s0f0, enp4s0f0, enp4s0f1]
 
 scale:
 # lab specific vars
