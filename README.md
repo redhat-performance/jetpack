@@ -189,3 +189,18 @@ For OSP deploy with Ceph using Composable Roles, After setting the above specifi
 Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
       requirement if needed
 
+# Limitations
+1. Overcloud nodes with existing software raid disks pre-deployment will lead to deployment failures due to [ironic bug](https://bugzilla.redhat.com/show_bug.cgi?id=1933256).
+   It is common for storage-class servers like 6049p to be predeployed with software raid. There are 2 workarounds until this ironic bug is resolved.
+     - Request for storage-class server allocations without software raid disks/partitions.
+     - After jetpack failure, for manual fix, Set root_device hints in undercloud :
+```
+       openstack baremetal node set --property root_device='{"model": "<model-name>"}' <node uuid>
+       Default model names:
+       Supermicro 6048r: ST9500620NS
+       Supermicro 6049p: ST1000NX0423
+       To identify model name of local ATA disk:
+```
+       openstack introspection data save <node uuid> |jq '.inventory.disks[] | select(.vendor == "ATA" ) | .model '
+```
+      **Note:**: Server hardwares are configured to boot only from local boot disk, hence setting root_device to name device to any disk not local will result in boot failure.
