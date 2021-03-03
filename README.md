@@ -189,3 +189,11 @@ For OSP deploy with Ceph using Composable Roles, After setting the above specifi
 Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
       requirement if needed
 
+# Limitations
+1. Overcloud nodes with existing software raid disks pre-deployment will lead to deployment failures due to [ironic bug](https://bugzilla.redhat.com/show_bug.cgi?id=1933256).
+   It is common for storage-class servers like 6049p to be predeployed with software raid. There are 2 workarounds until this ironic bug is resolved.
+     - Request for storage-class server allocations without software raid disks/partitions.
+     - Set root_device hints:
+       openstack baremetal node set --property root_device='{"name": "/dev/sda"}' <node uuid>
+       Or
+       ironic node-update <node uuid> add properties/root_device='{"name": "/dev/sda"}'
