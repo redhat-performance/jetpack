@@ -9,6 +9,7 @@
         15: 8.0
         16: 8.1
         16.1: 8.2
+        16.2: 8.4
   tasks:
     - name: set async_install to empty list
       set_fact:
@@ -30,24 +31,38 @@
       delay: 10
       with_items: "{{ async_install }}"
 
-    - block:
-        - name: preapare RHEL79.repo (OSP13)
-          template:
-            src: RHEL.repo.j2
-            dest: /etc/yum.repos.d/RHEL79.repo
-          delegate_to: "{{ undercloud_hostname }}"
-          vars:
-            ansible_python_interpreter: "{{ python_interpreter }}"
-            ansible_user: "root"
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "root"
+      ignore_errors: yes
 
+    - include_tasks: tasks/update_repo.yml
+      when: osp_release == 13 or 16.2
+
+      ## The 
+    - block:
         - name: update os to RHEL 7.9
           shell: |
+             rhos-release 13 -p passed_phase2 -r 7.9;
              yum update -y
           delegate_to: "{{ undercloud_hostname }}"
           vars:
             ansible_python_interpreter: "{{ python_interpreter }}"
             ansible_user: "root"
-      when: osp_release == 13
+        when: osp_release == 13
+
+        - name: update os to RHEL 8.4
+          shell: |
+             rhos-release 16.2 -p passed_phase2 -r 8.4;
+             dnf -y module disable virt:rhel container-tools:rhel8;
+             dnf -y module enable virt:av container-tools:2.0;
+             dnf update -y;
+          delegate_to: "{{ undercloud_hostname }}"
+          vars:
+            ansible_python_interpreter: "{{ python_interpreter }}"
+            ansible_user: "root"
+        when: osp_release == 16.2
 
     - name: list oc_instackenv_content
       shell: |
