@@ -30,18 +30,19 @@
       delay: 10
       with_items: "{{ async_install }}"
 
-    - block:
-        - name: preapare RHEL79.repo (OSP13)
-          template:
-            src: RHEL.repo.j2
-            dest: /etc/yum.repos.d/RHEL79.repo
-          delegate_to: "{{ undercloud_hostname }}"
-          vars:
-            ansible_python_interpreter: "{{ python_interpreter }}"
-            ansible_user: "root"
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "root"
+      ignore_errors: yes
 
+    - block:
         - name: update os to RHEL 7.9
           shell: |
+             rm -rf /etc/yum.repos.d/epel*.repo;
+             rm -rf /etc/yum.repos.d/RHEL*.repo;
+             yum install -y http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm;
+             rhos-release 13 -p passed_phase2 -r 7.9;
              yum update -y
           delegate_to: "{{ undercloud_hostname }}"
           vars:
