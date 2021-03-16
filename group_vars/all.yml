@@ -48,7 +48,7 @@ scale:
         rhel8_interfaces_tn10rt: [enp175s0f0, enp175s0f1, ens2f0, ens2f1]
       6048r:
         rhel7_interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
-        rhel8_interfaces: []
+        rhel8_interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
       5039ms:
         rhel7_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
         rhel8_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
@@ -58,6 +58,10 @@ scale:
       6048p:
         rhel7_interfaces:  []
         rhel8_interfaces:  []
+    hpe:
+      dl360:
+        rhel7_interfaces:  [ens2f0, ens2f1, ens1f0, ens1f1]
+        rhel8_interfaces:  [ens2f0, ens2f1, ens1f0, ens1f1]
 
     dell:
       r620:

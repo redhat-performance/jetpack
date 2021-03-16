@@ -59,17 +59,17 @@
         ansible_user: root
         ansible_python_interpreter: "{{ hammer_python_interpreter }}"
 
-    - name: set hypervisor host to PXE boot (Supermicro)
+    - name: set hypervisor host to PXE boot (Supermicro or HPE)
       shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
-      when: vendor is defined and vendor == "supermicro"
+      when:  vendor is defined and vendor in  ["supermicro", "hpe"]
       delegate_to: "{{ hammer_host }}"
       vars:
         ansible_user: root
         ansible_python_interpreter: "{{ hammer_python_interpreter }}"
 
-    - name: power cycle hypervisor host (Supermicro)
+    - name: power cycle hypervisor host (Supermicro or HPE)
       shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis power cycle
-      when: vendor is defined and vendor == "supermicro"
+      when:  vendor is defined and vendor in  ["supermicro", "hpe"]
       delegate_to: "{{ hammer_host }}"
       vars:
         ansible_user: root

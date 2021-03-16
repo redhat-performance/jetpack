@@ -49,7 +49,7 @@
 
           - name: set vendor
             set_fact:
-              vendor: "{{ (machine_type in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell') }}"
+              vendor: "{{ (machine_type in lab_vars['machine_types']['supermicro']) | ternary('supermicro', ((machine_type in lab_vars['machine_types']['dell']) | ternary('dell', 'hpe'))) }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias']
@@ -64,7 +64,7 @@
 
           - name: set vendors of overcloud nodes
             set_fact:
-              vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell')] }}"
+              vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', ((item in lab_vars['machine_types']['dell']) | ternary('dell', 'hpe')))] }}"
             with_items:
               - "{{ machine_types }}"
         vars:
@@ -87,3 +87,4 @@
         set_fact:
           time_servers: ["clock1.rdu2.redhat.com"]
         when: lab_name == "scale"
+
