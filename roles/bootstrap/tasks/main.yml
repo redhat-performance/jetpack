@@ -1,0 +1,90 @@
+---
+# tasks file for bootstrap
+
+- name: install packages
+  include_tasks: install_packages.yml
+
+- name: check if ssh key exists
+  stat:
+    path: "{{ ansible_ssh_key }}"
+  register: sshkey
+
+- name:  Generate ssh key
+  shell:
+    ssh-keygen -q -N "" -f {{ ansible_ssh_key }}
+  when: sshkey.stat.exists == False
+
+- name: load instackenv file
+  include_tasks: load_instackenv.yml
+
+- name: setup infrared
+  include_tasks: setup_infrared.yml
+
+- name: add localhost to inventory file
+  add_host:
+    name: "localhost"
+    groups: "local"
+    ansible_connection: "local"
+
+- name: Check if log directory exists
+  stat:
+    path: "{{ log_directory }}"
+  register: log_path
+
+- name: create a directory to store logs
+  file:
+    path: "{{ log_directory }}"
+    state: directory
+  when: not (log_path.stat.isdir is defined and log_path.stat.isdir)
+
+- block:
+    - name: set machine_type
+      set_fact:
+        machine_type: "{{ (lab_name == 'scale') | ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
+      when: virtual_uc != true
+
+    - name: set machine type for virtual undercloud
+      set_fact:
+        machine_type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
+      when: virtual_uc
+
+    - name: set vendor
+      set_fact:
+        vendor: "{{ (machine_type in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell') }}"
+      vars:
+        lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+      when: lab_name in ['scale', 'alias']
+
+- block:
+    - name: set machines_types of overcloud nodes
+      set_fact:
+        machine_types: "{{ machine_types|default([]) + [ (lab_name == 'scale') | ternary(item.pm_addr.split('.')[0].split('-')[4], item.pm_addr.split('.')[0].split('-')[3]) ] }}"
+      with_items: "{{ oc_instackenv_content.nodes }}"
+      vars:
+        oc_instackenv_content: "{{ lookup('file', '{{ overcloud_instackenv_path }}') | from_json }}"
+
+    - name: set vendors of overcloud nodes
+      set_fact:
+        vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell')] }}"
+      with_items:
+        - "{{ machine_types }}"
+      vars:
+        lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+  when: lab_name in ['scale', 'alias'] and virtual_uc != true
+
+# use of a local time server is essential or at least a good idea for Ceph, Kerberos, Redis,
+# maybe Kubernetes, and other components sensitive to server time skew
+
+- name: default to corporate time server if lab not recognized
+  set_fact:
+    time_servers: ["clock.redhat.com", "clock2.redhat.com"]
+
+- name: use bos.redhat.com time servers for Alias lab in Westford
+  set_fact:
+    time_servers: ["clock1.bos.redhat.com", "clock2.bos.redhat.com"]
+  when: lab_name == "alias"
+
+- name: use rdu2.redhat.com time servers for Scale Lab in Raleigh NC USA
+  set_fact:
+    time_servers: ["clock1.rdu2.redhat.com"]
+  when: lab_name == "scale"

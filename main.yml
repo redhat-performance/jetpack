@@ -1,11 +1,7 @@
 ---
-- import_playbook: bootstrap.yml
-  tags:
-    - undercloud
-    - introspect
-    - tag
-    - composable
-    - overcloud
+- hosts: localhost
+  roles:
+    - { role: bootstrap, tags: [ undercloud, introspect, tag, composable, overcloud] }
 
 - import_playbook: scale_compute_vms.yml
   when: scale_compute_vms == true
