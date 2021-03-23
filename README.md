@@ -194,6 +194,24 @@ For OSP deploy with Ceph using Composable Roles, After setting the above specifi
 Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
       requirement if needed
 
+## scale simulation
+This feature allows scale testing on limited nodes environment. It helps in scale testing tripleo. Jetpack simulates VMs as Openstack overcloud compute nodes. Jetpack will use lab machines as hypervisors to create VMs and then use these VMs as Openstack overcloud nodes. Undercloud and Controller nodes will be still baremetal nodes.
+
+Requirements
+1) User has to install RHEL 8.2 on all hypervisors
+2) User has to copy ssh keys (i.e ~/.ssh) to all hypervisors. Each hypervisor should be able to login to other hypervisors.
+3) In group_vars/all.yml, set
+```
+scale_compute_vms: true
+undercloud_public_host: 192.168.0.2
+undercloud_admin_host: 192.168.0.3
+cidr: 192.168.0.0/16
+gateway: 192.168.0.1
+dhcp_start: 192.168.0.5
+dhcp_end: 192.168.10.254
+inspection_iprange: 192.168.11.1,192.168.20.254
+```
+
 # Limitations
 1. Overcloud nodes with existing software raid disks pre-deployment will lead to deployment failures due to [ironic bug](https://bugzilla.redhat.com/show_bug.cgi?id=1933256).
    It is common for storage-class servers like 6049p to be predeployed with software raid. There are 2 workarounds until this ironic bug is resolved.
