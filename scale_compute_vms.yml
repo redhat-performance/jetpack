@@ -35,36 +35,6 @@
          hostname_list: "{{ hostname_list|default([]) + [item.stdout] }}"
       with_items: "{{ host_list.results }}"
 
-    - name: install os
-      vars:
-        chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
-        needed_os: "{{ (lab_name == 'scale') | ternary('CentOS 7', 'CentOS 7.7') }}"
-        hypervisor_host: "{{ hyp }}"
-        hypervisor_password: "{{ ansible_ssh_pass }}"
-      include_tasks: tasks/install_os.yml
-      with_items: "{{ hostname_list }}"
-      loop_control:
-        loop_var: hyp
-
-    - name: Wait for hypervisors to be available
-      async_status:
-        jid: "{{ item }}"
-      register: install_tasks
-      until: install_tasks.finished
-      retries: 300
-      delay: 10
-      with_items: "{{ async_install }}"
-      when: async_install is defined
-
-    - include_tasks: tasks/copykeys.yml
-      vars:
-        hostname: "{{ hyp }}"
-        ssh_user: "root"
-        id_file:  "{{ ansible_ssh_key }}"
-      with_items: "{{ hostname_list }}"
-      loop_control:
-        loop_var: hyp
-
     - include_tasks: tasks/get_interpreter.yml
       vars:
         hostname: "{{ hostname_list[0] }}"
@@ -82,49 +52,11 @@
       loop_control:
         loop_var: hyp
 
-    # create ssh key on the first hypervisor
-    - name: check if ssh key exists
-      stat:
-        path: "{{ ansible_ssh_key }}"
-      register: sshkey
-      delegate_to: "{{ groups.hypervisor|first }}"
-
-    - name:  Generate ssh key
-      shell:
-        ssh-keygen -q -N "" -f {{ ansible_ssh_key }}
-      when: sshkey.stat.exists == False
-      delegate_to: "{{ groups.hypervisor|first }}"
-
-    - name:  install sshpass on first hypervisor
-      package:
-        name: sshpass
-        state: installed
-      delegate_to: "{{ groups.hypervisor|first }}"
-
-    # copy first hypervisor key to all hypervisors (as vbmc ports are created on first hypervisor)
-    - name: remove key
-      shell: |
-        ssh-keygen -R {{ hyp }}
-      changed_when: false
-      with_items: "{{ groups.hypervisor }}"
-      loop_control:
-        loop_var: hyp
-      delegate_to: "{{ groups.hypervisor|first }}"
-      ignore_errors: true
-
-    - name: add ssh key
-      shell: |
-        echo '{{ ansible_ssh_pass }}' | sshpass ssh-copy-id -i {{ ansible_ssh_key }} -o 'StrictHostKeyChecking no' -f root@{{ hyp }}
-      changed_when: false
-      with_items: "{{ groups.hypervisor }}"
-      loop_control:
-        loop_var: hyp
-      delegate_to: "{{ groups.hypervisor|first }}"
     - name: set rhel 7 interfaces for hypervisors
       vars:
         lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
       set_fact:
-        hyp_ifaces: "{{ lab_vars['machine_types'][vendor][machine_type]['rhel7_interfaces'] }}"
+        hyp_ifaces: "{{ lab_vars['machine_types'][vendor][machine_type]['rhel8_interfaces'] }}"
 
 
 - hosts: hypervisor
@@ -138,7 +70,7 @@
       package:
         name: "{{ item }}"
         state: installed
-      loop: ['gcc', 'libffi-devel', 'openssl-devel', 'python-virtualenv', 'libvirt', 'qemu-kvm', 'libselinux-python']
+      loop: ['gcc', 'libffi-devel', 'openssl-devel', 'python3-virtualenv', 'libvirt', 'qemu-kvm']
 
     - name: start libvirtd
       systemd:
