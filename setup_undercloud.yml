@@ -40,7 +40,7 @@
     - include_tasks: tasks/update_repo.yml
       when: osp_release == 13 or 16.2
 
-      ## The 
+      ## This block of task execute when condition meet for 13 and 16.2
     - block:
         - name: update os to RHEL 7.9
           shell: |
