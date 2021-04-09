@@ -222,9 +222,9 @@ scale_compute_vms: false
 #Specify the controller ifaces for composable roles explicitly in
 #case you need specific machines as controllers. Else default controller
 #machine type is the first node in overcloud_instackenv.json
-composable_roles: false
+composable_roles: true
 #controller_ifaces: []
-#controller_machine_type: "1029p"
+controller_machine_type: "1029p"
 #ceph_ifaces: []
 ceph_machine_type: ''
 
