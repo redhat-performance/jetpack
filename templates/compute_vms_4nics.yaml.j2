@@ -191,15 +191,7 @@ resources:
                           members:
                             -
                               type: interface
-                              name: nic3
-                            -
-                              type: vlan
-                              vlan_id:
-                                  get_param: InternalApiNetworkVlanID
-                              addresses:
-                              -
-                                ip_netmask:
-                                    get_param: InternalApiIpSubnet
+                              name: nic4
                         -
                           type: ovs_bridge
                           name: br-ctlplane
@@ -208,14 +200,6 @@ resources:
                             -
                               type: interface
                               name: nic1
-                            -
-                              type: vlan
-                              vlan_id:
-                                  get_param: TenantNetworkVlanID
-                              addresses:
-                              -
-                                ip_netmask:
-                                    get_param: TenantIpSubnet
                           addresses:
                             -
                               ip_netmask:
@@ -239,11 +223,35 @@ resources:
                             -
                               type: vlan
                               vlan_id:
+                                  get_param: InternalApiNetworkVlanID
+                              addresses:
+                              -
+                                ip_netmask:
+                                    get_param: InternalApiIpSubnet
+                            -
+                              type: vlan
+                              vlan_id:
                                   get_param: StorageNetworkVlanID
                               addresses:
                               -
                                 ip_netmask:
                                     get_param: StorageIpSubnet
+                        -
+                          type: ovs_bridge
+                          name: br-tenant
+                          use_dhcp: false
+                          members:
+                            -
+                              type: interface
+                              name: nic3
+                            -
+                              type: vlan
+                              vlan_id:
+                                  get_param: TenantNetworkVlanID
+                              addresses:
+                              -
+                                ip_netmask:
+                                    get_param: TenantIpSubnet
 
 outputs:
   OS::stack_id:

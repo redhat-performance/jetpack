@@ -1,0 +1,97 @@
+
+- hosts: localhost
+  gather_facts: yes
+  tasks:
+    - name: setup infrared
+      include_tasks: tasks/setup_infrared.yml
+
+- import_playbook: bootstrap.yml
+
+- hosts: localhost
+  gather_facts: yes
+  vars:
+    infrared_hosts_dir: "{{ infrared_workspaces_dir }}/active"
+    inventory_file_name: "hosts-hypervisors"
+  tasks:
+    - name: generate local_hosts inventory file needed for infrared virsh pre playbook
+      template:
+        dest: "{{ infrared_workspaces_dir }}/active/local_hosts"
+        src: inventory.j2
+
+    - name: set controller nodes
+      set_fact:
+        controller_nodes: "{{ controller_nodes|default([]) + [(oc_instackenv_content.nodes[item | int]|combine({'name': 'controller-'+item}))] }}"
+      with_sequence: 0-{{ controller_count-1 }}
+
+    - name: set hypervisor nodes for compute VMs
+      set_fact:
+        hypervisor_nodes: "{{ oc_instackenv_content.nodes[controller_count:] }}"
+
+    - name: set overcloud_instackenv content to controller nodes
+      set_fact:
+        oc_instackenv_content: "{{ {} | combine({'nodes': controller_nodes}, recursive=True) }}"
+
+    - name: create overcloud_instackenv.json file
+      copy:
+        dest: "{{ overcloud_instackenv_path }}"
+        content: "{{ oc_instackenv_content }}"
+
+    - name: get hypervisor hosts
+      shell: |
+        echo "{{ hypervisor_nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '') }}"
+      with_sequence: 0-{{ (hypervisor_nodes|length - 1) }}
+      register: host_list
+
+    - name: hostname list
+      set_fact:
+         hostname_list: "{{ hostname_list|default([]) + [item.stdout] }}"
+      with_items: "{{ host_list.results }}"
+
+    - include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ hostname_list[0] }}"
+        user: "root"
+
+    - name: add hypervisors to inventory file
+      add_host:
+        name: "{{ hyp }}"
+        groups: "hypervisor"
+        ansible_host: "{{ hyp }}"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_user: "root"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+      with_items: "{{ hostname_list }}"
+      loop_control:
+        loop_var: hyp
+
+    - name: generate inventory file
+      template:
+        dest: "{{ infrared_hosts_dir }}/{{ inventory_file_name }}"
+        src: inventory.j2
+    - name: update inventory file symlink
+      file:
+        dest: "{{ infrared_hosts_file }}"
+        state: link
+        src: "{{ inventory_file_name }}"
+    - name: copy keys
+      copy:
+        src: "~/.ssh/id_rsa.pub"
+        dest: "{{ infrared_hosts_dir }}/id_rsa_undercloud.pub"
+
+- hosts: hypervisor
+  tasks:
+    - name: Clean network interfaces
+      shell: |
+        /root/clean-interfaces.sh --nuke
+      changed_when: false
+
+    - name: install packages
+      package:
+        name: "{{ item }}"
+        state: installed
+      loop: ['gcc', 'libffi-devel', 'openssl-devel', 'python3-virtualenv', 'libvirt', 'qemu-kvm']
+
+    - name: start libvirtd
+      systemd:
+        state: started
+        name: libvirtd

@@ -3,12 +3,14 @@
   file:
       state: absent
       path: "{{ ansible_user_dir }}/infrared"
+  when: scale_compute_vms == false
 
 - name: clone infrared
   git:
       repo: "https://github.com/redhat-openstack/infrared"
       dest: "{{ infrared_dir }}"
       force: yes
+  when: scale_compute_vms == false
 
 - name: infrared setup
   shell: |
@@ -20,11 +22,6 @@
   args:
     chdir: "{{ infrared_dir }}"
   changed_when: false
-
-- name: change deployment timeout in infrared code
-  shell: |
-    sed -ri 's/^(\s*)(maximum\s*:\s*240\s*$)/\1maximum: 2400/' {{ infrared_dir }}/plugins/tripleo-overcloud/plugin.spec
-  when: scale_compute_vms == true
 
 - name: add infrared plugins
   shell: source .venv/bin/activate && infrared plugin add all

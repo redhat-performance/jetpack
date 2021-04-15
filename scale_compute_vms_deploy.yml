@@ -1,0 +1,49 @@
+- hosts: localhost
+  gather_facts: yes
+  tasks:
+    - name: copy inventory
+      meta: refresh_inventory
+    - name: set rhel 7 interfaces for hypervisors
+      vars:
+        lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+      set_fact:
+        hyp_ifaces: "{{ lab_vars['machine_types'][vendor][machine_type]['rhel8_interfaces'] }}"
+
+
+- hosts: hypervisor
+  tasks:
+    # workaround for infrared issue https://github.com/redhat-openstack/infrared/issues/396
+    - name: create network script file for interfaces
+      vars:
+        hyp_ifaces: "{{ hostvars['localhost']['hyp_ifaces'] }}"
+      shell: |
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[0] }}
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[1] }}
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[2] }}
+        touch /etc/sysconfig/network-scripts/ifcfg-{{ hyp_ifaces[3] }}
+
+
+- hosts: localhost
+  vars:
+    topology_network_path: "{{ ansible_user_dir }}/3_nets_multi_hypervisor.yml"
+  tasks:
+    - name: create topology network file
+      vars:
+        isolated_interface: "{{ hyp_ifaces[0] }}"
+        ctlplane_interface: "{{ hyp_ifaces[1] }}"
+        external_interface: "{{ hyp_ifaces[2] }}"
+      template:
+        src: 3_nets_multi_hypervisor.yml.j2
+        dest: "{{ topology_network_path }}"
+    - name: prepare host address variable
+      set_fact:
+        host_address: "--host-address {{ hostname_list | join(' --host-address ') }}"
+
+    - name: run virsh for multi hypervisor
+      shell: |
+            source .venv/bin/activate
+            echo infrared virsh {{ host_address }} --host-key {{ ansible_ssh_key }} --topology-nodes compute:{{ compute_count|default(1) }} --topology-network {{ topology_network_path }} --host-memory-overcommit True > {{ log_directory }}/virsh.log 2>&1
+      args:
+        chdir: "{{ infrared_dir }}"
+
+

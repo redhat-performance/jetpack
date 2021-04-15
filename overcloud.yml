@@ -291,6 +291,11 @@
           ceph_params: "--storage-backend ceph --storage-external no"
         when: ceph_enabled
 
+      - name: set deployment_timeout to 2400
+        set_fact:
+          deployment_timeout: 2400
+        when: scale_compute_vms == true
+
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate

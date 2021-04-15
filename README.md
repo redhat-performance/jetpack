@@ -212,6 +212,24 @@ dhcp_end: 192.168.10.254
 inspection_iprange: 192.168.11.1,192.168.20.254
 ```
 
+We need to follow below steps in this simulation.
+Please reach out to osp perf team for internal document which has detailed steps.
+1) clone infrared in home directory in ansible jump host
+```
+ GIT_SSL_NO_VERIFY=true git clone https://gitlab.cee.redhat.com/osp_perf_scale/infrared
+ cd ~/infrared
+ git checkout virsh_multi 
+```
+2) Run scale_compute_vms.yml which creates VMs on hypervisors
+```
+ansible-playbook scale_compute_vms_prepare.yml
+```
+3) Manually deploy VMs as explained in scale_compute_vms_deploy.yml
+4) Run main.yaml which deploys OSP on these VMs
+```
+ansible-playbook main.yaml
+```
+
 # Limitations
 1. Overcloud nodes with existing software raid disks pre-deployment will lead to deployment failures due to [ironic bug](https://bugzilla.redhat.com/show_bug.cgi?id=1933256).
    It is common for storage-class servers like 6049p to be predeployed with software raid. There are 2 workarounds until this ironic bug is resolved.
