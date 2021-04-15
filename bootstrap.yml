@@ -18,6 +18,13 @@
 
       - name: setup infrared
         include_tasks: tasks/setup_infrared.yml
+        when: scale_compute_vms == false
+
+      - name: change deployment timeout in infrared code
+        shell: |
+           sed -ri 's/^(\s*)(maximum\s*:\s*240\s*$)/\1maximum: 2400/' {{ ansible_user_dir }}/.infrared/plugins/tripleo-overcloud/plugin.spec
+        when: scale_compute_vms == true
+        ignore_errors: true
 
       - name: add localhost to inventory file
         add_host:

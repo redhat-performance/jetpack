@@ -121,8 +121,10 @@
             force: yes
 
       - name: prepare compute.yaml.j2
+        vars:
+            compute_path: "{{ (scale_compute_vms) | ternary('compute_vms.yaml.j2', 'compute.yaml.j2') }}"
         template:
-            src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', 'osp10_compute.yaml.j2') }}"
+            src: "{{ (osp_release|int > 10) | ternary(compute_path, 'osp10_compute.yaml.j2') }}"
             dest: "{{ nic_config_path }}/compute.yaml.j2"
             force: yes
 
@@ -132,10 +134,3 @@
             dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
             force: yes
         when: ceph_enabled
-
-      - name: prepare compute.yaml.j2
-        template:
-            src: "{{ (osp_release|int > 10) | ternary('compute_vms.yaml.j2', 'osp10_compute.yaml.j2') }}"
-            dest: "{{ nic_config_path }}/compute.yaml.j2"
-            force: yes
-        when: scale_compute_vms == true
