@@ -6,6 +6,9 @@
             stat: path=/home/stack/instackenv.json
             register: st
             delegate_to: "{{ groups.undercloud|first }}"
+            vars:
+              ansible_python_interpreter: "{{ python_interpreter }}"
+              ansible_user: "stack"
 
           - name: copy instack file to /home/stack/instackenv.json for infrared tagging
             copy:

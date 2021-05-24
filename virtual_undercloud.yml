@@ -1,6 +1,9 @@
 ---
 - hosts: localhost
   tasks:
+    - name: reload inventory content from inventory file
+      meta: refresh_inventory
+
     - include_tasks: tasks/copykeys.yml
       vars:
         hostname: "localhost"

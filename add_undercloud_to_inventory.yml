@@ -8,9 +8,6 @@
       vars:
         hostname: "{{ undercloud_hostname }}"
         user: "stack"
-    - name: reload inventory content from inventory file
-      meta: refresh_inventory
-      when: scale_compute_vms == true
     - name: add localhost to inventory file
       add_host:
         name: "localhost"
