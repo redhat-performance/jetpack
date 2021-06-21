@@ -35,7 +35,7 @@
   block:
     - name: set undercloud hostname
       set_fact:
-        undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+        undercloud_hostname: "{{ undercloud_hostname|default(instackenv_content.nodes[0].pm_addr | replace('mgmt-','') | replace('-drac', '') | replace('.mgmt', '')) }}"
 
     - name: set overcloud_instackenv content
       set_fact:
