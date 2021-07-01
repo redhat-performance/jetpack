@@ -10,7 +10,7 @@ Usage
      * ``cloud_name: <cloud name>``
      * ``lab_type: <lab type>``
      * ``osp_release: <osp release>``
-     * ``hammer_host: <FQDN/IP of host with hammer cli>``
+     * ``foreman_url: <foreman_url>``
      * ``ansible_ssh_pass: <default password of servers>``
 
     For OSP > 13, set the below variables

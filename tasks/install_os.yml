@@ -38,6 +38,13 @@
       ignore_errors: true
       when: hypervisor_host == undercloud_hostname
 
+
+    - name: Build the images for hammercli
+      become: true
+      shell: podman build --build-arg foreman_url={{ foreman_url }} -t hammercli .
+      args:
+        chdir: "{{ playbook_dir }}/hammer"
+
     - name: set hammer build command
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"
@@ -47,33 +54,23 @@
 
     - name: set hammer build params
       vars:
-        medium: "{{ ('CentOS' in os_install) | ternary('CentOS mirror', os_install) }}"
+        medium: "{{ ('CentOS' in os_install) | ternary('CentOS mirror', 'rhel_local') }}"
       set_fact:
         hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'ALIAS-Partition' --overwrite 1"
       when: lab_name == "alias"
 
     - name: update host to install new os
-      shell: "{{ hammer_build_cmd }}"
-      delegate_to: "{{ hammer_host }}"
-      vars:
-        ansible_user: root
-        ansible_python_interpreter: "{{ hammer_python_interpreter }}"
+      become: true
+      shell: |
+        podman run hammercli {{ hammer_build_cmd }}
 
     - name: set hypervisor host to PXE boot (Supermicro)
       shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
       when: vendor is defined and vendor == "supermicro"
-      delegate_to: "{{ hammer_host }}"
-      vars:
-        ansible_user: root
-        ansible_python_interpreter: "{{ hammer_python_interpreter }}"
 
     - name: power cycle hypervisor host (Supermicro)
       shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis power cycle
       when: vendor is defined and vendor == "supermicro"
-      delegate_to: "{{ hammer_host }}"
-      vars:
-        ansible_user: root
-        ansible_python_interpreter: "{{ hammer_python_interpreter }}"
 
     - name: set hypervisor host to PXE boot off Foreman (Dell)
       shell: |
