@@ -20,7 +20,7 @@ set_boot_order: true
 hammer_host: hwstore.example.com
 alias:
 #lab specific vars
-  lab_url: "http://quads11.alias.bos.scalelab.redhat.com"
+  lab_url: "http://quads.alias.bos.scalelab.redhat.com"
   machine_types:
     dell:
       740xd: 
