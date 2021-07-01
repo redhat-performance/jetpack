@@ -23,7 +23,6 @@
               ansible_python_interpreter: "{{ python_interpreter }}"
               ansible_user: "stack"
             become: true
-            when: lab_name in ['scale', 'alias']
 
           - name: set undercloud_local_interface
             set_fact:

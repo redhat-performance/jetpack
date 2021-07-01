@@ -4,6 +4,7 @@
   gather_facts: yes
   vars:
        external_interface: "{{ hostvars['localhost']['external_interface'] }}"
+       ifaces: "{{ hostvars['localhost']['ifaces'] }}"
   tasks:
       - name: set ext_interface for baremetal
         block:
@@ -64,7 +65,16 @@
             ip a a {{ external_gateway }} dev {{ vlan_interface }}
         become: true
         ignore_errors: true
-        when: external_network_vlan_id is defined
+        when: external_network_vlan_id is defined and (ifaces|length > 1)
+
+      - name: add port for single interface deployment
+        shell: |
+            ovs-vsctl add-port br-ctlplane vlan{{ external_network_vlan_id }} tag={{ external_network_vlan_id }} -- set interface vlan{{ external_network_vlan_id }} type=internal
+            ip a a {{ external_gateway }} dev vlan{{ external_network_vlan_id }}
+            ip l s vlan{{ external_network_vlan_id }} up
+        become: true
+        ignore_errors: true
+        when: external_network_vlan_id is defined and (ifaces|length == 1)
 
       - name: add ip on when external interface is real public interface
         shell: |

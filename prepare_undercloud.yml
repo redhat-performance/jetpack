@@ -33,6 +33,7 @@
       shell: |
         /root/clean-interfaces.sh --nuke
       changed_when: false
+      ignore_errors: true
 
     - name: Ensure SELinux is set to enforcing mode
       selinux:
