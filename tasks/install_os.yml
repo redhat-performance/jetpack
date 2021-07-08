@@ -25,10 +25,15 @@
     os_install: "RHEL 7.8"
   when: needed_os == "RHEL 7.9"
 
+- name: set os_install before updating os RHEL 8.4
+  set_fact:
+    os_install: "RHEL 8.2"
+  when: needed_os == "RHEL 8.4"
+
 - name: set os_install for forceful provisioning
   set_fact:
     os_install: "{{ needed_os }}"
-  when: force_reprovision == true and needed_os != "RHEL 7.9"
+  when: force_reprovision == true and needed_os not in ["RHEL 7.9", "RHEL 8.4"]
 
 - name: Reboot if OS install needed
   block:

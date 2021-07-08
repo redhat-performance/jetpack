@@ -1,0 +1,20 @@
+---
+- name: Delete the the existing EPEL and RHEL Repos configured by Foreman
+  file:
+    path: "/etc/yum.repos.d/{{ item }}"
+    state: absent
+  with_items:
+    - epel*.repo
+    - RHEL*.repo
+  delegate_to: "{{ undercloud_hostname }}"
+  vars:
+    ansible_python_interpreter: "{{ python_interpreter }}"
+    ansible_user: "root"
+
+- name : Install the rhos-release-latest rpm
+  shell: |
+     rpm -ivh http://download.devel.redhat.com/rcm-guest/puddles/OpenStack/rhos-release/rhos-release-latest.noarch.rpm;
+  delegate_to: "{{ undercloud_hostname }}"
+  vars:
+    ansible_python_interpreter: "{{ python_interpreter }}"
+    ansible_user: "root"
