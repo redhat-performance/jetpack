@@ -19,12 +19,12 @@
     - name: generate hosts file
       shell: |
           source /home/stack/stackrc
-          ./generate_tripleo_hostfile.sh -l
+          ./generate_tripleo_inventory.sh -l
       args:
           chdir: "{{ browbeat_dir }}/ansible"
     - name: install browbeat
       shell: |
-          ansible-playbook -i hosts install/browbeat.yml
+          ansible-playbook -i hosts.yml install/browbeat.yml
       args:
           chdir: "{{ browbeat_dir }}/ansible"
     - name: Activate virtualenv to run tests
