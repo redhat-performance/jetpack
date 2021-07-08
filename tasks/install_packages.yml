@@ -18,6 +18,7 @@
       - python3-libselinux
       - python3-netaddr
       - python3-pip
+      - podman
   become: true
   failed_when: false
 
@@ -46,19 +47,3 @@
       virtualenv_command: /usr/bin/python3 -m venv
       virtualenv: "{{ badfish_venv }}"
   when: virtual_uc == false or scale_compute_vms == true
-
-- block:
-  - include_tasks: copykeys.yml
-    vars:
-      hostname: "{{ hammer_host }}"
-      ssh_user: "root"
-
-  - include_tasks: get_interpreter.yml
-    vars:
-      hostname: "{{ hammer_host }}"
-      user: "root"
-  - name: set hammer host python interpreter
-    set_fact:
-      hammer_python_interpreter: "{{ python_interpreter }}"
-  when: lab_name in ['scale', 'alias']
-
