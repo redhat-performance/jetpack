@@ -42,10 +42,12 @@ scale:
       1029p:
         rhel7_interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
         rhel8_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
-      1029u:
+      1029utrtp:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
-        rhel8_interfaces_trtp: [ens1f0, ens1f1, ens2f0, ens2f1 ]
-        rhel8_interfaces_tn10rt: [enp175s0f0, enp175s0f1, ens2f0, ens2f1]
+        rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1 ]
+      1029utn10rt:
+        rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        rhel8_interfaces: [enp175s0f0, enp175s0f1, ens2f0, ens2f1]
       6048r:
         rhel7_interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
         rhel8_interfaces: []
@@ -197,7 +199,10 @@ browbeat: true
 #      disk: 40
 #      vcpus: 4
 #pci_node_count: 0
-#pci_node_type: '1029u'
+# if your machine is 1029U type you need to specify the product type also
+# refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
+# rest are 1029utrtp machines
+#pci_node_type: '1029p'
 
 
 #For Nova-less provisioning enable the variable
@@ -224,10 +229,16 @@ scale_compute_vms: false
 #machine type is the first node in overcloud_instackenv.json
 composable_roles: false
 #controller_ifaces: []
+# if your machine is 1029U type you need to specify the product type also
+# refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
+# rest are 1029utrtp machines
 #controller_machine_type: "1029p"
 
 #Ceph deployment params
 #ceph_ifaces: []
+# if your machine is 1029U type you need to specify the product type also
+# refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
+# rest are 1029utrtp machines
 ceph_machine_type: ''
 ceph_enabled: false
 osd_scenario: lvm

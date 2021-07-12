@@ -21,39 +21,17 @@
           machine_count: "{{ machine_count | combine({item: (item in machine_count)|ternary(machine_count[item], 0)|int + 1 }, recursive=True) }}"
         with_items: "{{ machine_types }}"
 
-      - include_tasks: tasks/copykeys.yml
-        vars:
-          hostname: "{{ item.0.stdout }}"
-          ssh_user: "root"
-        when: item.1 == "1029u"
-        with_together:
-          - "{{ host_list.results }}"
-          - "{{ machine_types }}"
-
       - block:
-          - name: Get Product Name of 1029u
-            vars:
-              ansible_user: root
-            shell: |
-              dmidecode -t system | grep "Product Name" | cut -d '-' -f3
-            register: product_name
-            delegate_to: "{{ item.1.stdout }}"
-            when: item.0 == "1029u"
-            with_together:
-              - "{{ machine_types }}"
-              - "{{ host_list.results }}"
-
           - name: set fact rhel8_interfaces
             set_fact:
-              rhel8_interfaces: "{{  rhel8_interfaces|default([]) + [((item.0.changed == False) | ternary((item.1.stdout.split('-')[0] == 'f04' and item.2 == 'r640') | ternary ('rhel8_interfaces_f04', 'rhel8_interfaces'), (item.0.changed == true and item.0.stdout == 'TN10RT') | ternary('rhel8_interfaces_tn10rt', 'rhel8_interfaces_trtp')))] }}"
+              rhel8_interfaces: "{{ rhel8_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel8_interfaces_f04', 'rhel8_interfaces') ] }}"
             with_together:
-              - "{{ product_name.results }}"
               - "{{ host_list.results }}"
               - "{{ machine_types }}"
 
           - name: set fact rhel7_interfaces
             set_fact:
-              rhel7_interfaces: "{{  rhel7_interfaces|default([]) + [ (item.0.stdout.split('-')[0] == 'f04' and item.1 =='r640') | ternary('rhel7_interfaces_f04', 'rhel7_interfaces')] }}"
+              rhel7_interfaces: "{{ rhel7_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel7_interfaces_f04', 'rhel7_interfaces') ] }}"
             with_together:
               - "{{ host_list.results }}"
               - "{{ machine_types }}"
