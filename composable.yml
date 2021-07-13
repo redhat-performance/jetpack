@@ -10,6 +10,7 @@
 - hosts: undercloud
   vars:
     machine_types:  "{{ hostvars['localhost']['machine_types'] }}"
+    tn10rt: "{{ hostvars['localhost']['tn10rt'] }}"
   tasks:
     - name: create flavors
       shell: |
@@ -90,13 +91,31 @@
       args:
         chdir: "/home/stack"
 
-    - name: Setting profile for node type
+    - name: get node UUIDs
       shell: |
         source ~/stackrc
-        for i in $(openstack baremetal node list --format value -c UUID); do
-          if [[ `openstack baremetal node show $i --fields driver_info -f json | jq '.driver_info.ipmi_address'` =~ {{ item }} ]]
-          then
-            openstack baremetal node set $i --property capabilities=profile:baremetal{{ item }},cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
-          fi
-        done
-      with_items: "{{ machine_types }}"
+        openstack baremetal node list --format value -c UUID
+      register: node_uuid
+
+    - name: get the node fqdn list
+      shell: |
+        source ~/stackrc
+        openstack baremetal node show {{ item }} --fields driver_info -f json | jq '.driver_info.ipmi_address'
+      register: node_fqdn
+      loop: "{{ node_uuid.stdout_lines|flatten(levels=1) }}"
+
+    - name: populate uuid type map
+      set_fact:
+        uuid_type_map: "{{ uuid_type_map|default({}) | combine ( {item.0 : type}) }}"
+      vars:
+        type1: "{{ (lab_name == 'scale') | ternary(item.1.stdout.split('.')[0].split('-')[4], item.1.stdout.split('.')[0].split('-')[3]) }}"
+        type: "{{ (type1 != '1029u') | ternary(type1, (item.1.stdout.replace('mgmt-', '').replace('\"', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp')) }}"
+      with_together:
+        - "{{ node_uuid.stdout_lines }}"
+        - "{{ node_fqdn.results }}"
+
+    - name: setting profile for node type
+      shell: |
+        source ~/stackrc
+        openstack baremetal node set {{ item.key }} --property capabilities=profile:baremetal{{ item.value }},cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:bios
+      loop: "{{ uuid_type_map|dict2items }}"

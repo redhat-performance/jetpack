@@ -46,7 +46,9 @@
 
 - name: get the machine type of introspection failed nodes
   set_fact:
-    failed_nodes_machine_type: "{{ failed_nodes_machine_type|default([]) + [((lab_name == 'scale')|ternary(item.stdout.split('.')[0].split('-')[4], item.stdout.split('.')[0].split('-')[3])) ] }}"
+    failed_nodes_machine_type: "{{ failed_nodes_machine_type|default([]) + [(type != '1029u')|ternary(type, (item.stdout.replace('mgmt-', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp')) ] }}"
+  vars:
+      type: "{{ (lab_name == 'scale' | ternary(item.stdout.split('.')[0].split('-')[4], item.stdout.split('.')[0].split('-')[3])) }}"
   with_items: "{{ failed_nodes_ipmi_addr.results }}"
   when: lab_name in ['scale', 'alias']
 
