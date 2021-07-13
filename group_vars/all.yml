@@ -130,14 +130,16 @@ dhcp_end: 192.168.24.105
 inspection_iprange: 192.168.24.110,192.168.24.250
 # external network params for adding external network to
 # undercloud to access overcloud resources
-external_gateway: 172.17.5.1/24
+external_gateway: 172.18.0.1/16
 external_network_vlan_id: 300
 clean_nodes: false
 #adding changes 
-external_net_cidr: 172.17.5.0/24
-external_allocation_pools_start: 172.17.5.50
-external_allocation_pools_end: 172.17.5.150
-external_interface_default_route: 172.17.5.1
+external_net_cidr: 172.18.0.0/16
+external_allocation_pools_start: 172.18.0.50
+external_allocation_pools_end: 172.18.0.150
+external_interface_default_route: 172.18.0.1
+overcloud_external_net_alloc_start: 172.18.1.1
+overcloud_external_net_alloc_end: 172.18.254.254
 
 #internal
 internal_api_net_cidr: 172.17.1.0/24
