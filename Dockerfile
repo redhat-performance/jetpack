@@ -1,8 +1,6 @@
 FROM centos:7
 
-RUN yum -y install git
-RUN yum -y install epel-release
-RUN yum -y install ansible
+RUN yum -y install git epel-release ansible
 
 RUN git clone https://github.com/redhat-performance/jetpack.git
 
