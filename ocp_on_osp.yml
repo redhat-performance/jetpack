@@ -8,6 +8,10 @@
         dir: vars
         files_matching: shift_stack_vars.yaml
 
+    - name: flush iptables
+      shell: iptables --flush
+      become: yes
+
     - name: create flavors
       include_tasks: tasks/create_flavors.yml
 
