@@ -9,8 +9,9 @@
         files_matching: shift_stack_vars.yaml
 
     - name: flush iptables
-      shell: iptables --flush
+      shell: sudo iptables --flush
       become: yes
+      ignore_errors: yes
 
     - name: create flavors
       include_tasks: tasks/create_flavors.yml
