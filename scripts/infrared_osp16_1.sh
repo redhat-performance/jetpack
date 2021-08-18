@@ -11,6 +11,7 @@ LOGFILE="$BASEDIR/run.log"
 PACKAGES=(git gcc libffi-devel openssl-devel python3-virtualenv libselinux-python3 ansible)
 IMAGE_URL=http://download.eng.pek2.redhat.com/released/RHEL-8/8.2.0/BaseOS/x86_64/images/rhel-guest-image-8.2-290.x86_64.qcow2
 NETWORK_BACKEND='geneve,vlan'
+STORAGE_BACKEND='lvm'
 set -ex
 
 if [ "$#" -ne 2 ]; then
@@ -40,6 +41,9 @@ function cleanup_host() {
 
 # installs the required packages and generates a ssh key
 function prep_env() {
+  echo "net.ipv6.conf.all.disable_ipv6=0" > /etc/sysctl.conf
+  sysctl -p
+
   for PACKAGE in ${PACKAGES[@]}
   do
     yum install -y $PACKAGE
@@ -106,7 +110,8 @@ function overcloud_deploy() {
     --deployment-files virt \
     --network-protocol ipv4 \
     --network-backend $NETWORK_BACKEND \
-    --network-ovn true
+    --network-ovn true \
+    --storage-backend $STORAGE_BACKEND
 
 }
 
@@ -120,7 +125,7 @@ ssh -T -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i ~/.ssh/id_
   git clone https://github.com/cloud-bulldozer/browbeat.git
   pushd ~/browbeat/ansible
   grep "8.8.8.8" ~/browbeat/ansible/install/group_vars/all.yml | sed 's/8.8.8.8/10.11.5.19/'
-  ./generate_tripleo_hostfile.sh -l
+  ./generate_tripleo_inventory.sh -l
   popd
 EOSSH
 
@@ -132,7 +137,7 @@ pwd
 su - stack
 pushd ~/browbeat/ansible
 install browbeat
-ansible-playbook -i hosts install/browbeat.yml
+ansible-playbook -i hosts.yml install/browbeat.yml
 popd
 EOSSH
 }
