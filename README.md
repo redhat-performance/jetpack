@@ -195,7 +195,7 @@ Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template f
       requirement if needed
 
 ## Deployment with Openshift
-1) On homogeneous set of machine type to deploy Openshift on Openstack, set the following variables in group_vars/all.yml
+1) On homogeneous set of machine type to deploy Openshift on Openstack, set the following variables in group_vars/all.yml.  
 ```
 passthrough_nvme:
     vendor_id: '144d'
@@ -226,11 +226,11 @@ heat_configs:
   
 shift_stack: true
 ```
-2) Set ``ocp_base_domain`` in ``vars/shift_stack_vars.yaml`` to whatever domain you mentioned as ``NeutronDnsDomain`` in ``group_vars/all.yml``.
-3) Set other parameters in ``vars/shift_stack_vars.yaml`` as per your specific requirement.
-4) If you do not have an Openstack environment already set up, trigger deployment for Openstack along with Openshift, by running ``ansible-playbook main.yml``.
-5) If you already have an existing Openstack environment on which you want to deploy Openshift using Jetpack, follow the steps mentioned below.
-i) Prepare a hosts file like the one below, and save the file under the name ``hosts``.
+2) Set ``ocp_base_domain`` in ``vars/shift_stack_vars.yaml`` to whatever domain you mentioned as ``NeutronDnsDomain`` in ``group_vars/all.yml``.  
+3) Set other parameters in ``vars/shift_stack_vars.yaml`` as per your specific requirement.  
+4) If you do not have an Openstack environment already set up, trigger deployment for Openstack along with Openshift, by running ``ansible-playbook main.yml``.  
+5) If you already have an existing Openstack environment on which you want to deploy Openshift using Jetpack, follow the steps mentioned below.  
+i) Prepare a hosts file like the one below, and save the file under the name ``hosts``.  
 ```
 [undercloud]
 <IP address or DNS of undercloud host>
@@ -240,11 +240,11 @@ ansible_connection=ssh
 ansible_user=stack
 ansible_ssh_pass=<password for stack user>
 ```
-ii) Run ``ansible-playbook -i hosts -vvv ocp_on_osp.yml``
+ii) Run ``ansible-playbook -i hosts -vvv ocp_on_osp.yml``  
 
-Cleanup of single Openshift deployment :
-To destroy a single Openshift deployment, follow the steps mentioned below.
-1) If you didn't already create a hosts file during deployment of Openshift on Openstack, create a hosts file like the one below, and save the file under the name ``hosts``.
+Cleanup of single Openshift deployment :  
+To destroy a single Openshift deployment, follow the steps mentioned below.  
+1) If you didn't already create a hosts file during deployment of Openshift on Openstack, create a hosts file like the one below, and save the file under the name ``hosts``.  
 ```
 [undercloud]
 <IP address or DNS of undercloud host>
@@ -254,10 +254,10 @@ ansible_connection=ssh
 ansible_user=stack
 ansible_ssh_pass=<password for stack user>
 ```
-2) Run ``ansible-playbook -i hosts -vvv delete_single_ocp.yml``
+2) Run ``ansible-playbook -i hosts -vvv delete_single_ocp.yml``  
 
-Possible issues and Workarounds :
-Some of the possible issues that can be faced during the deployment of Openshift on Openstack using Jetpack are listed below, along with solutions to fix the issues.
+Possible issues and Workarounds :  
+Some of the possible issues that can be faced during the deployment of Openshift on Openstack using Jetpack are listed below, along with solutions to fix the issues.  
 1) Error : ``panic: runtime error: invalid memory address or nil pointer dereference``  
 This issue can occur if your Openstack environment does not have enough computing power to support the ``ocp_master_flavor`` or the ``ocp_worker_flavor`` that was passed in ``vars/shift_stack_vars.yaml``.  
 Solution : Change ``ocp_master_flavor`` and ``ocp_worker_flavor`` to smaller flavors. You can choose from the list of flavors mentioned in ``vars/flavors.yaml``.
