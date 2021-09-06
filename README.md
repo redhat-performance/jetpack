@@ -258,17 +258,17 @@ ansible_ssh_pass=<password for stack user>
 
 Possible issues and Workarounds :
 Some of the possible issues that can be faced during the deployment of Openshift on Openstack using Jetpack are listed below, along with solutions to fix the issues.
-1) Error : ``panic: runtime error: invalid memory address or nil pointer dereference``
-This issue can occur if your Openstack environment does not have enough computing power to support the ``ocp_master_flavor`` or the ``ocp_worker_flavor`` that was passed in ``vars/shift_stack_vars.yaml``.
+1) Error : ``panic: runtime error: invalid memory address or nil pointer dereference``  
+This issue can occur if your Openstack environment does not have enough computing power to support the ``ocp_master_flavor`` or the ``ocp_worker_flavor`` that was passed in ``vars/shift_stack_vars.yaml``.  
 Solution : Change ``ocp_master_flavor`` and ``ocp_worker_flavor`` to smaller flavors. You can choose from the list of flavors mentioned in ``vars/flavors.yaml``.
-2) Error : ``error message: {"badRequest": {"code": 400, "message": "PCI alias nvme is not defined"}``
-This error can occur if you didn't enable PCI passthrough for your Openstack deployment.
+2) Error : ``error message: {"badRequest": {"code": 400, "message": "PCI alias nvme is not defined"}``  
+This error can occur if you didn't enable PCI passthrough for your Openstack deployment.  
 Solution : Choose a flavor from the ``flavors`` section of ``vars/flavors.yaml`` for ``ocp_master_flavor`` in ``vars/shift_stack_vars.yaml``
 3) Error : 
 ```
 Bootstrap failed to complete: failed waiting for Kubernetes API: Get "https://<Openshift DNS>:6443/version?timeout=32s": dial tcp <lb floating ip>:6443: i/o timeout
-```
-This error occurs when the user has not added a rule for masquerade on the undercloud.
+```  
+This error occurs when the user has not added a rule for masquerade on the undercloud.  
 Solution : ssh to the undercloud as the root user. Run ``sudo iptables -t nat -A POSTROUTING -o <interface> -j MASQUERADE``
 
 
