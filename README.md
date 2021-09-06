@@ -194,6 +194,84 @@ For OSP deploy with Ceph using Composable Roles, After setting the above specifi
 Note: User can customize [internal.yml.j2](templates/internal.yml.j2) template for Ceph deployment based on their
       requirement if needed
 
+## Deployment with Openshift
+1) On homogeneous set of machine type to deploy Openshift on Openstack, set the following variables in group_vars/all.yml
+```
+passthrough_nvme:
+    vendor_id: '144d'
+    product_id: 'a804'
+    address: '01:00.0'
+    flavor:
+      name: 'nvme'
+      ram: 16384
+      disk: 40
+      vcpus: 4
+
+extra_templates:
+  - /usr/share/openstack-tripleo-heat-templates/environments/services/octavia.yaml
+
+heat_configs:
+#if you need vlan tenant network enable the below lines
+  - NeutronNetworkType=vlan
+  - NeutronBridgeMappings=openshift:br-openshift,datacentre:br-ex
+  - NeutronNetworkVLANRanges=openshift:500:1000,datacentre:1:500
+  - ComputeParameters.NeutronBridgeMappings=openshift:br-openshift
+  - ControllerExtraConfig.neutron::agents::l3::extensions=fip_qos
+  - NeutronServicePlugins=qos,ovn-router,trunk
+  - NeutronDhcpAgentDnsmasqDnsServers=10.1.32.3
+  - NeutronEnableForceMetadata=true
+  - NeutronDnsDomain=example.com
+  - NeutronPluginExtensions=qos,port_security,dns_doNeutronDnsDomainmain_ports
+  - ControllerExtraConfig.neutron::agents::dhcp::dnsmasq_local_resolv=true
+  
+shift_stack: true
+```
+2) Set ``ocp_base_domain`` in ``vars/shift_stack_vars.yaml`` to whatever domain you mentioned as ``NeutronDnsDomain`` in ``group_vars/all.yml``.
+3) Set other parameters in ``vars/shift_stack_vars.yaml`` as per your specific requirement.
+4) If you do not have an Openstack environment already set up, trigger deployment for Openstack along with Openshift, by running ``ansible-playbook main.yml``.
+5) If you already have an existing Openstack environment on which you want to deploy Openshift using Jetpack, follow the steps mentioned below.
+i) Prepare a hosts file like the one below, and save the file under the name ``hosts``.
+```
+[undercloud]
+<IP address or DNS of undercloud host>
+
+[all:vars]
+ansible_connection=ssh
+ansible_user=stack
+ansible_ssh_pass=<password for stack user>
+```
+ii) Run ``ansible-playbook -i hosts -vvv ocp_on_osp.yml``
+
+Cleanup of single Openshift deployment :
+To destroy a single Openshift deployment, follow the steps mentioned below.
+1) If you didn't already create a hosts file during deployment of Openshift on Openstack, create a hosts file like the one below, and save the file under the name ``hosts``.
+```
+[undercloud]
+<IP address or DNS of undercloud host>
+
+[all:vars]
+ansible_connection=ssh
+ansible_user=stack
+ansible_ssh_pass=<password for stack user>
+```
+2) Run ``ansible-playbook -i hosts -vvv delete_single_ocp.yml``
+
+Possible issues and Workarounds :
+Some of the possible issues that can be faced during the deployment of Openshift on Openstack using Jetpack are listed below, along with solutions to fix the issues.
+1) Error : ``panic: runtime error: invalid memory address or nil pointer dereference``
+This issue can occur if your Openstack environment does not have enough computing power to support the ``ocp_master_flavor`` or the ``ocp_worker_flavor`` that was passed in ``vars/shift_stack_vars.yaml``.
+Solution : Change ``ocp_master_flavor`` and ``ocp_worker_flavor`` to smaller flavors. You can choose from the list of flavors mentioned in ``vars/flavors.yaml``.
+2) Error : ``error message: {"badRequest": {"code": 400, "message": "PCI alias nvme is not defined"}``
+This error can occur if you didn't enable PCI passthrough for your Openstack deployment.
+Solution : Choose a flavor from the ``flavors`` section of ``vars/flavors.yaml`` for ``ocp_master_flavor`` in ``vars/shift_stack_vars.yaml``
+3) Error : 
+```
+Bootstrap failed to complete: failed waiting for Kubernetes API: Get "https://<Openshift DNS>:6443/version?timeout=32s": dial tcp <lb floating ip>:6443: i/o timeout
+```
+This error occurs when the user has not added a rule for masquerade on the undercloud.
+Solution : ssh to the undercloud as the root user. Run ``sudo iptables -t nat -A POSTROUTING -o <interface> -j MASQUERADE``
+
+
 ## scale simulation
 This feature allows scale testing on limited nodes environment. It helps in scale testing tripleo. Jetpack simulates VMs as Openstack overcloud compute nodes. Jetpack will use lab machines as hypervisors to create VMs and then use these VMs as Openstack overcloud nodes. Undercloud and Controller nodes will be still baremetal nodes.
 
