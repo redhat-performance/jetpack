@@ -1,0 +1,263 @@
+---
+infrared_dir: "{{ ansible_user_dir }}/infrared"
+infrared_workspaces_dir: "{{ ansible_user_dir }}/.infrared/.workspaces"
+infrared_hosts_file: "{{ infrared_workspaces_dir }}/active/hosts"
+instackenv_file: "{{ playbook_dir }}/instackenv.json"
+undercloud_conf: "{{ ansible_user_dir }}/undercloud.conf"
+log_directory: "{{ playbook_dir }}/jetpack/logs"
+cloud_name: "{{ lookup('env', 'CLOUD_NAME')|default('', true) }}"
+lab_name: scale
+ansible_ssh_pass: "{{ lookup('env', 'ANSIBLE_SSH_PASSWORD')|default('', true) }}"
+ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
+osp_release: "{{ lookup('env', 'OSP_VERSION')|default('16', true) }}"
+osp_puddle: passed_phase2
+baseurl: http://download.eng.pek2.redhat.com/released/RHEL-7/7.9/Server/x86_64/os/
+controller_count: 3
+# No need to set compute_count. This will be set to all remaining nodes, which is calclulated in overcloud.yml
+#compute_count: 1
+ceph_node_count: 0
+set_boot_order: false
+hammer_host: "{{ lookup('env', 'HAMMER_HOST')|default('hwstore.rdu2.scalelab.redhat.com', true) }}"
+alias:
+#lab specific vars
+  lab_url: "http://quads.alias.bos.scalelab.redhat.com"
+  machine_types:
+    dell:
+      740xd: 
+        rhel7_interfaces: [enp25s0f0, enp25s0f1, enp134s0f0, enp134s0f1]
+        rhel8_interfaces: []
+    supermicro:
+      6029r:
+        rhel7_interfaces: [enp94s0f0, enp94s0f1, enp95s0f0, enp95s0f1]
+        rhel8_interfaces: []
+      6048p:
+        rhel7_interfaces: [enp130s0f0, enp130s0f1, enp4s0f0, enp4s0f1]
+        rhel8_interfaces: []
+
+scale:
+# lab specific vars
+  lab_url: "http://quads.rdu2.scalelab.redhat.com"
+  machine_types:
+    supermicro:
+      1029p:
+        rhel7_interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
+        rhel8_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
+      1029utrtp:
+        rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1 ]
+      1029utn10rt:
+        rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        rhel8_interfaces: [enp175s0f0, enp175s0f1, ens2f0, ens2f1]
+      6048r:
+        rhel7_interfaces: [enp4s0f0, enp4s0f1, enp131s0f0, enp131s0f1]
+        rhel8_interfaces: []
+      5039ms:
+        rhel7_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+        rhel8_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+      6049p:
+        rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
+        rhel8_interfaces: [ens3f0, ens3f1, ens2f0, ens2f1]
+      6048p:
+        rhel7_interfaces:  []
+        rhel8_interfaces:  []
+
+    dell:
+      r620:
+        rhel7_interfaces: [p2p3, p2p4, em1, em2]
+        rhel8_interfaces: [enp66s0f2, enp66s0f3, eno1, eno2]
+      r630:
+        rhel7_interfaces: [em1, em2, em3, em4]
+        rhel8_interfaces: [eno1, eno2, eno3, eno4]
+      r730xd:
+        rhel7_interfaces: [em1, em2, p4p1, p4p2]
+        rhel8_interfaces: []
+      r930:
+        rhel7_interfaces: [em1, em2, p1p1, p1p2]
+        rhel8_interfaces: []
+      r640:
+        rhel7_interfaces: [p1p1, p1p2, p2p1, p2p2]
+        rhel7_interfaces_f04: [p3p1, p3p2, p2p1, p2p2]
+        rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
+        rhel8_interfaces_f04: [ens3f0, ens3f1, ens2f0, ens2f1]
+
+# Other lab machines have to define their interfaces through below
+# 'interfaces' variable. prepare_nic_configs.yml will use that
+# instead of deriving from
+# scale/alias.machine_types.supermicro/dell...interfaces
+# note: If you are using scale lab or alias lab, don't enable below
+# 'interfaces' parameter.
+interfaces:
+  rhel8_interfaces: [eno1]
+  rhel7_interfaces: [em1]
+
+# Scale lab can provide us public external network on 4th interface
+# We can use that to access overcloud VM's from outside undercloud.
+# To use this feature set 'public_external_interface: true' and
+# assign 4th nic to external_interface to 4th nic and
+# define external_XXXXXX parameters wth CIDR provided by lab team
+# Don't define external_network_vlan_id as lab team might have
+# created their own vlan for this external network implementation.
+# public_external_interface: "{{ (lookup('env', 'OSP_PUBLIC_EXTERNAL_INTERFACE')|default(false, true))|bool }}"
+# set this based on osp version. For example, for 1029p nodes if the
+# osp version is 14 and above set it to ens2f3, otherwise to enp94s0f3.
+# You can refer above table or scale lab wiki for this interface name.
+# external_interface: ens2f1
+# overcloud provider external network. This external network will be created
+# after overcloud deployment as part of post deployment tasks.
+public_net_name: "{{ lookup('env', 'OSP_PUBLIC_NETWORK_NAME')|default('public', true) }}"
+
+extra_templates:
+  #  - /usr/share/openstack-tripleo-heat-templates/environments/services/octavia.yaml
+
+heat_configs:
+  #- ControllerExtraConfig.neutron::agents::l3::extensions=fip_qos
+  #- NeutronServicePlugins=qos,ovn-router,trunk
+  #- NeutronDhcpAgentDnsmasqDnsServers=10.1.32.3
+  #- NeutronEnableForceMetadata=true
+  #- NeutronDnsDomain=rdu2.scalelab.redhat.com
+  #- NeutronPluginExtensions=qos,port_security,dns_domain_ports
+  #- ControllerExtraConfig.neutron::agents::dhcp::dnsmasq_local_resolv=true
+
+# containers params
+registry_mirror: "{{ lookup('env', 'OSP_REGISTRY_MIRROR')|default('registry-proxy.engineering.redhat.com', true) }}"
+registry_namespace: "{{ lookup('env', 'OSP_REGISTRY_NAMESPACE')|default('rh-osbs', true) }}"
+insecure_registries: "{{ lookup('env', 'OSP_INSECURE_REGISTRIES')|default('docker-registry.upshift.redhat.com', true) }}"
+#undercloud.conf default section
+undercloud_public_host: 192.168.24.2
+undercloud_admin_host: 192.168.24.3
+# undercloud.conf ctlplane-subnet section config options
+cidr: 192.168.24.0/24
+gateway: 192.168.24.1
+dhcp_start: 192.168.24.5
+dhcp_end: 192.168.24.105
+inspection_iprange: 192.168.24.110,192.168.24.250
+# external network params for adding external network to
+# undercloud to access overcloud resources
+external_gateway: "{{ lookup('env', 'OSP_EXTERNAL_GATEWAY')|default('172.18.0.1/16', true) }}"
+external_network_vlan_id: 300
+clean_nodes: false
+#adding changes 
+external_net_cidr: "{{ lookup('env', 'OSP_EXTERNAL_NET_CIDR')|default('172.18.0.0/16', true) }}"
+external_allocation_pools_start: "{{ lookup('env', 'OSP_EXTERNAL_ALLOCATION_POOLS_START')|default('172.18.0.50', true) }}"
+external_allocation_pools_end: "{{ lookup('env', 'OSP_EXTERNAL_ALLOCATION_POOLS_END')|default('172.18.0.150', true) }}"
+external_interface_default_route: "{{ lookup('env', 'OSP_EXTERNAL_INTERFACE_DEFAULT_ROUTE')|default('172.18.0.1', true) }}"
+overcloud_external_net_alloc_start: "{{ lookup('env', 'OSP_OVERCLOUD_EXTERNAL_NET_ALLOCATION_POOLS_START')|default('172.18.1.1', true) }}"
+overcloud_external_net_alloc_end: "{{ lookup('env', 'OSP_OVERCLOUD_EXTERNAL_NET_ALLOCATION_POOLS_END')|default('172.18.254.254', true) }}"
+
+#internal
+internal_api_net_cidr: 172.17.1.0/24
+internal_api_allocation_pools_start: 172.17.1.10
+internal_api_allocation_pools_end: 172.17.1.149
+internal_api_network_vlan_id: 301
+#storage
+storage_net_cidr: 172.17.3.0/24
+storage_allocation_pools_start: 172.17.3.10
+storage_allocation_pools_end: 172.17.3.149
+storage_network_vlan_id: 302
+storage_mgmt_net_cidr: 172.17.4.0/24
+storage_mgmt_allocation_pools_start: 172.17.4.10
+storage_mgmt_allocation_pools_end: 172.17.4.149
+storage_mgmt_network_vlan_id: 303
+#tenant
+tenant_net_cidr: 172.17.2.0/24
+tenant_allocation_pools_start: 172.17.2.10
+tenant_allocation_pools_end: 172.17.2.150
+tenant_network_vlan_id: 304
+#This allows the user to force re provision undercloud
+#default is false - not forced
+force_reprovision: true
+#This enables user to have a undercloud in VM
+#NOTE: now the vm is created in the ansible host, so
+#do not enable this while running from your desktop
+virtual_uc: false
+undercloud_host: 172.16.0.2
+vm_external_interface: eth0
+undercloud_local_interface: eth0
+virtual_uc_ctlplane_interface: em1
+vm_image_url:
+   rhel7: https://url.corp.redhat.com/rhel-guest-image-7-6-210-x86-64-qcow2
+   rhel8: http://download.hosts.prod.upshift.rdu2.redhat.com/released/RHEL-8/8.1.0/BaseOS/x86_64/images/rhel-guest-image-8.1-263.x86_64.qcow2
+   rhel8_2: http://download.eng.pek2.redhat.com/released/RHEL-8/8.2.0/BaseOS/x86_64/images/rhel-guest-image-8.2-290.x86_64.qcow2
+#Neutron backend, if not set default will be used.
+#neutron_backend: ovn
+#ocp installation
+shift_stack: "{{ (lookup('env', 'OPENSHIFT_INSTALL')|default(false, true))|bool }}"
+vlan_provider_network: false
+#browbeat installation
+#installs browbeat, if this variable is not defined or set true
+#skips browbeat installation, only if the variable set false
+browbeat: true
+
+# define mount_nvme to mount /var/lib/nova on nvme device
+# to use nvme storage for nova instances as ephemeral disk
+mount_nvme: false
+
+# enable nvme parameters
+# README has details about how to get these values
+#passthrough_nvme:
+#    vendor_id: '144d'
+#    product_id: 'a804'
+#    address: '01:00.0'
+#    flavor:
+#      name: 'nvme'
+#      ram: 16384
+#      disk: 40
+#      vcpus: 4
+#pci_node_count: 0
+# if your machine is 1029U type you need to specify the product type also
+# refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
+# rest are 1029utrtp machines
+#pci_node_type: '1029p'
+
+
+#For Nova-less provisioning enable the variable
+novaless_prov: false
+
+new_nodes_instack: "{{ playbook_dir }}/newnodes.json"
+
+# This feature creates VMs on hypervisors and uses them as overcloud
+# compute nodes to simulate overcloud scale deployment. This feature
+# requires control plane network tuning as below
+scale_compute_vms: false
+#undercloud_public_host: 192.168.0.2
+#undercloud_admin_host: 192.168.0.3
+#cidr: 192.168.0.0/16
+#gateway: 192.168.0.1
+#dhcp_start: 192.168.0.5
+#dhcp_end: 192.168.10.254
+#inspection_iprange: 192.168.11.1,192.168.20.254
+
+# Enables composable_roles
+# If lab_name not in [scale, alias] set undercloud_local_interface.
+#Specify the controller ifaces for composable roles explicitly in
+#case you need specific machines as controllers. Else default controller
+#machine type is the first node in overcloud_instackenv.json
+composable_roles: false
+#controller_ifaces: []
+# if your machine is 1029U type you need to specify the product type also
+# refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
+# rest are 1029utrtp machines
+controller_machine_type: ""
+
+#Ceph deployment params
+#ceph_ifaces: []
+# if your machine is 1029U type you need to specify the product type also
+# refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
+# rest are 1029utrtp machines
+ceph_machine_type: ''
+
+
+#Ceph deployment params
+ceph_enabled: false
+osd_scenario: lvm
+osd_objectstore: bluestore
+
+#Note:By default storage_node_disks can be detected automatically
+#using introspection data
+#storage_node_disks: ['/dev/nvme0n1']
+#osd_pool_default_pg_num:
+#osd_pool_default_pgp_num:
+
+#Default value for introspection timeout is 2400s, but user can configure
+#the timeout for large cloud
+#introspection_timeout:
