@@ -1,4 +1,4 @@
-{% if osp_release == 13 %}
+{% if osp_release|int == 13 %}
 [rhel-7-server79]
 name=Red Hat Enterprise Linux - 7.9 - Server
 baseurl={{ baseurl }}

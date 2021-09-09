@@ -8,7 +8,7 @@
 
     - name: image url
       set_fact:
-        image_url: "{{ (osp_release <=13 ) | ternary(vm_image_url.rhel7, ((osp_release>13 and osp_release<=16) | ternary(vm_image_url.rhel8, vm_image_url.rhel8_2))) }}"
+        image_url: "{{ (osp_release|int <=13 ) | ternary(vm_image_url.rhel7, ((osp_release|int > 13 and osp_release|int <= 16) | ternary(vm_image_url.rhel8, vm_image_url.rhel8_2))) }}"
 
     - name: copy topology node
       template:

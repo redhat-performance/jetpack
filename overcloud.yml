@@ -16,7 +16,7 @@
             insertafter: "    excludes:"
             line: '    - ceph'
 
-      when: (ceph_enabled != true) and (osp_release > 13)
+      when: (ceph_enabled != true) and (osp_release|int > 13)
 
     - name: get tht version
       shell: |

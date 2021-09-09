@@ -5,7 +5,7 @@ undercloud_ntp_servers = {{ time_servers | join(",") }}
 {% if clean_nodes %}
 clean_nodes = True
 {% endif %}
-{% if osp_release > 13 %}
+{% if osp_release|int > 13 %}
 container_images_file=/home/stack/containers-prepare-parameter.yaml
 container_insecure_registries={{ registry_mirror }},{{ insecure_registries }}
 undercloud_timezone = UTC
@@ -13,7 +13,7 @@ undercloud_public_host = {{ undercloud_public_host }}
 undercloud_admin_host = {{ undercloud_admin_host }}
 {% endif %}
 
-{% if osp_release <= 12 %}
+{% if osp_release|int <= 12 %}
 network_cidr = {{ cidr }}
 network_gateway = {{ gateway }}
 {% else %}

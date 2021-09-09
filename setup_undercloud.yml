@@ -47,7 +47,7 @@
           vars:
             ansible_python_interpreter: "{{ python_interpreter }}"
             ansible_user: "root"
-      when: osp_release == 13
+      when: osp_release|int == 13
 
     - name: list oc_instackenv_content
       shell: |
