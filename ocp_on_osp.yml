@@ -180,12 +180,12 @@
     - name: Set url for installer
       set_fact:
         ocp_installer_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp/
-      when: ocp_dev_preview == false
+      when: ocp_dev_preview|bool == false
 
     - name: Set url for installer
       set_fact:
         ocp_installer_url: https://mirror.openshift.com/pub/openshift-v4/x86_64/clients/ocp-dev-preview/
-      when: ocp_dev_preview
+      when: ocp_dev_preview|bool == true
 
     - name: get the latest installer
       get_url:
