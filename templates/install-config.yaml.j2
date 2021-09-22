@@ -26,10 +26,10 @@ metadata:
   name: "{{ ocp_cluster_name }}"
 networking:
   clusterNetworks:
-  - cidr:             10.128.0.0/14
+  - cidr:             10.128.0.0/10
     hostSubnetLength: 9
   serviceCIDR: 172.30.0.0/16
-  machineCIDR: 10.196.0.0/16
+  machineCIDR: 10.0.0.0/16
   type: "{{ ocp_network_type }}"
 platform:
   openstack:
