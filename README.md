@@ -8,7 +8,7 @@ Once the user's baremetal node allocation is ready to use, they need to set belo
 cloud_name: cloud05
 lab_type: scale
 osp_release: 13
-hammer_host: <FQDN/IP of host with hammer cli>
+foreman_url: specify the foreman url based on the lab
 ansible_ssh_pass: default password of servers
 
 ```

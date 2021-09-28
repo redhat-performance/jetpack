@@ -17,7 +17,6 @@ controller_count: 3
 #compute_count: 1
 ceph_node_count: 0
 set_boot_order: true
-hammer_host: hwstore.example.com
 alias:
 #lab specific vars
   lab_url: "http://quads.alias.bos.scalelab.redhat.com"
@@ -264,3 +263,4 @@ osd_objectstore: bluestore
 #Default value for introspection timeout is 2400s, but user can configure
 #the timeout for large cloud
 #introspection_timeout:
+foreman_url: https://foreman.example.com
