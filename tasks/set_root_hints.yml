@@ -14,5 +14,9 @@
 - name: set root hints based on model (740XD G-CL)
   shell: |
     source ~/stackrc
-    openstack baremetal node set "{{ item }}" --property root_device='{"model": {{ model.stdout }}}'
-  with_items: "{{ node_uuids.stdout_lines }}"
+    for i in $(openstack baremetal node list --format value -c UUID); do
+      if [[ `openstack baremetal node show $i --fields driver_info -f json | jq '.driver_info.ipmi_address'` =~ "e26" ]]
+      then
+        openstack baremetal node set $i --property root_device='{"model": {{ model.stdout }}}'
+      fi
+    done
