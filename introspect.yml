@@ -43,3 +43,7 @@
       - name: check and delete introspection failed nodes
         include_tasks: tasks/delete_introspection_failed_nodes.yml
         when: scale_compute_vms == false
+
+      - name: enable root_hints(740xd G-CL)
+        include_tasks: tasks/set_root_hints.yml
+        when: lab_name == alias and machine_type == '740xd' and instackenv_content.nodes[0]['pm_addr'].split('.')[0].split('-')[1] == 'e26'
