@@ -12,6 +12,7 @@ ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
 osp_puddle: passed_phase2
 baseurl: http://download.eng.pek2.redhat.com/released/RHEL-7/7.9/Server/x86_64/os/
+nic_configs: "{{ ansible_user_dir }}/virt"
 controller_count: 3
 # No need to set compute_count. This will be set to all remaining nodes, which is calculated in overcloud.yml
 #compute_count: 1

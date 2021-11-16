@@ -6,15 +6,6 @@
         hostname: "{{ undercloud_hostname }}"
         ssh_user: "root"
 
-    - include_tasks: tasks/get_interpreter.yml
-      vars:
-        hostname: "{{ undercloud_hostname }}"
-        user: "root"
-
-    - name: python interpreter
-      set_fact:
-        python_interpreter: "{{ (python_version.stderr_lines|length > 0) | ternary('/usr/libexec/platform-python', '/usr/bin/python') }}"
-
     - name: add undercloud_host to inventory file
       add_host:
         name: "undercloud"
