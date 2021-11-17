@@ -61,6 +61,7 @@
 - import_playbook: post.yml
   tags:
     - overcloud
+    - post
 
 - import_playbook: ocp_on_osp.yml
   tags:
