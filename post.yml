@@ -3,6 +3,20 @@
   become: yes
   become_user: stack
   tasks:
+    - name: get default route
+      shell: |
+        ip r | grep default | cut -d ' ' -f5
+      register: default_route
+      become: true
+      when: external_network_vlan_id is defined
+
+    - name: masquerade on public interface
+      shell: |
+        iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
+      become: true
+      become_user: root
+      when: external_network_vlan_id is defined
+
     - name: create nvme flavor
       shell: |
         source /home/stack/overcloudrc

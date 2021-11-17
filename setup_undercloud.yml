@@ -49,12 +49,6 @@
             ansible_user: "root"
       when: osp_release == 13
 
-    - name: list oc_instackenv_content
-      shell: |
-        echo "{{ (oc_instackenv_content.nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
-      with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
-      register: host_list
-
     - block:
         - name: set boot order to director
           include_tasks: tasks/set_boot_order_director.yml

@@ -1,0 +1,69 @@
+---
+- hosts: localhost
+  tasks:
+      - name: load instackenv file
+        include_tasks: tasks/load_instackenv.yml
+
+      - name: get tn10rt machines list
+        get_url:
+          url: http://wiki.scalelab.redhat.com/1029u/
+          dest: /tmp/tn10rt.html
+
+      - name: load tn10rt machines list
+        set_fact:
+          tn10rt: "{{ lookup('file', '/tmp/tn10rt.html') }}"
+
+      - block:
+          - name: set machine_type
+            set_fact:
+              machine_type: "{{ (type != '1029u') | ternary(type, (undercloud_hostname in tn10rt) | ternary('1029utn10rt', '1029utrtp')) }}"
+            vars:
+              type: "{{ (lab_name == 'scale') | ternary(undercloud_hostname.split('.')[0].split('-')[3], undercloud_hostname.split('.')[0].split('-')[2]) }}"
+            when: virtual_uc != true
+
+          - name: set machine type for virtual undercloud
+            set_fact:
+              machine_type: "{{ (type != '1029u') | ternary(type, (instackenv_content.nodes[0].pm_addr.replace('mgmt-', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp') }}"
+            vars:
+              type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
+            when: virtual_uc
+
+          - name: set vendor
+            set_fact:
+              vendor: "{{ (machine_type in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell') }}"
+        vars:
+          lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+        when: lab_name in ['scale', 'alias']
+
+      - block:
+          - name: load overcloud instackenv
+            set_fact:
+              stack_data: "{{ lookup('file', '{{ overcloud_instackenv_path }}') | from_json }}"
+
+          - name: get machine types
+            set_fact:
+              machine_types: "{{ machine_types|default([]) + [ (type != '1029u') | ternary(type, (item.pm_addr.replace('mgmt-', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp')) ] }}"
+            vars:
+              type: "{{ (lab_name == 'scale') | ternary(item.pm_addr.split('.')[0].split('-')[4], item.pm_addr.split('.')[0].split('-')[3]) }}"
+            loop: "{{ stack_data.nodes|flatten(levels=1) }}"
+
+          - name: set vendors of overcloud nodes
+            set_fact:
+              vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell')] }}"
+            with_items:
+              - "{{ machine_types }}"
+        vars:
+          lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+        when: lab_name in ['scale', 'alias'] and virtual_uc != true
+
+      - name: list oc_instackenv_content
+        shell: |
+          echo "{{ (oc_instackenv_content.nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+        with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
+        register: host_list
+
+      - include_tasks: tasks/get_interpreter.yml
+        vars:
+          hostname: "{{ undercloud_hostname }}"
+          user: "root"
+

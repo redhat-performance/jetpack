@@ -12,6 +12,7 @@ ansible_ssh_key: "{{ ansible_user_dir }}/.ssh/id_rsa"
 osp_release: 13
 osp_puddle: passed_phase2
 baseurl: http://download.eng.pek2.redhat.com/released/RHEL-7/7.9/Server/x86_64/os/
+nic_configs: "{{ ansible_user_dir }}/virt"
 controller_count: 3
 # No need to set compute_count. This will be set to all remaining nodes, which is calculated in overcloud.yml
 #compute_count: 1
@@ -107,22 +108,22 @@ interfaces:
 
 #extra_templates:
 
-heat_configs:
+#heat_configs:
   # Enable root user password for all nodes
-  NodeRootPassword: "{{ ansible_ssh_pass }}"
-  SshServerOptions:
-    PasswordAuthentication: 'yes'
-    PermitRootLogin: 'yes'
+#  NodeRootPassword: "{{ ansible_ssh_pass }}"
+#  SshServerOptions:
+#    PasswordAuthentication: 'yes'
+#    PermitRootLogin: 'yes'
 #if you need vlan tenant network enable the below lines
 # - NeutronNetworkType=vlan
 # - NeutronBridgeMappings=openshift:br-openshift,datacentre:br-ex
 # - NeutronNetworkVLANRanges=openshift:500:1000,datacentre:1:500
 # - ComputeParameters.NeutronBridgeMappings=openshift:br-openshift
 
-resource_registry:
+#resource_registry:
   # Enable root user password for all nodes
-  - OS::TripleO::NodeUserData=/usr/share/openstack-tripleo-heat-templates/firstboot/userdata_root_password.yaml
-  - OS::TripleO::Services::Sshd=/usr/share/openstack-tripleo-heat-templates/deployment/sshd/sshd-baremetal-puppet.yaml
+#  - OS::TripleO::NodeUserData=/usr/share/openstack-tripleo-heat-templates/firstboot/userdata_root_password.yaml
+#  - OS::TripleO::Services::Sshd=/usr/share/openstack-tripleo-heat-templates/deployment/sshd/sshd-baremetal-puppet.yaml
 
 # containers params
 registry_mirror: redhat.com
