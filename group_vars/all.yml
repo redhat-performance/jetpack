@@ -108,22 +108,22 @@ interfaces:
 
 #extra_templates:
 
-heat_configs:
+#heat_configs:
   # Enable root user password for all nodes
-  NodeRootPassword: "{{ ansible_ssh_pass }}"
-  SshServerOptions:
-    PasswordAuthentication: 'yes'
-    PermitRootLogin: 'yes'
+#  NodeRootPassword: "{{ ansible_ssh_pass }}"
+#  SshServerOptions:
+#    PasswordAuthentication: 'yes'
+#    PermitRootLogin: 'yes'
 #if you need vlan tenant network enable the below lines
 # - NeutronNetworkType=vlan
 # - NeutronBridgeMappings=openshift:br-openshift,datacentre:br-ex
 # - NeutronNetworkVLANRanges=openshift:500:1000,datacentre:1:500
 # - ComputeParameters.NeutronBridgeMappings=openshift:br-openshift
 
-resource_registry:
+#resource_registry:
   # Enable root user password for all nodes
-  - OS::TripleO::NodeUserData=/usr/share/openstack-tripleo-heat-templates/firstboot/userdata_root_password.yaml
-  - OS::TripleO::Services::Sshd=/usr/share/openstack-tripleo-heat-templates/deployment/sshd/sshd-baremetal-puppet.yaml
+#  - OS::TripleO::NodeUserData=/usr/share/openstack-tripleo-heat-templates/firstboot/userdata_root_password.yaml
+#  - OS::TripleO::Services::Sshd=/usr/share/openstack-tripleo-heat-templates/deployment/sshd/sshd-baremetal-puppet.yaml
 
 # containers params
 registry_mirror: redhat.com
