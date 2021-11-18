@@ -1,0 +1,22 @@
+---
+- name: get the node uuids
+  shell: |
+    source ~/stackrc
+    openstack baremetal node list -f value -c UUID
+  register: node_uuids
+
+- name: using introspection data to set root device
+  shell: |
+    source ~/stackrc
+    openstack baremetal introspection data save "{{ node_uuids.stdout_lines[0] }}" | jq '.inventory.disks[0]["model"]'
+  register: model
+
+- name: set root hints based on model (740XD G-CL)
+  shell: |
+    source ~/stackrc
+    for i in $(openstack baremetal node list --format value -c UUID); do
+      if [[ `openstack baremetal node show $i --fields driver_info -f json | jq '.driver_info.ipmi_address'` =~ "e26" ]]
+      then
+        openstack baremetal node set $i --property root_device='{"model": {{ model.stdout }}}'
+      fi
+    done
