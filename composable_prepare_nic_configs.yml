@@ -104,6 +104,13 @@
           storage_interfaces: "{{ isolated_interfaces }}"
         when: ceph_enabled and isolated_interfaces is defined
 
+      - name: set dedicated vlan based provider network
+        set_fact:
+          openshift_vlan_interfaces: "{{ openshift_vlan_interfaces|default([]) + [item[2]] }}"
+        when: item|length > 2
+        with_items:
+          - "{{ ifaces }}"
+
       - name: remove duplicates from machine types
         set_fact:
           machine_types: "{{ machine_types | unique }}"
@@ -169,6 +176,7 @@
           external_interface: "{{ controller_external_interface | default(external_interfaces[0]) }}"
           tenant_interface: "{{ controller_tenant_interface | default(tenant_interfaces[0]) }}"
           isolated_interface: "{{ controller_isolated_interface | default(isolated_interfaces[0]) }}"
+          openshift_vlan_interface: "{{ controller_tenant_interface | default(openshift_vlan_interfaces[0]) }}"
         template:
           src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', false) }}"
           dest: "{{ nic_config_path }}/controller.yaml.j2"
@@ -180,6 +188,7 @@
           external_interface: "{{ item.2 }}"
           tenant_interface: "{{ item.3 }}"
           isolated_interface: "{{ item.4 }}"
+          openshift_vlan_interface: "{{ item.5 }}"
         template:
           src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', false) }}"
           dest: "{{ nic_config_path }}/compute_{{ item.0 }}.yaml.j2"
@@ -190,6 +199,7 @@
          - "{{ external_interfaces }}"
          - "{{ tenant_interfaces }}"
          - "{{ isolated_interfaces }}"
+         - "{{ openshift_vlan_interfaces }}"
 
       - block:
           - name: fail if ceph_machine_type or ceph_ifaces are not defined
