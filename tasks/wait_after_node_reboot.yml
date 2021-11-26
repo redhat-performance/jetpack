@@ -1,0 +1,23 @@
+---
+- name: wait for node to go down
+  command: ping -c 1 {{ hypervisor_host }}
+  register: node_down
+  until: node_down.rc != 0
+  retries: 100
+  delay: 3
+  ignore_errors: true
+  changed_when: false
+
+- name: wait for 180 seconds before checking for node
+  wait_for:
+    timeout: 180
+
+- name: waiting for the undercloud to be available
+  wait_for:
+    port: 22
+    host: "{{ hypervisor_host }}"
+    search_regex: OpenSSH
+    timeout: 30
+  register: node_reachable
+  retries: 100
+  until: node_reachable is succeeded

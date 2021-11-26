@@ -15,9 +15,6 @@
         ansible_python_interpreter: "{{ python_interpreter }}"
 
 - hosts: undercloud
-  vars:
-    user: "stack"
-    hostname: "{{ hostvars['localhost']['undercloud_hostname'] }}"
   gather_facts: yes
   tasks:
     - name: Clean network interfaces
@@ -37,32 +34,17 @@
       changed_when: false
       ignore_errors: true
 
-    - name: wait for undercloud to go down
-      command: ping -c 1 {{ hostvars['localhost']['undercloud_hostname'] }}
-      register: node_down
-      until: node_down.rc != 0
-      retries: 100
-      delay: 3
-      ignore_errors: true
-      changed_when: false
-      delegate_to: localhost
+- hosts: localhost
+  tasks:
+    - include_tasks: tasks/wait_after_node_reboot.yml
+      vars:
+        hypervisor_host: "{{ undercloud_hostname }}"
 
-    - name: wait for 180 seconds before checking for undercloud
-      wait_for:
-        timeout: 180
-      delegate_to: localhost
-
-    - name: waiting for the undercloud to be available
-      wait_for:
-        port: 22
-        host: "{{ hostvars['localhost']['undercloud_hostname'] }}"
-        search_regex: OpenSSH
-        timeout: 30
-      register: uc_reachable
-      delegate_to: localhost
-      retries: 100
-      until: uc_reachable is succeeded
-
+- hosts: undercloud
+  vars:
+    user: "stack"
+  gather_facts: yes
+  tasks:
     - name: add stack user
       user:
         name: "{{ user }}"

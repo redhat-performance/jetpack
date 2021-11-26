@@ -10,25 +10,25 @@
   with_together:
     - [ "{{ hypervisor_password }}", 'stack']
     - ['root', 'stack']
-
   ignore_errors: true
 
+- name: set rhel_stdout
+  set_fact:
+    rhel_stdout: "{{ (rhel_release.results[0].stdout) | ternary(rhel_release.results[0].stdout, rhel_release.results[1].stdout) }}"
+
+# forman is not having 8.4. So we need to install previsous version and upgrade later
+# We don't install RHEL 8.2 or RHEL 8.4 when host already has this for OSP16.2
 - name: set os_install when installed OS version not matching with the needed
   vars:
-    rhel_stdout: "{{ (rhel_release.results[0].stdout) | ternary(rhel_release.results[0].stdout, rhel_release.results[1].stdout) }}"
+    lab_available_os: "{{ (needed_os == 'RHEL 8.4') | ternary('RHEL 8.2', needed_os) }}"
   set_fact:
-    os_install: "{{ needed_os }}"
-  when: rhel_stdout == "" or (needed_os.split()[1] not in rhel_stdout) or (os_search_string not in rhel_stdout)
+    os_install: "{{ lab_available_os }}"
+  when: (force_reprovision == true) or (rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))
 
-- name: set os_install before updating os RHEL 7.9
+- name: set upgrade_os
   set_fact:
-    os_install: "RHEL 7.8"
-  when: needed_os == "RHEL 7.9"
-
-- name: set os_install for forceful provisioning
-  set_fact:
-    os_install: "{{ needed_os }}"
-  when: force_reprovision == true and needed_os != "RHEL 7.9"
+    upgrade_os: "{{ needed_os.split()[1] }}"
+  when: (needed_os == 'RHEL 8.4') and ((os_install is defined) or ('8.2' in rhel_stdout))
 
 - name: Reboot if OS install needed
   block:
@@ -113,3 +113,21 @@
   set_fact:
     async_install: "{{ async_install|default([]) + [hyp_reachable.ansible_job_id] }}"
 
+- name: Wait for undercloud to be available
+  async_status:
+    jid: "{{ item }}"
+  register: install_uc
+  until: install_uc.finished
+  retries: 300
+  delay: 10
+  with_items: "{{ async_install }}"
+
+- name: upgrade os and reboot
+  block:
+    - name: upgrade os
+      shell: |
+        sshpass -p {{ hypervisor_password }}  ssh -o 'PreferredAuthentications=password' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -q root@{{ hypervisor_host }} '/root/update-latest-rhel-release.sh {{ upgrade_os }} && dnf update -y && reboot'
+      ignore_errors: true
+
+    - include_tasks: tasks/wait_after_node_reboot.yml
+  when: upgrade_os is defined
