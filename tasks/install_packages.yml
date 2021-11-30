@@ -46,4 +46,11 @@
       requirements: "{{ ansible_user_dir }}/badfish/requirements.txt"
       virtualenv_command: /usr/bin/python3 -m venv
       virtualenv: "{{ badfish_venv }}"
+      
+  - name: Install badfish packages
+    shell: |
+      source {{ badfish_venv }}/bin/activate;
+      pip install -e .
+    args:
+      chdir: "{{ ansible_user_dir }}/badfish"
   when: virtual_uc == false or scale_compute_vms == true
