@@ -60,6 +60,9 @@ scale:
       6048p:
         rhel7_interfaces:  []
         rhel8_interfaces:  []
+      6018r:
+        rhel7_interfaces: [eno1, eno2, enp4s0f0, enp4s0f1]
+        rhel8_interfaces: [eno1, eno2, enp4s0f0, enp4s0f1]
 
     dell:
       r620:
