@@ -32,6 +32,12 @@ parameters:
     default: ''
     description: IP address/subnet on the management network
     type: string
+{% if manila_enabled %}
+  StorageNFSIpSubnet:
+    default: ''
+    description: IP address/subnet on the storage network
+    type: string
+{% endif %}
   InternalApiNetworkVlanID:
     default: 20
     description: Vlan ID for the internal_api network traffic.
@@ -44,6 +50,12 @@ parameters:
     default: 50
     description: Vlan ID for the tenant network traffic.
     type: number
+{% if manila_enabled %}
+  StorageNFSNetworkVlanID:
+    default: 70
+    description: Vlan ID for the storage network traffic.
+    type: number
+{% endif %}
   ControlPlaneSubnetCidr: # Override this via parameter_defaults
     default: '24'
     description: The subnet CIDR of the control plane network.
@@ -110,6 +122,14 @@ parameters:
       guaranteed to pass through the data path of the segments in the
       Management network.
     type: number
+{% if manila_enabled %}
+  StorageNFSMtu:
+    default: 1500
+    description: The maximum transmission unit (MTU) size(in bytes) that is
+      guaranteed to pass through the data path of the segments in the
+      Storage NFS network.
+    type: number
+{% endif %}
 {%raw%}{% endif %}{%endraw%}
 
 {%raw%}{% if install.version|openstack_release >= 14 %}{%endraw%}
@@ -162,7 +182,18 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
+{% if manila_enabled %}
+  StorageNFSInterfaceRoutes:
+    default: []
+    description: >
+      Routes for the storageNFS network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
+{% endif %}
 {%raw%}{% endif %}{%endraw%}
+
 resources:
   OsNetConfigImpl:
     type: OS::Heat::SoftwareConfig

@@ -168,6 +168,11 @@ storage_mgmt_net_cidr: 172.17.4.0/24
 storage_mgmt_allocation_pools_start: 172.17.4.10
 storage_mgmt_allocation_pools_end: 172.17.4.149
 storage_mgmt_network_vlan_id: 303
+#storage_nfs
+storage_nfs_net_cidr: 172.17.5.0/24
+storage_nfs_network_vlan_id: 305
+storage_nfs_allocation_pools_start: 172.17.5.10
+storage_nfs_allocation_pools_end: 172.17.5.149
 #tenant
 tenant_net_cidr: 172.17.2.0/24
 tenant_allocation_pools_start: 172.17.2.10
@@ -268,3 +273,4 @@ osd_objectstore: bluestore
 #the timeout for large cloud
 #introspection_timeout:
 foreman_url: https://foreman.example.com
+manila_enabled: false

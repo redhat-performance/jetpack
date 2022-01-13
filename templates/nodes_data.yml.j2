@@ -1,6 +1,11 @@
 ---
 parameter_defaults:
+{% if manila_enabled %}
+  ControllerStorageNfsCount: {{ controller_count }}
+{% else %}
   ControllerCount: {{ controller_count }}
+{% endif %}
+
 {% if failed_nodes_machine_type is not defined %}
 {% for node_type in machine_types %}
 {% if (node_type|string() == controller_machine_type|string()) and (node_type|string() == ceph_machine_type|string()) %}

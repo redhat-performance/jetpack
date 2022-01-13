@@ -13,6 +13,11 @@
         set_fact:
           tn10rt: "{{ lookup('file', '~/tn10rt.html') }}"
 
+      - name: set storage-protocol-backend
+        set_fact:
+          storage_protocol_backend: ' --storage-protocol-backend nfs-ganesha'
+        when: manila_enabled
+
       - block:
           - name: set machine_type
             set_fact:
