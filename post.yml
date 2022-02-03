@@ -61,3 +61,10 @@
       changed_when: false
       ignore_errors: true
 
+    - name: run post overcloud deploy
+      vars:
+        share_type_name: default
+        allocation_pool_start: "{{ storage_nfs_allocation_pools_start.split('.')[0:3] | join('.')  }}.150"
+        allocation_pool_end: "{{ storage_nfs_allocation_pools_end.split('.')[0:3] | join('.')  }}.250"
+      include_tasks: tasks/manila.yml
+      when: manila_enabled
