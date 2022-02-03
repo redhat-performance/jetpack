@@ -1,0 +1,52 @@
+---
+- hosts: localhost
+  tasks:
+    - name: load instackenv
+      include_tasks: tasks/load_instackenv.yml
+
+    - name: get intrepeter
+      include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "stack"
+
+    - name: add undercloud
+      add_host:
+        name: "undercloud"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_user: "stack"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+
+- hosts: undercloud
+  vars:
+    ucscalein_nodes: /home/stack/scalein_nodes.yml
+  tasks:
+    - name: get the node uuids to be scaled in
+      copy:
+        src: "{{ nodes_tobescaledin }}"
+        dest: "{{ ucscalein_nodes }}"
+        force: yes
+
+    - name: delete the mentioned node(s)
+      shell: |
+        source /home/stack/stackrc
+        cat {{ ucscalein_nodes }} | awk '( NR>2 ) {print substr($0,3)}' | tr "\n" " " | xargs openstack overcloud node delete -y
+      when: nodes_tobescaledin is defined
+ 
+    - name: get all nodes count
+      shell: |
+        source /home/stack/stackrc
+        openstack server list -c ID -f value
+      register: all_nodes
+
+    - name: set fact compute count
+      set_fact:
+        compute_node_count: "{{ all_nodes.stdout_lines|length - controller_count - ceph_node_count }}"
+
+    - name: change compute count
+      lineinfile:
+        path: /home/stack/virt/nodes_data.yaml
+        regexp: 'ComputeCount:'
+        line: '    ComputeCount: {{ compute_node_count }}'
+

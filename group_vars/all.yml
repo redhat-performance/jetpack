@@ -223,7 +223,14 @@ browbeat: true
 #For Nova-less provisioning enable the variable
 novaless_prov: false
 
+# For node Scale Out.
 new_nodes_instack: "{{ playbook_dir }}/newnodes.json"
+
+# This file acts as a placeholder for node uuids, that needs to be scaled
+# in. Enable this variable and specify the node uuids in the specified file. 
+# The node scale in functionality is available for Compute nodes.
+nodes_tobescaledin: "{{ playbook_dir }}/scalein_nodes.yml"
+
 
 # This feature creates VMs on hypervisors and uses them as overcloud
 # compute nodes to simulate overcloud scale deployment. This feature
