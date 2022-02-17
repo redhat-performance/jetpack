@@ -33,6 +33,12 @@ parameters:
     default: ''
     description: IP address/subnet on the management network
     type: string
+{% if manila_enabled %}
+  StorageNFSIpSubnet:
+    default: ''
+    description: IP address/subnet on the storage network
+    type: string
+{% endif %}
   ExternalNetworkVlanID:
     default: 10
     description: Vlan ID for the external network traffic.
@@ -53,6 +59,12 @@ parameters:
     default: 50
     description: Vlan ID for the tenant network traffic.
     type: number
+{% if manila_enabled %}
+  StorageNFSNetworkVlanID:
+    default: 70
+    description: Vlan ID for the storage network traffic.
+    type: number
+{% endif %}
   ExternalInterfaceDefaultRoute:
     default: '10.0.0.1'
     description: default route for the external network
@@ -123,6 +135,14 @@ parameters:
       guaranteed to pass through the data path of the segments in the
       Management network.
     type: number
+{% if manila_enabled %}
+  StorageNFSMtu:
+    default: 1500
+    description: The maximum transmission unit (MTU) size(in bytes) that is
+      guaranteed to pass through the data path of the segments in the
+      Storage NFS network.
+    type: number
+{% endif %}
 {%raw%}{% endif %}{%endraw%}
 
 {%raw%}{% if install.version|openstack_release >= 14 %}{%endraw%}
@@ -175,7 +195,18 @@ parameters:
       Unless the default is changed, the parameter is automatically resolved
       from the subnet host_routes attribute.
     type: json
+{% if manila_enabled %}
+  StorageNFSInterfaceRoutes:
+    default: []
+    description: >
+      Routes for the storageNFS network traffic.
+      JSON route e.g. [{'destination':'10.0.0.0/16', 'nexthop':'10.0.0.1'}]
+      Unless the default is changed, the parameter is automatically resolved
+      from the subnet host_routes attribute.
+    type: json
+{% endif %}
 {%raw%}{% endif %}{%endraw%}
+
 resources:
   OsNetConfigImpl:
     type: OS::Heat::SoftwareConfig
@@ -307,6 +338,18 @@ resources:
                               -
                                 ip_netmask:
                                     get_param: StorageMgmtIpSubnet
+{% if manila_enabled %}
+                            -
+                              type: vlan
+                              vlan_id:
+                                  get_param: StorageNFSNetworkVlanID
+                              addresses:
+                              -
+                                ip_netmask:
+                                    get_param: StorageNFSIpSubnet
+{% endif %}
+
+
 {% if tenant_interface is defined and vlan_provider_network == false %}
                         -
                           type: ovs_bridge

@@ -19,7 +19,13 @@ resource_registry:
 {% else %}
   OS::TripleO::Compute::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/compute.yaml
 {% endif %}
+
+{% if manila_enabled %}
+  OS::TripleO::ControllerStorageNfs::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/controller.yaml
+{% else %}
   OS::TripleO::Controller::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/controller.yaml
+{% endif %}
+
 {% if ceph_enabled %}
   OS::TripleO::CephStorage::Net::SoftwareConfig: vlans/{%raw%}{{ nics_subfolder }}{%endraw%}/ceph-storage.yaml
 {% endif %}
@@ -49,6 +55,16 @@ parameter_defaults:
     TenantAllocationPools: [{'start': '{{ tenant_allocation_pools_start }}', 'end': '{{ tenant_allocation_pools_end }}'}]
     TenantNetworkVlanID: {{ tenant_network_vlan_id }}
 {%raw%}{% endif %}{%endraw%}
+
+{% if manila_enabled %}
+
+    StorageNFSNetCidr: {{ storage_nfs_net_cidr }}
+    StorageNFSNetworkVlanID: {{ storage_nfs_network_vlan_id }}
+    StorageNFSAllocationPools: [{'start': '{{ storage_nfs_allocation_pools_start }}', 'end': '{{ storage_nfs_allocation_pools_end }}'}]
+
+    NeutronBridgeMappings: datacentre:br-ex,storage:br-isolated
+    NeutronNetworkVLANRanges: datacentre:1:1000,storage:300:1500
+{% endif %}
 
     DnsServers: ['{{ gateway }}']
     EC2MetadataIp: {{ gateway }}

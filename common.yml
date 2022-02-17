@@ -7,11 +7,16 @@
       - name: get tn10rt machines list
         get_url:
           url: http://wiki.scalelab.redhat.com/1029u/
-          dest: /tmp/tn10rt.html
+          dest: ~/tn10rt.html
 
       - name: load tn10rt machines list
         set_fact:
-          tn10rt: "{{ lookup('file', '/tmp/tn10rt.html') }}"
+          tn10rt: "{{ lookup('file', '~/tn10rt.html') }}"
+
+      - name: set storage-protocol-backend
+        set_fact:
+          storage_protocol_backend: ' --storage-protocol-backend nfs-ganesha'
+        when: manila_enabled
 
       - block:
           - name: set machine_type
