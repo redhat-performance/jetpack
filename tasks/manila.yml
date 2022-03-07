@@ -1,0 +1,15 @@
+---
+- name: create manila default share type
+  shell: |
+    source /home/stack/overcloudrc
+    manila type-create {{ share_type_name }} False
+
+- name: create StorageNFS network
+  shell: |
+    source /home/stack/overcloudrc
+    openstack network create StorageNFS --share  --provider-network-type vlan --provider-physical-network storage --provider-segment {{ storage_nfs_network_vlan_id }}
+
+- name: Create StorageNFSSubnet subnet
+  shell: |
+    source /home/stack/overcloudrc
+    openstack subnet create --allocation-pool start={{ allocation_pool_start }},end={{ allocation_pool_end }} --dhcp --network StorageNFS --subnet-range {{ storage_nfs_net_cidr }} StorageNFSSubnet
