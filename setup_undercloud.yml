@@ -10,6 +10,7 @@
         16: 8.1
         16.1: 8.2
         16.2: 8.4
+        17.0: 9.0
   tasks:
     - name: set async_install to empty list
       set_fact:

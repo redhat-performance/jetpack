@@ -1,9 +1,9 @@
 ---
-- name: remove infrared
-  file:
-      state: absent
-      path: "{{ ansible_user_dir }}/infrared"
-  when: scale_compute_vms == false
+#- name: remove infrared
+#  file:
+#      state: absent
+#      path: "{{ ansible_user_dir }}/infrared"
+#  when: scale_compute_vms == false
 
 - name: clone infrared
   git:

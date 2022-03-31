@@ -93,29 +93,70 @@
         set_fact:
           nic_config_path: "{{ ansible_user_dir }}/virt/network/vlans{{ ((osp_release|int > 10) | ternary('', '/legacy')) }}"
 
-      - name: prepare network-environment.yaml.j2
-        template:
-            src: "network-environment.yaml.j2"
-            dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
-            force: yes
+      - block:
+          - name: prepare network-environment.yaml.j2
+            template:
+              src: "network-environment.yaml.j2"
+              dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
+              force: yes
 
-      - name: prepare controller.yaml.j2
-        template:
-            src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', 'osp10_controller.yaml.j2') }}"
-            dest: "{{ nic_config_path }}/controller.yaml.j2"
-            force: yes
+          - name: prepare controller.yaml.j2
+            template:
+              src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', 'osp10_controller.yaml.j2') }}"
+              dest: "{{ nic_config_path }}/controller.yaml.j2"
+              force: yes
+          - name: prepare compute.yaml.j2
+            vars:
+              compute_path: "{{ (scale_compute_vms) | ternary('compute_vms.yaml.j2', 'compute.yaml.j2') }}"
+            template:
+              src: "{{ (osp_release|int > 10) | ternary(compute_path, 'osp10_compute.yaml.j2') }}"
+              dest: "{{ nic_config_path }}/compute.yaml.j2"
+              force: yes
 
-      - name: prepare compute.yaml.j2
-        vars:
-            compute_path: "{{ (scale_compute_vms) | ternary('compute_vms.yaml.j2', 'compute.yaml.j2') }}"
-        template:
-            src: "{{ (osp_release|int > 10) | ternary(compute_path, 'osp10_compute.yaml.j2') }}"
-            dest: "{{ nic_config_path }}/compute.yaml.j2"
-            force: yes
+          - name: prepare ceph-storage.yaml.j2
+            template:
+              src: ceph-storage.yaml.j2
+              dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
+              force: yes
+            when: ceph_enabled
+        when: osp_release < 17
 
-      - name: prepare ceph-storage.yaml.j2
-        template:
-            src: ceph-storage.yaml.j2
-            dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
-            force: yes
-        when: ceph_enabled
+      - block:
+          - name: prepare network-environment_v2.yaml.j2
+            template:
+              src: network-environment_v2.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/network-environment_v2.yaml.j2"
+
+          - name: prepare network-environment_v2.yaml.j2
+            template:
+              src: network_data_v2.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/network_data_v2.yaml.j2"
+
+          - name: prepare baremetal_deployment.yaml.j2
+            template:
+              src: baremetal_deployment.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/baremetal_deployment.yaml.j2"
+
+          - name: prepare vip_data.yaml.j2
+            template:
+              src: vip_data.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/vip_data.yaml.j2"
+
+          - name: prepare ceph-storage.j2.j2
+            template:
+              src: ceph-storage.j2.j2
+              dest: "{{ nic_config_path }}/ceph-storage.j2.j2"
+            when: ceph_enabled
+
+          - name: prepare compute.j2.j2
+            template:
+              src: compute.j2.j2
+              dest: "{{ nic_config_path }}/compute.j2.j2"
+
+          - name: prepare controller.j2.j2
+            template:
+              src: controller.j2.j2
+              dest: "{{ nic_config_path }}/controller.j2.j2"
+
+        when: osp_release == 17
+
