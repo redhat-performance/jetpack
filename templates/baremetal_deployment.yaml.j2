@@ -1,0 +1,40 @@
+- name: Controller
+  count: {{ controller_count }}
+  hostname_format: controller-%index%
+  defaults:
+    network_config:
+      template: /home/stack/virt/network/vlans/controller.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: storage_mgmt
+    - network: internal_api
+    - network: tenant
+    - network: external
+- name: Compute
+  count: {{ compute_count }}
+  hostname_format: compute-%index%
+  defaults:
+    network_config:
+      template: /home/stack/virt/network/vlans/compute.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: internal_api
+    - network: tenant
+{%- if ceph_enabled %}
+- name: CephStorage
+  count: {{ ceph_count }}
+  hostname_format: ceph-%index%
+  defaults:
+    profile: ceph-storage
+    network_config:
+      template: /home/stack/virt/network/vlans/ceph-storage.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: storage_mgmt
+{% endif -%}

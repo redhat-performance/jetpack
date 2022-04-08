@@ -1,0 +1,70 @@
+---
+network_config:
+- type: ovs_bridge
+  name: br-isolated
+  use_dhcp: false
+  members:
+  - type: interface
+    name: {{ isolated_interface }}
+    primary: true
+  - type: vlan
+    vlan_id: {{ internal_api_network_vlan_id }}
+    {% raw -%}
+    addresses:
+    - ip_netmask: {{ internal_api_ip }}/{{ internal_api_cidr }}
+{% endraw %}
+  - type: vlan
+    vlan_id: {{ storage_network_vlan_id }}
+    {% raw -%}
+    addresses:
+    - ip_netmask: {{ storage_ip }}/{{ storage_cidr }}
+{% endraw %}
+  - type: vlan
+    vlan_id: {{ storage_mgmt_network_vlan_id }}
+    {% raw -%}
+    addresses:
+    - ip_netmask: {{ storage_mgmt_ip }}/{{ storage_mgmt_cidr }}
+{% endraw %}
+
+- type: interface
+  name: {{ ctlplane_interface }}
+  {% raw -%}
+  use_dhcp: false
+  dns_servers: {{ ctlplane_dns_nameservers }}
+  domain: {{ dns_search_domains }}
+  addresses:
+  - ip_netmask: {{ ctlplane_ip }}/{{ ctlplane_subnet_cidr }}
+  routes:
+  - ip_netmask: 0.0.0.0/0
+    next_hop: {{ ctlplane_gateway_ip }}
+    default: true
+{% endraw %}
+
+- type: ovs_bridge
+  name: br-tenant
+  use_dhcp: false
+  members:
+  - type: interface
+    name: {{ tenant_interface }}
+    primary: true
+  - type: vlan
+    vlan_id: {{ tenant_network_vlan_id }}
+    {% raw -%}
+    addresses:
+    - ip_netmask: {{ tenant_ip }}/{{ tenant_cidr }}
+{% endraw %}
+
+- type: ovs_bridge
+  name: br-ex
+  use_dhcp: false
+  members:
+  - type: interface
+    name: {{ external_interface }}
+    primary: true
+  - type: vlan
+    vlan_id: {{ external_network_vlan_id }}
+    {% raw -%}
+    addresses:
+      - ip_netmask: {{ external_ip }}/{{ external_cidr }}
+{% endraw %}
+
