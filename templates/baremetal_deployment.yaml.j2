@@ -26,10 +26,9 @@
     - network: tenant
 {%- if ceph_enabled %}
 - name: CephStorage
-  count: {{ ceph_count }}
+  count: {{ ceph_node_count }}
   hostname_format: ceph-%index%
   defaults:
-    profile: ceph-storage
     network_config:
       template: /home/stack/virt/network/vlans/ceph-storage.j2
     networks:

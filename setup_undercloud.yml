@@ -10,6 +10,7 @@
         16: 8.1
         16.1: 8.2
         16.2: 8.4
+        17.0: 9.0
   tasks:
     - name: set async_install to empty list
       set_fact:
@@ -47,6 +48,18 @@
         - name: try again setting boot order to director
           include_tasks: tasks/set_boot_order_director.yml
       when: lab_name in ['scale', 'alias'] and set_boot_order == true
+
+    - name: set boot mode to uefi for Dell (OSP17)
+      shell: |
+        source {{ badfish_venv }}/bin/activate;
+        python3 badfish.py -H mgmt-{{ item[1].stdout }}  -u quads -p {{ chassis_password }} --set-bios-attribute --attribute BootMode --value Uefi
+      args:
+        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      when: vendors is defined and item[0] == "dell" and osp_release|int == 17
+      with_together:
+        - "{{ vendors }}"
+        - "{{ host_list.results }}"
+      ignore_errors: yes
 
     - name: Check if stack user exists
       shell: |
