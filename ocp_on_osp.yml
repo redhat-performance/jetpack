@@ -33,6 +33,7 @@
         cloud: "overcloud"
         name: "{{ shiftstack_id.stdout }}"
         server_groups: -1
+        server_group_members: -1
         properties: -1
         ram: -1
         key_pairs: -1
@@ -284,6 +285,11 @@
           shell: |
             sudo cp /home/stack/oc /usr/local/bin
             sudo chmod a+x /usr/local/bin/oc
+
+        - name: copy kubectl to bin
+          shell: |
+            sudo cp /home/stack/kubectl /usr/local/bin
+            sudo chmod a+x /usr/local/bin/kubectl
       when: install_client == true
 
     - name: create .kube dir on home
