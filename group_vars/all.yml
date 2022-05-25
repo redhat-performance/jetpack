@@ -55,6 +55,7 @@ scale:
       5039ms:
         rhel7_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
         rhel8_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+        rhel9_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
       6049p:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
         rhel8_interfaces: [ens3f0, ens3f1, ens2f0, ens2f1]
@@ -275,3 +276,6 @@ osd_objectstore: bluestore
 #introspection_timeout:
 foreman_url: https://foreman.example.com
 manila_enabled: false
+
+#image path for overcloud nodes
+remote_image_path: https://sf.redhat.com

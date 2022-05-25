@@ -45,10 +45,16 @@
         dest: "/home/stack/wipe-disk.sh"
       when: ceph_enabled and (clean_nodes != true)
 
-    - name: setting node capabilities (boot_mode uefi)
+    - name: setting node capabilities (boot_mode bios)
       vars:
-        boot_mode: uefi
+        boot_mode: bios
       include_tasks: tasks/set_boot_mode.yml
+      when: osp_release|int == 17
+
+    - name: get overcloud node images
+      vars:
+        image_path: /home/stack/images
+      include_tasks: tasks/overcloud_images.yaml
       when: osp_release|int == 17
 
     - name: Set name for overcloud nodes
@@ -323,6 +329,6 @@
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
-            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout {{ deployment_timeout | default(240) }} --build {{ osp_puddle }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --storage-nodes {{ ceph_node_count }} {{ oc_extra_templates }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true {{ ceph_params | default('') }} {{ storage_protocol_backend | default('') }} --public-network false {{ oc_heat_configs | default('') }} {{ oc_config_resource | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
+            infrared tripleo-overcloud -vvv --version {{ osp_release }} --deployment-timeout {{ deployment_timeout | default(240) }} --build {{ osp_puddle }} --deployment-files {{ nic_configs }} --introspect no --tagging no --deploy yes --controller-nodes {{ controller_count }} --compute-nodes {{ compute_count }} --storage-nodes {{ ceph_node_count }} {{ oc_extra_templates }} --network-protocol ipv4 --network-backend {{ network_backend }} {{ network_type }} true {{ ceph_params | default('') }} {{ storage_protocol_backend | default('') }} --ntp-server {{ gateway }} --public-network false {{ oc_heat_configs | default('') }} {{ oc_config_resource | default('') }} > {{ log_directory }}/overcloud_deploy.log 2>&1
         args:
             chdir: "{{ infrared_dir }}"
