@@ -15,7 +15,7 @@ Example:
 
 ### generate_ansible_inventory.py
 
-This script generates an ansible inventory files from overcloud-node-deployed.yaml. This script can be run after overcloud node provisioning or after overcloud deployment.
+This script generates an ansible inventory file from overcloud-node-deployed.yaml. This script can be run after overcloud node provisioning or after overcloud deployment.
 
 Usage:
   python3 generate_ansible_inventory.py -i (hosts group, Eg.: controller) -f (path to overcloud node deployed file) -o (path to directory to store ansible inventory file)
