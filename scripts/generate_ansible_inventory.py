@@ -1,4 +1,4 @@
-# This script generates an ansible inventory files from
+# This script generates an ansible inventory file from
 # overcloud-node-deployed.yaml.
 # This script can be run after overcloud node provisioning
 # or after overcloud deployment.
