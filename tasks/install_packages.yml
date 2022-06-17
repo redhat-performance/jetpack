@@ -28,6 +28,12 @@
       repo: "https://github.com/redhat-performance/badfish.git"
       dest: "{{ ansible_user_dir }}/badfish"
 
+  - name: pin badfish
+    shell: |
+      git checkout a81dda87a1781af7743b60b6f62f3491e5f0401a
+    args:
+      chdir: "{{ ansible_user_dir }}/badfish"
+
   - name: set badfish venv path
     set_fact:
       badfish_venv: "{{ ansible_user_dir }}/badfish/.venv"
