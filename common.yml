@@ -5,9 +5,7 @@
         include_tasks: tasks/load_instackenv.yml
 
       - name: get tn10rt machines list
-        get_url:
-          url: http://wiki.scalelab.redhat.com/1029u/
-          dest: ~/tn10rt.html
+        shell: curl http://wiki.scalelab.redhat.com/1029u/ > ~/tn10rt.html
 
       - name: load tn10rt machines list
         set_fact:
