@@ -28,3 +28,7 @@
         file:
             path: "{{ ansible_user_dir }}/undercloud.conf"
             state: absent
+      - name: Remove tn10rt.html
+        file:
+            path: "{{ ansible_user_dir }}/tn10rt.html"
+            state: absent
