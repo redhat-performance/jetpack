@@ -43,7 +43,7 @@
       shell: podman build --build-arg foreman_url={{ foreman_url }} -t hammercli .
       args:
         chdir: "{{ playbook_dir }}/hammer"
-    
+
     - name: set hammer build command
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"

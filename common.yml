@@ -64,14 +64,14 @@
           echo "{{ (oc_instackenv_content.nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
         with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
         register: host_list
-      
-      - name: remove existing bad-hosts file
+
+      - name: remove existing dell-hosts file
         file:
-            path: "~/jetpack/badfish/bad-hosts"
+            path: "~/jetpack/badfish/dell-hosts"
             state: absent
 
       - name: prepare dell hosts for badfish
-        shell: echo "mgmt-{{ item[1].stdout }}" >> ~/jetpack/badfish/bad-hosts
+        shell: echo "mgmt-{{ item[1].stdout }}" >> ~/jetpack/badfish/dell-hosts
         when: vendors is defined and item[0] == "dell"
         with_together:
           - "{{ vendors }}"

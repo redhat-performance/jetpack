@@ -1,2 +1,2 @@
 FROM quay.io/quads/badfish
-COPY bad-hosts /
+COPY dell-hosts /
