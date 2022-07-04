@@ -54,5 +54,5 @@
 
       - name: use rdu2.redhat.com time servers for Scale Lab in Raleigh NC USA
         set_fact:
-          time_servers: ["clock1.rdu2.redhat.com"]
+          time_servers: ["clock1.rdu2.redhat.com", "clock.redhat.com"]
         when: lab_name == "scale"
