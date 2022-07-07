@@ -59,4 +59,4 @@
 
       - name: pull badfish image
         become: yes
-        shell: podman pull quay.io/quads/badfish  
+        shell: podman pull quay.io/quads/badfish
