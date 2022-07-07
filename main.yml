@@ -41,6 +41,11 @@
   tags:
     - introspect
 
+- import_playbook: post_introspect.yml
+  tags:
+    - overcloud
+  when: ceph_enabled
+
 - import_playbook: tag.yml
   tags:
     - tag
