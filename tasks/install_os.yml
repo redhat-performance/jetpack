@@ -38,7 +38,6 @@
       ignore_errors: true
       when: hypervisor_host == undercloud_hostname
 
-
     - name: Build the images for hammercli
       become: true
       shell: podman build --build-arg foreman_url={{ foreman_url }} -t hammercli .
@@ -73,11 +72,8 @@
       when: vendor is defined and vendor == "supermicro"
 
     - name: set hypervisor host to PXE boot off Foreman (Dell)
-      shell: |
-        source {{ badfish_venv }}/bin/activate
-        python3 badfish.py -H mgmt-{{ hypervisor_host }} -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" -t foreman --pxe
-      args:
-        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      become: yes
+      shell: podman run -it --rm quay.io/quads/badfish -H mgmt-{{ hypervisor_host }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml -t foreman --pxe
       when: vendor is defined and vendor == "dell"
       retries: 5
       delay: 3
@@ -85,11 +81,8 @@
       until: result.rc == 0
 
     - name: power cycle hypervisor (Dell)
-      shell: |
-        source {{ badfish_venv }}/bin/activate
-        python3 badfish.py -H mgmt-{{ hypervisor_host }}  -u quads -p {{ chassis_password }} --power-cycle
-      args:
-        chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+      become: yes
+      shell: podman run -it --rm quay.io/quads/badfish -H mgmt-{{ hypervisor_host }} -u quads -p {{ chassis_password }} --power-cycle
       when: vendor is defined and vendor == "dell"
 
     - name: wait for 120 seconds before checking for hypervisor
