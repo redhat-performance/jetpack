@@ -65,6 +65,27 @@
         with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
         register: host_list
 
+      - name: remove existing dell-hosts file
+        file:
+            path: "~/jetpack/badfish/dell-hosts"
+            state: absent
+
+      - name: prepare dell hosts for badfish
+        shell: echo "mgmt-{{ item[1].stdout }}" >> ~/jetpack/badfish/dell-hosts
+        when: vendors is defined and item[0] == "dell"
+        with_together:
+          - "{{ vendors }}"
+          - "{{ host_list.results }}"
+
+      - name: remove existing badfish image
+        shell: podman rmi -f quay.io/quads/badfish
+        become: yes
+        ignore_errors: yes
+
+      - name: build badfish image
+        shell: podman build --tag badfish:latest -f ~/jetpack/badfish/Dockerfile
+        become: yes
+
       - include_tasks: tasks/get_interpreter.yml
         vars:
           hostname: "{{ undercloud_hostname }}"
