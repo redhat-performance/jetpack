@@ -56,3 +56,7 @@
         set_fact:
           time_servers: ["clock1.rdu2.redhat.com", "clock.redhat.com"]
         when: lab_name == "scale"
+
+      - name: pull badfish image
+        become: yes
+        shell: podman pull quay.io/quads/badfish

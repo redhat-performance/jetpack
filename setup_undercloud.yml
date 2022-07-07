@@ -33,11 +33,8 @@
             - "{{ host_list.results }}"
 
         - name: Wait for iDrac to be responsive
-          shell: |
-            source {{ badfish_venv }}/bin/activate;
-            python3 badfish.py -H mgmt-{{ item[1].stdout }}  -u quads -p {{ chassis_password }} -i "{{ ansible_user_dir }}/badfish/config/idrac_interfaces.yml" --check-boot
-          args:
-            chdir: "{{ ansible_user_dir }}/badfish/src/badfish"
+          become: yes
+          shell: podman run -it --rm quay.io/quads/badfish -H mgmt-{{ item[1].stdout }} -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --check-boot
           when: vendors is defined and item[0] == "dell"
           with_together:
             - "{{ vendors }}"
