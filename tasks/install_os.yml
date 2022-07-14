@@ -38,15 +38,12 @@
       ignore_errors: true
       when: hypervisor_host == undercloud_hostname and osp_release|int < 17
 
-<<<<<<< HEAD
-=======
     - name: delete overcloud before re install undercloud (OSP17)
       shell: |
         ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'source ~/stackrc && openstack overcloud delete overcloud -y -b ~/virt/network/network_data_v2.yaml  --networks-file ~/virt/network/network_data_v2.yaml --network-ports'
       ignore_errors: true
       when: hypervisor_host == undercloud_hostname and osp_release|int >= 17
 
->>>>>>> 718013d (Add support for supermicro's)
     - name: Build the images for hammercli
       become: true
       shell: podman build --build-arg foreman_url={{ foreman_url }} -t hammercli .

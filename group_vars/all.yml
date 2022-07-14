@@ -43,6 +43,7 @@ scale:
       1029p:
         rhel7_interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
         rhel8_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
+        rhel9_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
       1029utrtp:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
         rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1 ]
