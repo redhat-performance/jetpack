@@ -72,3 +72,22 @@
         become: true
         ignore_errors: true
         when: external_network_vlan_id is not defined
+
+      - name: flush iptables
+        shell: sudo iptables --flush
+        become: yes
+        ignore_errors: yes
+
+      - name: get default route
+        shell: |
+          ip r | grep default | cut -d ' ' -f5
+        register: default_route
+        become: true
+        when: external_network_vlan_id is defined
+
+      - name: masquerade on public interface
+        shell: |
+          iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE
+        become: true
+        become_user: root
+        when: external_network_vlan_id is defined

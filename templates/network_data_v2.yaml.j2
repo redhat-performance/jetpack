@@ -1,0 +1,60 @@
+- name: Storage
+  name_lower: storage
+  subnets:
+    storage_subnet:
+      allocation_pools:
+      - end: {{ storage_allocation_pools_end }}
+        start: {{ storage_allocation_pools_start }}
+      ip_subnet: {{ storage_net_cidr }}
+      physical_network: storage
+      vlan: {{ storage_network_vlan_id }} 
+  vip: true
+
+- name: StorageMgmt
+  name_lower: storage_mgmt
+  subnets:
+    storage_mgmt_subnet:
+      allocation_pools:
+      - end: {{ storage_mgmt_allocation_pools_end }}
+        start: {{ storage_mgmt_allocation_pools_start }}
+      ip_subnet: {{ storage_mgmt_net_cidr }}
+      physical_network: storage_mgmt
+      vlan: {{ storage_mgmt_network_vlan_id }}
+  vip: true
+
+- name: InternalApi
+  name_lower: internal_api
+  subnets:
+    internal_api_subnet:
+      allocation_pools:
+      - end: {{ internal_api_allocation_pools_end }}
+        start: {{ internal_api_allocation_pools_start }}
+      ip_subnet: {{ internal_api_net_cidr }}
+      physical_network: internal_api
+      vlan: {{ internal_api_network_vlan_id }}
+  vip: true
+
+- name: Tenant
+  name_lower: tenant
+  subnets:
+    tenant_subnet:
+      allocation_pools:
+      - end: {{ tenant_allocation_pools_end }}
+        start: {{ tenant_allocation_pools_start }}
+      ip_subnet: {{ tenant_net_cidr }}
+      physical_network: tenant
+      vlan: {{ tenant_network_vlan_id }}
+
+- name: External
+  name_lower: external
+  vip: true
+  subnets:
+    external_subnet:
+      allocation_pools:
+      - end: {{ external_allocation_pools_end }}
+        start: {{ external_allocation_pools_start }}
+      gateway_ip: {{ external_interface_default_route }}
+      ip_subnet: {{ external_net_cidr }}
+      physical_network: external
+      vlan: {{ external_network_vlan_id }}
+

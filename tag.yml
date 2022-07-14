@@ -24,4 +24,5 @@
             args:
               chdir: "{{ infrared_dir }}"
             changed_when: false
-        when: composable_roles == false
+        when: composable_roles == false and osp_release < 17
+

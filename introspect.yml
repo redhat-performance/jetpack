@@ -51,8 +51,8 @@
         vars:
           rack_info: "{{ instackenv_content.nodes[item|int].pm_addr.split('-')[1] }}"
         with_sequence: 0-{{ instackenv_content.nodes|length - 1 }}
-        when: lab_name == 'alias' and rack_info == 'e26'
+        when: lab_name == 'alias' and rack_info == 'e26' and osp_release < 17
 
       - name: enable root_hints(740xd G-CL)
         include_tasks: tasks/set_root_hints.yml
-        when: lab_name == 'alias' and hostvars['localhost']['machine_type'] == '740xd' and rack == 'e26'
+        when: lab_name == 'alias' and hostvars['localhost']['machine_type'] == '740xd' and rack == 'e26' and osp_release < 17

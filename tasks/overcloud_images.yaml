@@ -1,0 +1,25 @@
+---
+- name: create dir for images
+  file:
+    path: "{{ image_path }}"
+    state: directory
+
+- name: get the overcloud images
+  get_url:
+    url: "{{ item }}"
+    dest: "{{ image_path }}/"
+    validate_certs: no
+  loop:
+    - "{{ remote_image_path }}/overcloud-hardened-uefi-full.qcow2"
+    - "{{ remote_image_path }}/ironic-python-agent.tar"
+
+- name: Extract ironic-python-agent.tar
+  unarchive:
+    src:  "{{ image_path }}/ironic-python-agent.tar"
+    dest: "{{ image_path }}/"
+    remote_src: yes
+
+- name: upload overcloud images to glance
+  shell: |
+    source ~/stackrc
+    openstack overcloud image upload --whole-disk --image-path {{ image_path }} --http-boot=/var/lib/ironic/httpboot --local --update-existing

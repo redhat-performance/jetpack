@@ -36,20 +36,32 @@
       shell: |
         ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'source ~/stackrc && openstack overcloud delete overcloud -y'
       ignore_errors: true
-      when: hypervisor_host == undercloud_hostname
+      when: hypervisor_host == undercloud_hostname and osp_release|int < 17
+
+    - name: delete overcloud before re install undercloud (OSP17)
+      shell: |
+        ssh -o 'PreferredAuthentications=publickey' -o 'StrictHostKeyChecking=no' -o 'UserKnownHostsFile=/dev/null' -i ~/.ssh/id_rsa stack@{{ undercloud_hostname }} 'source ~/stackrc && openstack overcloud delete overcloud -y -b ~/virt/network/network_data_v2.yaml  --networks-file ~/virt/network/network_data_v2.yaml --network-ports'
+      ignore_errors: true
+      when: hypervisor_host == undercloud_hostname and osp_release|int >= 17
 
     - name: Build the images for hammercli
       become: true
       shell: podman build --build-arg foreman_url={{ foreman_url }} -t hammercli .
       args:
         chdir: "{{ playbook_dir }}/hammer"
-
     - name: set hammer build command
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"
       set_fact:
         hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'generic-rhel' --overwrite 1"
-      when: lab_name == "scale"
+      when: lab_name == "scale" and osp_release|int < 17
+
+    - name: set hammer build command (OSP17)
+      vars:
+        medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"
+      set_fact:
+        hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'RHEL9-ONLY' --overwrite 1"
+      when: lab_name == "scale"  and osp_release|int == 17
 
     - name: set hammer build params
       vars:

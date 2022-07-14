@@ -26,6 +26,7 @@ alias:
       740xd: 
         rhel7_interfaces: [em2, em1, p7p1, p7p2]
         rhel8_interfaces: [eno2, eno1, ens7f0, ens7f1]
+        rhel9_interfaces: [eno2, eno1, enp135s0f0, enp135s0f1]
     supermicro:
       6029r:
         rhel7_interfaces: [enp95s0f1, enp95s0f0, enp94s0f0, enp94s0f1]
@@ -42,6 +43,7 @@ scale:
       1029p:
         rhel7_interfaces: [enp94s0f0, enp94s0f1, enp94s0f2, enp94s0f3]
         rhel8_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
+        rhel9_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
       1029utrtp:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
         rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1 ]
@@ -54,6 +56,7 @@ scale:
       5039ms:
         rhel7_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
         rhel8_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
+        rhel9_interfaces:  [enp1s0f0, enp1s0f1, enp2s0f1]
       6049p:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
         rhel8_interfaces: [ens3f0, ens3f1, ens2f0, ens2f1]
@@ -274,3 +277,6 @@ osd_objectstore: bluestore
 #introspection_timeout:
 foreman_url: https://foreman.example.com
 manila_enabled: false
+
+#image path for overcloud nodes
+remote_image_path: https://sf.redhat.com

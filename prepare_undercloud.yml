@@ -21,6 +21,7 @@
       shell: |
         /root/clean-interfaces.sh --nuke
       changed_when: false
+      when: osp_release < 17
 
     - name: Ensure SELinux is set to enforcing mode
       selinux:

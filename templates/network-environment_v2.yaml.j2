@@ -1,0 +1,25 @@
+# v2 config
+
+resource_registry:
+    OS::TripleO::Controller::Net::SoftwareConfig: OS::Heat::None
+    OS::TripleO::Compute::Net::SoftwareConfig: OS::Heat::None
+{% if ceph_enabled %}
+    OS::TripleO::CephStorage::Net::SoftwareConfig: OS::Heat::None
+{% endif %}
+parameter_defaults:
+    ControllerNetworkConfigTemplate: '/home/stack/virt/network/vlans/controller.j2'
+    ComputeNetworkConfigTemplate: '/home/stack/virt/network/vlans/compute.j2'
+{% if ceph_enabled %}
+    CephStorageNetworkConfigTemplate: '/home/stack/virt/network/vlans/ceph-storage.j2'
+{% endif %}
+    NeutronExternalNetworkBridge: ""
+{% if osp_release > 14 and neutron_backend is not defined %}
+    ControllerParameters:
+      NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
+    ComputeParameters:
+      NeutronBridgeMappings: ""
+{% else %}
+    NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
+{% endif %}
+    NeutronNetworkVLANRanges: "tenant:1000:2000"
+
