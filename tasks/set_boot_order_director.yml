@@ -1,7 +1,7 @@
 ---
 - name: Clear redfish job queues
   become: yes
-  shell: podman run -it --rm quay.io/quads/badfish --host-list /dell-hosts -u quads -p {{ chassis_password }} --clear-jobs --force
+  shell: podman run -it -v {{ playbook_dir }}/badfish:/dell --rm quay.io/quads/badfish --host-list /dell/dell-hosts -u quads -p {{ chassis_password }} --clear-jobs --force
   register: clear_jobs
   until: clear_jobs is succeeded
   retries: 3
@@ -9,7 +9,7 @@
 
 - name: Wait for iDrac to be responsive
   become: yes
-  shell: podman run -it --rm quay.io/quads/badfish --host-list /dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --check-boot
+  shell: podman run -it -v {{ playbook_dir }}/badfish:/dell --rm quay.io/quads/badfish --host-list /dell/dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --check-boot
   register: wait_for_idrac
   until: wait_for_idrac is succeeded
   retries: 20
@@ -17,7 +17,7 @@
 
 - name: set boot order director (badfish)
   become: yes
-  shell: podman run -it --rm quay.io/quads/badfish --host-list /dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml -t director
+  shell: podman run -it -v {{ playbook_dir }}/badfish:/dell --rm quay.io/quads/badfish --host-list /dell/dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml -t director
   retries: 5
   delay: 3
   register: result
@@ -25,11 +25,11 @@
 
 - name: power cycle overcloud nodes
   become: yes
-  shell: podman run -it --rm quay.io/quads/badfish --host-list /dell-hosts -u quads -p {{ chassis_password }} --power-cycle
+  shell: podman run -it -v {{ playbook_dir }}/badfish:/dell --rm quay.io/quads/badfish --host-list /dell/dell-hosts -u quads -p {{ chassis_password }} --power-cycle
 
 - name: Wait for iDrac to be responsive
   become: yes
-  shell: podman run -it --rm quay.io/quads/badfish --host-list /dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --check-boot
+  shell: podman run -it -v {{ playbook_dir }}/badfish:/dell --rm quay.io/quads/badfish --host-list /dell/dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --check-boot
   register: wait_for_idrac
   until: wait_for_idrac is succeeded
   retries: 20
