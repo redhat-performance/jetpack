@@ -208,7 +208,9 @@ vm_image_url:
    rhel8: http://download.hosts.prod.upshift.rdu2.redhat.com/released/RHEL-8/8.1.0/BaseOS/x86_64/images/rhel-guest-image-8.1-263.x86_64.qcow2
    rhel8_2: http://download.eng.pek2.redhat.com/released/RHEL-8/8.2.0/BaseOS/x86_64/images/rhel-guest-image-8.2-290.x86_64.qcow2
 #Neutron backend, if not set default will be used.
-#neutron_backend: ovn
+#we are not supporting ML2/OVS for DVR as of now, as it needs
+#modification of default roles_data.yaml
+neutron_backend: ovn
 #ocp installation
 shift_stack: false
 vlan_provider_network: false
@@ -290,3 +292,7 @@ osds_per_device: 1
 #overcloud_timeout:
 foreman_url: https://foreman.example.com
 manila_enabled: false
+
+# DVR is enabled by default for osp_releases >= 16, set this to false for non-dvr based deployments.
+# This variable has no affect on osp_releases < 16, as jetpack doesn't support dvr for osp_releases < 16 as of now.
+dvr_enabled: true

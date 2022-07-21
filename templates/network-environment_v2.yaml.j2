@@ -27,10 +27,17 @@ parameter_defaults:
     ControllerParameters:
       NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
 {% if composable_roles %}
+{% if dvr_enabled == false %}
 {% for node_type in machine_types %}
     Compute{{ node_type }}Parameters:
       NeutronBridgeMappings: ""
 {% endfor %}
 {% endif %}
+{% endif %}
     NeutronExternalNetworkBridge: ""
     NeutronNetworkVLANRanges: " datacentre:300:900, tenant:200:2000"
+
+{% if dvr_enabled == true %}
+    NeutronBridgeMappings: "datacentre:br-ex,tenant:br-tenant"
+    NeutronEnableDVR: 'true'
+{% endif %}
