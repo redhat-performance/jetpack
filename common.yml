@@ -65,6 +65,16 @@
         with_sequence: 0-{{ (oc_instackenv_content.nodes|length - 1) }}
         register: host_list
 
+      - name: clear existing dell-hosts file
+        shell: echo "" > {{ playbook_dir }}/badfish/dell-hosts
+
+      - name: prepare dell hosts for badfish
+        shell: echo "mgmt-{{ item[1].stdout }}" >> {{ playbook_dir }}/badfish/dell-hosts
+        when: vendors is defined and item[0] == "dell"
+        with_together:
+          - "{{ vendors }}"
+          - "{{ host_list.results }}"
+
       - include_tasks: tasks/get_interpreter.yml
         vars:
           hostname: "{{ undercloud_hostname }}"

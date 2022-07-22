@@ -38,7 +38,8 @@ Note: User can add support for fc640 in case your allocation has machines with s
 * Python 3.6+
 * > RHEL 7.7 for ansible jump host
 * A host for running hammer cli/ipmitool/badfish operations referenced by the variable *hammer_host*
-* Passwordless sudo for user running the playbook on the ansible control node (host where the playbooks are being run from)
+* SELinux mode as Permissive on the ansible control node (host where the playbooks are being run from)
+* Passwordless sudo for user running the playbook on the ansible control node
 
 Passwordless sudo can be setup as below:
 
