@@ -2,24 +2,35 @@
 
 resource_registry:
     OS::TripleO::Controller::Net::SoftwareConfig: OS::Heat::None
+{% if composable_roles %}
+{% for node_type in machine_types %}
+    OS::TripleO::Compute{{ node_type }}::Net::SoftwareConfig: OS::Heat::None
+{% endfor %}
+{% else %}
     OS::TripleO::Compute::Net::SoftwareConfig: OS::Heat::None
+{%  endif %}
 {% if ceph_enabled %}
     OS::TripleO::CephStorage::Net::SoftwareConfig: OS::Heat::None
 {% endif %}
 parameter_defaults:
     ControllerNetworkConfigTemplate: '/home/stack/virt/network/vlans/controller.j2'
+{% if composable_roles %}
+{% for node_type in machine_types %}
+    Compute{{ node_type }}NetworkConfigTemplate: '/home/stack/virt/network/vlans/compute_{{ node_type }}.j2'
+{% endfor %}
+{% else %}
     ComputeNetworkConfigTemplate: '/home/stack/virt/network/vlans/compute.j2'
+{% endif %}
 {% if ceph_enabled %}
     CephStorageNetworkConfigTemplate: '/home/stack/virt/network/vlans/ceph-storage.j2'
 {% endif %}
-    NeutronExternalNetworkBridge: ""
-{% if osp_release > 14 and neutron_backend is not defined %}
     ControllerParameters:
       NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
-    ComputeParameters:
+{% if composable_roles %}
+{% for node_type in machine_types %}
+    Compute{{ node_type }}Parameters:
       NeutronBridgeMappings: ""
-{% else %}
-    NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
+{% endfor %}
 {% endif %}
-    NeutronNetworkVLANRanges: "tenant:1000:2000"
-
+    NeutronExternalNetworkBridge: ""
+    NeutronNetworkVLANRanges: " datacentre:300:900, tenant:200:2000"

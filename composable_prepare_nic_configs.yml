@@ -52,9 +52,28 @@
               - "{{ iface_rhel_version }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
-        when: lab_name in ['scale', 'alias']
+        when: lab_name in ['scale', 'alias'] and osp_release|int < 17
 
-      #todo for non scale/alias machines
+      - block:
+        - name: set fact for rhel 9 interfaces
+          set_fact:
+            rhel9_interfaces: "{{ rhel9_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel9_interfaces_f04', 'rhel9_interfaces') ] }}"
+          with_together:
+            - "{{ host_list.results }}"
+            - "{{ machine_types }}"
+
+        - name: set interfaces
+          set_fact:
+            ifaces: "{{ (ifaces|default([]) + [lab_vars['machine_types'][item[0]][item[1]][item[2]]]) | unique }}"
+          with_together:
+            - "{{ vendors }}"
+            - "{{ machine_types }}"
+            - "{{ rhel9_interfaces }}"
+        vars:
+          lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+        when: lab_name in ['scale', 'alias'] and osp_release|int >= 17
+
+            #todo for non scale/alias machines
 
       - name: interfaces is empty
         fail:
@@ -129,12 +148,12 @@
         set_fact:
           nic_config_path: "{{ ansible_user_dir }}/virt/network/vlans{{ ((osp_release|int > 10) | ternary('', '/legacy')) }}"
 
-
       - name: prepare network-environment.yaml.j2
         template:
             src: "network-environment.yaml.j2"
             dest: "{{ ansible_user_dir }}/virt/network/network-environment.yaml.j2"
             force: yes
+        when: osp_release|int < 17
 
       - name: set fact controller machine type
         set_fact:
@@ -169,7 +188,6 @@
             when: controller_ifaces|length > 1
 
         when: controller_ifaces is defined
-
       - name: prepare controller.yaml.j2
         vars:
           ctlplane_interface: "{{ controller_ctlplane_interface | default(ctlplane_interfaces[0]) }}"
@@ -181,6 +199,7 @@
           src: "{{ (osp_release|int > 10) | ternary('controller.yaml.j2', false) }}"
           dest: "{{ nic_config_path }}/controller.yaml.j2"
           force: yes
+        when: osp_release|int < 17
 
       - name: prepare compute.yaml.j2
         vars:
@@ -200,6 +219,7 @@
          - "{{ tenant_interfaces }}"
          - "{{ isolated_interfaces }}"
          - "{{ openshift_vlan_interfaces }}"
+        when: osp_release|int < 17
 
       - block:
           - name: fail if ceph_machine_type or ceph_ifaces are not defined
@@ -243,3 +263,60 @@
           machine_count: "{{ machine_count | combine({item.key: (item.value |int - ((item.key == pci_node_type)|ternary(pci_node_count, 0)))}) }}"
         with_dict: "{{ machine_count }}"
         when: passthrough_nvme is defined and pci_node_count is defined
+
+      - block:
+          - name: prepare network-environment_v2.yaml.j2
+            template:
+              src: network-environment_v2.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/network-environment_v2.yaml.j2"
+
+          - name: prepare network_data_v2.yaml.j2
+            template:
+              src: network_data_v2.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/network_data_v2.yaml.j2"
+
+          - name: prepare vip_data.yaml.j2
+            template:
+              src: vip_data.yaml.j2
+              dest: "{{ ansible_user_dir }}/virt/network/vip_data.yaml.j2"
+
+          - name: Create nic_config_path dir
+            file:
+              path: "~/virt/network/vlans/"
+              state: directory
+            delegate_to: undercloud
+
+          - name: prepare controller.j2.j2
+            vars:
+              ctlplane_interface: "{{ controller_ctlplane_interface | default(ctlplane_interfaces[0]) }}"
+              external_interface: "{{ controller_external_interface | default(external_interfaces[0]) }}"
+              tenant_interface: "{{ controller_tenant_interface | default(tenant_interfaces[0]) }}"
+              isolated_interface: "{{ controller_isolated_interface | default(isolated_interfaces[0]) }}"
+              openshift_vlan_interface: "{{ controller_tenant_interface | default(openshift_vlan_interfaces[0]) }}"
+            template:
+              src: controller.j2.j2
+              dest: "~/virt/network/vlans/controller.j2"
+              force: yes
+            delegate_to: undercloud
+
+          - name: prepare compute.j2.j2
+            vars:
+              ctlplane_interface: "{{ item.1 }}"
+              external_interface: "{{ item.2 }}"
+              tenant_interface: "{{ item.3 }}"
+              isolated_interface: "{{ item.4 }}"
+              openshift_vlan_interface: "{{ item.5 }}"
+            template:
+              src: compute.j2.j2
+              dest: "~/virt/network/vlans//compute_{{ item.0 }}.j2"
+              force: yes
+            delegate_to: undercloud
+            with_together:
+              - "{{ machine_types }}"
+              - "{{ ctlplane_interfaces }}"
+              - "{{ external_interfaces }}"
+              - "{{ tenant_interfaces }}"
+              - "{{ isolated_interfaces }}"
+              - "{{ openshift_vlan_interfaces }}"
+
+        when: osp_release|int >= 17

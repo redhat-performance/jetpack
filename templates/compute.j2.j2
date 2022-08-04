@@ -48,3 +48,16 @@ network_config:
     - ip_netmask: {{ tenant_ip }}/{{ tenant_cidr }}
 {% endraw %}
 
+- type: ovs_bridge
+  name: br-ex
+  use_dhcp: false
+  members:
+  - type: interface
+    name: {{ external_interface }}
+    primary: true
+  - type: vlan
+    vlan_id: {{ external_network_vlan_id }}
+    {% raw -%}
+    addresses:
+    - ip_netmask: {{ external_ip }}/{{ external_cidr }}
+{% endraw %}

@@ -46,7 +46,8 @@ scale:
         rhel9_interfaces: [ens2f0, ens2f1, ens2f2, ens2f3]
       1029utrtp:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
-        rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1 ]
+        rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
+        rhel9_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
       1029utn10rt:
         rhel7_interfaces: [enp175s0f0, enp175s0f1, enp216s0f0, enp216s0f1]
         rhel8_interfaces: [enp175s0f0, enp175s0f1, ens2f0, ens2f1]
@@ -74,6 +75,7 @@ scale:
       r630:
         rhel7_interfaces: [em1, em2, em3, em4]
         rhel8_interfaces: [eno1, eno2, eno3, eno4]
+        rhel9_interfaces: [eno1, eno2, eno3, eno4]
       r730xd:
         rhel7_interfaces: [em1, em2, p4p1, p4p2]
         rhel8_interfaces: []

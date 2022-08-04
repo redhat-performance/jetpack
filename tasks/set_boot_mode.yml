@@ -22,16 +22,16 @@
     - "{{ node_uuid.stdout_lines }}"
     - "{{ node_fqdn.results }}"
 
-- name: setting profile for node type (OSP < 17)
+- name: setting profile for node type (Composable Roles)
   shell: |
     source ~/stackrc
     openstack baremetal node set {{ item.key }} --property capabilities=profile:baremetal{{ item.value }},cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:{{ boot_mode }}
   loop: "{{ uuid_type_map|dict2items }}"
-  when: osp_release|int < 17
+  when: composable_roles
 
-- name: setting profile for node type (OSP 17)
+- name: setting profile for node type
   shell: |
     source ~/stackrc
     openstack baremetal node set {{ item.key }} --property capabilities=cpu_vt:true,cpu_hugepages:true,boot_option:local,cpu_txt:true,cpu_aes:true,cpu_hugepages_1g:true,boot_mode:{{ boot_mode }}
   loop: "{{ uuid_type_map|dict2items }}"
-  when: osp_release|int == 17
+  when: composable_roles == false

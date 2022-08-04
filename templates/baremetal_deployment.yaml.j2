@@ -2,7 +2,12 @@
   count: {{ controller_count }}
   hostname_format: controller-%index%
   defaults:
+{% if composable_roles %}
+    profile: baremetal{{ controller_machine_type }}
+{% endif %}
     network_config:
+      default_route_network:
+      - ctlplane
       template: /home/stack/virt/network/vlans/controller.j2
     networks:
     - network: ctlplane
@@ -12,6 +17,8 @@
     - network: internal_api
     - network: tenant
     - network: external
+
+{% if  composable_roles == false %}
 - name: Compute
   count: {{ compute_count }}
   hostname_format: compute-%index%
@@ -24,6 +31,67 @@
     - network: storage
     - network: internal_api
     - network: tenant
+    - network: external
+{% endif %}
+
+{% if composable_roles %}
+{% if failed_nodes_machine_type is not defined %}
+{% for node_type in machine_types %}
+
+- name: Compute{{ node_type }}
+{% if (node_type|string() == controller_machine_type|string()) and (node_type|string() == ceph_machine_type|string()) %}
+  count: {{ machine_count[node_type]|int - controller_count|int - ceph_node_count|int }}
+{% elif node_type|string() == controller_machine_type|string() %}
+  count: {{ machine_count[node_type]|int - controller_count|int }}
+{% else %}
+  count: {{ machine_count[node_type] }}
+{% endif %}
+  hostname_format: compute{{ node_type}}-%index%
+  defaults:
+    profile: baremetal{{ node_type }}
+    network_config:
+      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: internal_api
+    - network: tenant
+    - network: external
+{% endfor %}
+
+{% else %}
+{% for failed_machine_type in failed_nodes_machine_type|unique %}
+{% for node_type in machine_types %}
+{% if node_type|string() == failed_machine_type|string() %}
+
+{% if failed_machine_type|string() == controller_machine_type|string() %}
+  count: {{ machine_count[node_type]|int - controller_count|int - failed_nodes_machine_count[failed_machine_type]|int }}
+{% else %}
+  count: {{ machine_count[node_type]|int - failed_nodes_machine_count[failed_machine_type]|int }}
+{% endif %}
+
+{% elif node_type|string() == controller_machine_type|string() %}
+  count: {{ machine_count[node_type]|int - controller_count|int }}
+{% else %}
+  count: {{ machine_count[node_type] }}
+{% endif %}
+{% endfor %}
+  hostname_format: compute{{ node_type}}-%index%
+  defaults:
+    profile: baremetal{{ node_type }}
+    network_config:
+      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: internal_api
+    - network: tenant
+    - network: external
+{% endfor %}
+{% endif %}
+{% endif %}
 
 {%- if ceph_enabled %}
 
@@ -39,3 +107,4 @@
     - network: storage
     - network: storage_mgmt
 {% endif -%}
+

@@ -21,11 +21,13 @@
         openstack flavor set baremetal{{ item }} --property "resources:MEMORY_MB"="0"
         openstack flavor set baremetal{{ item }} --property "resources:DISK_GB"="0"
         openstack flavor set baremetal{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
-      with_items: "{{ machine_types }}"
+      with_items: "{{ machine_types }} "
+      when: osp_release|int < 17
 
     - name: copy roles directory
       command: |
         cp -r /usr/share/openstack-tripleo-heat-templates/roles /home/stack
+
     - name: copy roles directory
       command:  |
         cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}.yaml
@@ -44,6 +46,7 @@
         regexp: '  HostnameFormatDefault:'
         line: "  HostnameFormatDefault: 'compute{{ item }}-%index%'"
       with_items: "{{ machine_types }}"
+
     - block:
         - name: copy role for computePCI
           command: |

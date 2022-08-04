@@ -3,9 +3,21 @@
 openstack overcloud deploy \
   --timeout {{ install.deployment.timeout | int | default(100) }} \
   --templates {{ install.heat.templates.basedir }} \
-  --libvirt-type {{ install.libvirt.type }} \
 {% if install.overcloud.ssh.user != '' %}
   --overcloud-ssh-user {{ install.overcloud.ssh.user }} \
 {% endif %}
+  --ntp-server {{ install.ntp.server }} \
   --stack {{ install.overcloud.stack }} \
+{% if install.version|default(undercloud_version)|openstack_release >= 17 %}
+  --deployed-server \
+  -e /usr/share/openstack-tripleo-heat-templates/environments/deployed-server-environment.yaml \
   -r /home/stack/roles_data.yaml \
+  -e /home/stack/templates/overcloud-vip-deployed.yaml \
+  -e /home/stack/templates/overcloud-networks-deployed.yaml \
+  -e /home/stack/templates/overcloud-baremetal-deployed.yaml \
+{% if install.storage.backend|default('') == 'ceph' and not install.storage.external %}
+  -e /home/stack/templates/overcloud-ceph-deployed.yaml \
+{% endif %}
+{# rhbz#2020590 - network_data_v2.yaml has to be part of both, the "network provision" step also the OC deployment from now on  #}
+  --networks-file {{ template_base }}/network/network_data_v2.yaml \
+{% endif %}
