@@ -62,6 +62,10 @@
         shell: podman pull quay.io/quads/badfish
         ignore_errors: yes
 
+      - name: get SELinux status
+        shell: getenforce
+        register: selinux_status
+
       - name: set SELinux to Permissive
         become: yes
         shell: setenforce 0

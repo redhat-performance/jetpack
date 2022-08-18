@@ -68,3 +68,8 @@
         allocation_pool_end: "{{ storage_nfs_allocation_pools_end.split('.')[0:3] | join('.')  }}.250"
       include_tasks: tasks/manila.yml
       when: manila_enabled
+
+    - name: restore SELinux mode
+      become: yes
+      shell: setenforce 1
+      when: '"Enforcing" in selinux_status.stdout'  
