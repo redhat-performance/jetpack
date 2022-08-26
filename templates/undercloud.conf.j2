@@ -12,6 +12,7 @@ undercloud_timezone = UTC
 undercloud_public_host = {{ undercloud_public_host }}
 undercloud_admin_host = {{ undercloud_admin_host }}
 {% endif %}
+overcloud_domain_name = redhat.local
 
 {% if osp_release <= 12 %}
 network_cidr = {{ cidr }}

@@ -1,6 +1,26 @@
 ---
 - hosts: undercloud
+  vars:
+      tn10rt: "{{ hostvars['localhost']['tn10rt'] }}"
+      instackenv_content: "{{ hostvars['localhost']['instackenv_content'] }}"
+      rack: ''
   tasks:
+    - name: check and delete introspection failed nodes
+      include_tasks: tasks/delete_introspection_failed_nodes.yml
+      when: scale_compute_vms == false
+
+    - name: set fact for e26 rack machines in instackenv
+      set_fact:
+        rack: "{{ rack_info }}"
+      vars:
+        rack_info: "{{ instackenv_content.nodes[item|int].pm_addr.split('-')[1] }}"
+      with_sequence: 0-{{ instackenv_content.nodes|length - 1 }}
+      when: lab_name == 'alias' and rack_info == 'e26'
+
+    - name: enable root_hints(740xd G-CL)
+      include_tasks: tasks/set_root_hints.yml
+      when: lab_name == 'alias' and hostvars['localhost']['machine_type'] == '740xd' and rack == 'e26'
+
     - block:
         - name: get all nodes
           shell: |
@@ -42,8 +62,10 @@
             storage_node_disks: "{{ storage_node_disks|default([]) + item.stdout_lines }}"
           with_items: "{{ storage_disks_info_comp.results }}"
           when: composable_roles
-      when: storage_node_disks is not defined
+      when: storage_node_disks is not defined and ceph_enabled
 
     - name: show the storage_node_disks
       debug:
         msg: "{{ storage_node_disks|unique }}"
+      when: ceph_enabled
+
