@@ -1,34 +1,18 @@
 ---
 - hosts: undercloud
-  vars:
-      tn10rt: "{{ hostvars['localhost']['tn10rt'] }}"
-      instackenv_content: "{{ hostvars['localhost']['instackenv_content'] }}"
-      rack: ''
   tasks:
-    - name: check and delete introspection failed nodes
-      include_tasks: tasks/delete_introspection_failed_nodes.yml
-      when: scale_compute_vms == false
+    - name: get all nodes
+      shell: |
+        source ~/stackrc
+        openstack baremetal node list -f value -c UUID
+      register: total_nodes
+      changed_when: false
 
-    - name: set fact for e26 rack machines in instackenv
-      set_fact:
-        rack: "{{ rack_info }}"
-      vars:
-        rack_info: "{{ instackenv_content.nodes[item|int].pm_addr.split('-')[1] }}"
-      with_sequence: 0-{{ instackenv_content.nodes|length - 1 }}
-      when: lab_name == 'alias' and rack_info == 'e26'
-
-    - name: enable root_hints(740xd G-CL)
+    - name: enable root_hints
       include_tasks: tasks/set_root_hints.yml
-      when: lab_name == 'alias' and hostvars['localhost']['machine_type'] == '740xd' and rack == 'e26'
+      when: lab_name in ['scale', 'alias']
 
     - block:
-        - name: get all nodes
-          shell: |
-            source ~/stackrc
-            openstack baremetal node list -f value -c UUID
-          register: total_nodes
-          changed_when: false
-
         - name: introspection data for a nodes
           shell: |
             source ~/stackrc
@@ -69,3 +53,8 @@
         msg: "{{ storage_node_disks|unique }}"
       when: ceph_enabled
 
+    - name: remove the templates dir
+      file:
+        state: absent
+        path: /home/stack/templates
+      ignore_errors: true

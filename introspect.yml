@@ -34,3 +34,11 @@
             changed_when: false
             ignore_errors: true
         when: scale_compute_vms == true
+
+- hosts: undercloud
+  vars:
+      tn10rt: "{{ hostvars['localhost']['tn10rt'] }}"
+  tasks:
+      - name: check and delete introspection failed nodes
+        include_tasks: tasks/delete_introspection_failed_nodes.yml
+        when: scale_compute_vms == false
