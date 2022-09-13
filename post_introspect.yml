@@ -1,14 +1,18 @@
 ---
 - hosts: undercloud
   tasks:
-    - block:
-        - name: get all nodes
-          shell: |
-            source ~/stackrc
-            openstack baremetal node list -f value -c UUID
-          register: total_nodes
-          changed_when: false
+    - name: get all nodes
+      shell: |
+        source ~/stackrc
+        openstack baremetal node list -f value -c UUID
+      register: total_nodes
+      changed_when: false
 
+    - name: enable root_hints
+      include_tasks: tasks/set_root_hints.yml
+      when: lab_name in ['scale', 'alias']
+
+    - block:
         - name: introspection data for a nodes
           shell: |
             source ~/stackrc
@@ -42,8 +46,15 @@
             storage_node_disks: "{{ storage_node_disks|default([]) + item.stdout_lines }}"
           with_items: "{{ storage_disks_info_comp.results }}"
           when: composable_roles
-      when: storage_node_disks is not defined
+      when: storage_node_disks is not defined and ceph_enabled
 
     - name: show the storage_node_disks
       debug:
         msg: "{{ storage_node_disks|unique }}"
+      when: ceph_enabled
+
+    - name: remove the templates dir
+      file:
+        state: absent
+        path: /home/stack/templates
+      ignore_errors: true
