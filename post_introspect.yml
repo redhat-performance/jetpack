@@ -1,6 +1,12 @@
 ---
 - hosts: undercloud
+  vars:
+      tn10rt: "{{ hostvars['localhost']['tn10rt'] }}"
   tasks:
+    - name: check and delete introspection failed nodes
+      include_tasks: tasks/delete_introspection_failed_nodes.yml
+      when: scale_compute_vms == false
+
     - name: get all nodes
       shell: |
         source ~/stackrc
@@ -32,6 +38,7 @@
               fi
             done
           register: storage_disks_info_comp
+
           with_items: "{{ total_nodes.stdout_lines | default([]) }}"
           when: composable_roles
 
@@ -53,8 +60,83 @@
         msg: "{{ storage_node_disks|unique }}"
       when: ceph_enabled
 
-    - name: remove the templates dir
-      file:
-        state: absent
-        path: /home/stack/templates
-      ignore_errors: true
+    - name: setting node capabilities (boot_mode bios)
+      vars:
+        boot_mode: bios
+      include_tasks: tasks/set_boot_mode.yml
+      when: osp_release|int >= 17 or composable_roles
+
+    - name: get overcloud node images
+      vars:
+        image_path: /home/stack/images
+      include_tasks: tasks/overcloud_images.yaml
+      when: osp_release|int == 17
+
+    - name: Set name for overcloud nodes
+      shell: |
+        source ~/stackrc
+        openstack baremetal node list --fields uuid driver_info -f table | grep ipmi | sed -e "s/u'/'/g" -e "s/'/\\\\\"/g" \
+        | awk -F\| '  driver_info = $3   { system(  "name=$(echo  " driver_info " |jq .ipmi_address) ;\
+        openstack baremetal node set --name $name " $2) }  '
+
+- hosts: localhost
+  gather_facts: yes
+  vars:
+    nodes_uuids: "{{ hostvars['undercloud']['total_nodes'] }}"
+  tasks:
+      - name: Set compute count fact
+        set_fact:
+          compute_count: "{{ compute_count|default(oc_instackenv_content.nodes|length - (controller_count|int) - (ceph_node_count|int)) }}"
+
+      - block:
+        - name: check registered nodes with requested node count
+          debug:
+            msg: "Less nodes {{ nodes_uuids.stdout_lines|length }} registered with ironic than requested {{ compute_count|int + controller_count|int + ceph_node_count|int }}. So we will be adjusting controller and compute count according to registered available nodes"
+          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int + ceph_node_count|int)
+
+        - name: Adjust compute count
+          set_fact:
+            compute_count: "{{ compute_count|int - 1 }}"
+          when: nodes_uuids.stdout_lines|length < (compute_count|int + controller_count|int + ceph_node_count|int)
+          with_items: "{{ nodes_uuids }}"
+        when: scale_compute_vms == false
+
+      - name: save the compute count
+        shell: |
+           echo "{{ compute_count }}" > compute_count
+
+      - name: fail when compute count is less than 1
+        fail:
+            msg: "Failing as compute count is less than 1"
+        when: compute_count|int < 1
+
+      - name: set facts about failed nodes
+        set_fact:
+          failed_nodes_machine_type: "{{  hostvars['undercloud']['failed_nodes_machine_type'] }}"
+          failed_nodes_machine_count: "{{ hostvars['undercloud']['failed_nodes_machine_count'] }}"
+        when: composable_roles
+        ignore_errors: true
+
+      - name: prepare baremetal_deployment.yaml.j2
+        template:
+          src: baremetal_deployment.yaml.j2
+          dest: "{{ ansible_user_dir }}/virt/network/baremetal_deployment.yaml.j2"
+        when: osp_release|int == 17
+
+      - name: Template out nodes_data file
+        template:
+          src: nodes_data.yml.j2
+          dest: ~/virt/nodes_data.yaml
+        when: composable_roles
+
+      - name: set fact for storage nodes
+        set_fact:
+          storage_node_disks: "{{ hostvars['undercloud']['storage_node_disks']|unique }}"
+        when: ceph_enabled and storage_node_disks is not defined
+
+      - name: generate internal.yml.j2
+        template:
+          src: internal.yml.j2
+          dest: ~/.infrared/plugins/tripleo-overcloud/templates/storage/internal.yml.j2
+          force: yes
+        when: ceph_enabled

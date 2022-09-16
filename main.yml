@@ -30,6 +30,7 @@
 - import_playbook: composable_prepare_nic_configs.yml
   tags:
     - undercloud
+    - introspect
     - overcloud
   when: composable_roles
 
@@ -43,7 +44,7 @@
 
 - import_playbook: post_introspect.yml
   tags:
-    - overcloud
+    - introspect
 
 - import_playbook: tag.yml
   tags:
