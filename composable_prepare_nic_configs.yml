@@ -43,9 +43,10 @@
               - "{{ rhel8_interfaces }}"
               - "{{ rhel7_interfaces }}"
 
-          - name: set interfaces
+          # dict key is the machine type and value is interfaces
+          - name: set machine_ifaces
             set_fact:
-              ifaces: "{{ (ifaces|default([]) + [lab_vars['machine_types'][item[0]][item[1]][item[2]]]) | unique }}"
+              machine_ifaces: "{{ machine_ifaces|default({})  | combine({ item[1]: lab_vars['machine_types'][item[0]][item[1]][item[2]] }) }}"
             with_together:
               - "{{ vendors }}"
               - "{{ machine_types }}"
@@ -55,26 +56,33 @@
         when: lab_name in ['scale', 'alias'] and osp_release|int < 17
 
       - block:
-        - name: set fact for rhel 9 interfaces
-          set_fact:
-            rhel9_interfaces: "{{ rhel9_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel9_interfaces_f04', 'rhel9_interfaces') ] }}"
-          with_together:
-            - "{{ host_list.results }}"
-            - "{{ machine_types }}"
+          - name: set fact for rhel 9 interfaces
+            set_fact:
+              rhel9_interfaces: "{{ rhel9_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel9_interfaces_f04', 'rhel9_interfaces') ] }}"
+            with_together:
+              - "{{ host_list.results }}"
+              - "{{ machine_types }}"
 
-        - name: set interfaces
-          set_fact:
-            ifaces: "{{ (ifaces|default([]) + [lab_vars['machine_types'][item[0]][item[1]][item[2]]]) | unique }}"
-          with_together:
-            - "{{ vendors }}"
-            - "{{ machine_types }}"
-            - "{{ rhel9_interfaces }}"
+          # dict key is the machine type and value is interfaces
+          - name: set machine_ifaces
+            set_fact:
+              machine_ifaces: "{{ machine_ifaces|default({})  | combine({ item[1]: lab_vars['machine_types'][item[0]][item[1]][item[2]] }) }}"
+            with_together:
+              - "{{ vendors }}"
+              - "{{ machine_types }}"
+              - "{{ rhel9_interfaces }}"
         vars:
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias'] and osp_release|int >= 17
 
-            #todo for non scale/alias machines
+      - name: set interfaces
+        set_fact:
+          ifaces: "{{ ifaces|default([]) + [ machine_ifaces[item]] }}"
+        with_items:
+          - "{{ machine_types|unique }}"
+        when: lab_name in ['scale', 'alias']
 
+      #todo for non scale/alias machines
       - name: interfaces is empty
         fail:
             msg: other lab types should specify interfaces
@@ -320,3 +328,4 @@
               - "{{ openshift_vlan_interfaces }}"
 
         when: osp_release|int >= 17
+
