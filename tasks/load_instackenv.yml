@@ -24,6 +24,14 @@
       force: yes
   when: st.stat.exists == False and lab_name == "scale"
 
+- name: remove the name field from instackenv
+  lineinfile:
+    path: "{{ instackenv_file }}"
+    regexp: "name"
+    line: ''
+    state: absent
+  when: osp_release|int < 17
+
 - name: read instack env file
   set_fact:
     instackenv_content: "{{ instackenv_content }}"
