@@ -277,6 +277,7 @@ osd_objectstore: bluestore
 #Default value for introspection timeout is 2400s, but user can configure
 #the timeout for large cloud
 #introspection_timeout:
+#overcloud_timeout:
 foreman_url: https://foreman.example.com
 manila_enabled: false
 

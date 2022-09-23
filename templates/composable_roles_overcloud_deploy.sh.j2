@@ -1,7 +1,11 @@
 #!/bin/bash
 
 openstack overcloud deploy \
+{% if overcloud_timeout is defined %}
+  --timeout {{ overcloud_timeout }} \
+{% else %}
   --timeout {{ install.deployment.timeout | int | default(100) }} \
+{% endif %}
   --templates {{ install.heat.templates.basedir }} \
 {% if install.overcloud.ssh.user != '' %}
   --overcloud-ssh-user {{ install.overcloud.ssh.user }} \
