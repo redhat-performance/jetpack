@@ -37,6 +37,10 @@
   tags:
     - undercloud
 
+- import_playbook: set_boot_order.yml
+  tags:
+    - boot_order
+
 - import_playbook: introspect.yml
   tags:
     - introspect

@@ -1,0 +1,27 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+      chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+  tasks:
+    - block:
+        - name: set boot order to director
+          include_tasks: tasks/set_boot_order_director.yml
+      rescue:
+        - name: Reset iDrac
+          shell: |
+             sshpass -p {{ chassis_password }} ssh -o StrictHostKeyChecking=no quads@mgmt-{{ item.stdout }} "racadm racreset soft -f"
+          with_items:
+            - "{{ host_list.results }}"
+
+        - name: Wait for iDrac to be responsive
+          become: yes
+          shell: podman run -it -v {{ playbook_dir }}/badfish:/dell --rm quay.io/quads/badfish --host-list /dell/dell-hosts -u quads -p {{ chassis_password }} -i config/idrac_interfaces.yml --check-boot
+          register: wait_for_idrac
+          until: wait_for_idrac is succeeded
+          retries: 20
+          delay: 180
+
+        - name: try again setting boot order to director
+          include_tasks: tasks/set_boot_order_director.yml
+      when: lab_name in ['scale', 'alias'] and set_boot_order == true
