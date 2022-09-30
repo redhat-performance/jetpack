@@ -7,7 +7,7 @@
   with_items:
     - "{{ total_nodes.stdout_lines }}"
 
-- name: set root hints based on model (740XD G-CL)
+- name: set root hints based on model
   shell: |
     source ~/stackrc
     openstack baremetal node set "{{ item[0] }}" --property root_device='{"model": {{ item[1].stdout_lines[0] }} }'

@@ -43,14 +43,12 @@
   ignore_errors: yes
 
 # TODO for external labs
-
 - name: get the machine type of introspection failed nodes
   set_fact:
     failed_nodes_machine_type: "{{ failed_nodes_machine_type|default([]) + [(type != '1029u')|ternary(type, (item.stdout.replace('mgmt-', '').replace('\"', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp')) ] }}"
   vars:
-      type: "{{ (lab_name == 'scale' | ternary(item.stdout.split('.')[0].split('-')[4], item.stdout.split('.')[0].split('-')[3])) }}"
+      type: "{{ (lab_name == 'scale') | ternary(item.stdout.split('.')[0].split('-')[4], item.stdout.split('.')[0].split('-')[3]) }}"
   with_items: "{{ failed_nodes_ipmi_addr.results }}"
-  when: lab_name in ['scale', 'alias']
 
 - name: set machine count of failed nodes
   set_fact:
@@ -64,7 +62,7 @@
 
 - name: print the machine count of failed nodes
   debug:
-    msg: "{{ failed_nodes_machine_count }}"
+    var: failed_nodes_machine_count
   when: failed_nodes_machine_type is defined
 
 - name: power off the failed nodes
@@ -75,31 +73,30 @@
   changed_when: false
   ignore_errors: true
 
-- name: delete failed nodes
+- name: move to manage and delete failed nodes
   shell: |
       source ~/stackrc
+      openstack baremetal node manage {{ item }}
       openstack baremetal node delete {{ item }}
   with_items: "{{ failed_nodes_uuids | default([]) }}"
   changed_when: false
   ignore_errors: true
 
-- name: get all nodes
+- name: get nodes in manageable state
   shell: |
       source ~/stackrc
-      openstack baremetal node list -f value -c UUID
-  register: total_nodes
+      openstack baremetal node list | grep -i manageable | cut -d "|" -f 2
+  register: manageable_nodes
   changed_when: false
 
 - name: set provision state of all nodes to available
   shell: |
       source ~/stackrc;
-      export PROV_STATE=$(openstack baremetal node show {{ item }} -c provision_state -f value);
-      if [[ $PROV_STATE != *"available"* ]]; then
-          openstack baremetal node provide {{ item }};
-      fi
-  with_items: "{{ total_nodes.stdout_lines | default([]) }}"
+      openstack baremetal node provide {{ item }};
+  with_items: "{{ manageable_nodes.stdout_lines | default([]) }}"
   changed_when: false
   register: prov_state
   until: prov_state is succeeded
   retries: 3
   delay: 30
+
