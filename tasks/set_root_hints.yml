@@ -2,15 +2,19 @@
 - name: using introspection data to set root device
   shell: |
     source ~/stackrc
-    openstack baremetal introspection data save "{{ item }}" | jq '.inventory.disks[0]["model"]'
-  register: model
+    if [[ $(openstack baremetal introspection data save "{{ item }}" |jq '.inventory.disks[] | select(.vendor == "ATA" ) | .serial') ]]; then
+      echo $(openstack baremetal introspection data save "{{ item }}" |jq '.inventory.disks[] | select(.vendor == "ATA" ) | .serial' | head -n 1)
+    else
+      echo $(openstack baremetal introspection data save "{{ item }}" | jq '.inventory.disks[0]["serial"]')
+    fi
+  register: serial
   with_items:
     - "{{ total_nodes.stdout_lines }}"
 
 - name: set root hints based on model
   shell: |
     source ~/stackrc
-    openstack baremetal node set "{{ item[0] }}" --property root_device='{"model": {{ item[1].stdout_lines[0] }} }'
+    openstack baremetal node set "{{ item[0] }}" --property root_device='{"serial": {{ item[1].stdout_lines[0] }} }'
   with_together:
     - "{{ total_nodes.stdout_lines }}"
-    - "{{ model.results }}"
+    - "{{ serial.results }}"

@@ -42,7 +42,8 @@
       - name: Set container params
         set_fact:
           container_params: "--registry-mirror {{ registry_mirror }} --registry-namespace {{ registry_namespace }}"
-        when: osp_release > 13
+        when: osp_release|int > 13
+
       - name: run tripleo-undercloud
         shell: |
           source {{ infrared_dir }}/.venv/bin/activate

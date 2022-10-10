@@ -2,7 +2,7 @@
 - name: Get output of bulk introspection status and store as yaml
   shell: |
        source ~/stackrc
-       {% if osp_release < 13 %}
+       {% if osp_release|int < 13 %}
        openstack baremetal introspection bulk status -f yaml
        {% else %}
        openstack baremetal introspection list -f yaml
