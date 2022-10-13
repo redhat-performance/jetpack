@@ -1,0 +1,12 @@
+---
+- name: flush iptables
+  shell: sudo iptables --flush
+
+- name: get default route
+  shell: |
+    sudo ip r | grep default | cut -d ' ' -f5
+  register: default_route
+
+- name: masquerade on public interface
+  shell: |
+    sudo iptables -t nat -A POSTROUTING -o {{ default_route.stdout }} -j MASQUERADE

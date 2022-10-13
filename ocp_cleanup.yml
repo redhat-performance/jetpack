@@ -1,0 +1,31 @@
+---
+- name: Determine undercloud and allocate inventory
+  hosts: localhost
+  gather_facts: false
+  vars_files:
+    - vars/shift_stack_vars.yaml
+  tasks:
+    - name: list openstack projects for installed clusters
+      shell: |
+        ansible all -i '{{ undercloud_host }},' -m shell -a 'source /home/stack/overcloudrc && openstack project list -c Name -f value | grep rhocp' -u stack | grep rhocp
+      register: osp_project_list
+
+    - name: Add undercloud host to inventory for each cluster, that are to be deleted
+      add_host:
+        name: "undercloud-{{ item }}"
+        group: underclouds
+        ansible_host: "{{ undercloud_host }}"
+        ansible_connection: "ssh"
+        ansible_user: "stack"
+        osp_project_name: "{{ item }}"
+      loop: "{{ osp_project_list.stdout_lines }}"
+
+
+- hosts: underclouds
+  gather_facts: true
+  vars:
+    ocp_cluster_name: "{{ osp_project_name }}"
+    osp_user_name: "{{ osp_project_name }}"
+  tasks:
+    - name: destroy ocp cluster(s)
+      include_tasks: tasks/delete_ocp_cluster.yml
