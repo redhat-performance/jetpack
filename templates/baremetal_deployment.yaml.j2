@@ -18,7 +18,7 @@
     - network: tenant
     - network: external
 
-{% if  composable_roles == false %}
+{% if composable_roles == false %}
 - name: Compute
   count: {{ compute_count }}
   hostname_format: compute-%index%
@@ -33,102 +33,56 @@
     - network: tenant
     - network: external
 {% endif %}
-
 {% if composable_roles %}
-{% if failed_nodes_machine_type is not defined %}
 {% for node_type in machine_types %}
+{% set compute_count = machine_count[node_type]|int %}
 
-- name: Compute{{ node_type }}
-{% if (node_type|string() == controller_machine_type|string()) and (node_type|string() == ceph_machine_type|string()) %}
-  count: {{ machine_count[node_type]|int - controller_count|int - ceph_node_count|int }}
-{% elif node_type|string() == controller_machine_type|string() %}
-  count: {{ machine_count[node_type]|int - controller_count|int }}
-{% else %}
-  count: {{ machine_count[node_type] }}
-{% endif %}
-  hostname_format: compute{{ node_type}}-%index%
-  defaults:
-    profile: baremetal{{ node_type }}
-    network_config:
-      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
-    networks:
-    - network: ctlplane
-      vif: true
-    - network: storage
-    - network: internal_api
-    - network: tenant
-    - network: external
-{% endfor %}
+{#- Reduce the failed_node_counts at the beginning -#}
 
-{% else %}
-{% for node_type in machine_types %}
-{% if node_type in failed_nodes_machine_type|unique and node_type == controller_machine_type %}
-- name: Compute{{ node_type }}
-  count: {{ machine_count[node_type]|int - failed_nodes_machine_count[node_type] - controller_count|int }}
-  hostname_format: compute{{ node_type}}-%index%
-  defaults:
-    profile: baremetal{{ node_type }}
-    network_config:
-      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
-    networks:
-    - network: ctlplane
-      vif: true
-    - network: storage
-    - network: internal_api
-    - network: tenant
-    - network: external
-{% elif node_type not in failed_nodes_machine_type|unique and node_type == controller_machine_type %}
-- name: Compute{{ node_type }}
-  count: {{ machine_count[node_type]|int - controller_count|int }}
-  hostname_format: compute{{ node_type}}-%index%
-  defaults:
-    profile: baremetal{{ node_type }}
-    network_config:
-      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
-    networks:
-    - network: ctlplane
-      vif: true
-    - network: storage
-    - network: internal_api
-    - network: tenant
-    - network: external
-{% elif node_type in failed_nodes_machine_type|unique %}
-- name: Compute{{ node_type }}
-  count: {{ machine_count[node_type]|int - failed_nodes_machine_count[node_type] }}
-  hostname_format: compute{{ node_type}}-%index%
-  defaults:
-    profile: baremetal{{ node_type }}
-    network_config:
-      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
-    networks:
-    - network: ctlplane
-      vif: true
-    - network: storage
-    - network: internal_api
-    - network: tenant
-    - network: external
-{% else %}
-- name: Compute{{ node_type }}
-  count: {{ machine_count[node_type]|int }}
-  hostname_format: compute{{ node_type}}-%index%
-  defaults:
-    profile: baremetal{{ node_type }}
-    network_config:
-      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
-    networks:
-    - network: ctlplane
-      vif: true
-    - network: storage
-    - network: internal_api
-    - network: tenant
-    - network: external
-{% endif %}
-{% endfor %}
-{% endif %}
-{% endif %}
+{%- if (failed_nodes_machine_type is defined) and (node_type in failed_nodes_machine_type|unique) %}
+{% set compute_count = compute_count - failed_nodes_machine_count[node_type]|int %}
+{% endif -%}
+
+{#- Case for whether ceph is enabled or not -#}
 
 {%- if ceph_enabled %}
+{% if (node_type|string() == controller_machine_type|string()) and (node_type|string() == ceph_machine_type|string()) %}
+{% set compute_count = compute_count - controller_count|int - ceph_node_count|int %}
+{% elif (node_type|string() == ceph_machine_type|string()) %}
+{% set compute_count = compute_count - ceph_node_count|int %}
+{% elif (node_type|string() == controller_machine_type|string()) %}
+{% set compute_count = compute_count - controller_count|int %}
+{% endif %}
+{% endif -%}
 
+{%- if ceph_enabled == false %}
+{% if (node_type|string() == controller_machine_type|string()) %}
+{% set compute_count = compute_count - controller_count|int %}
+{% endif %}
+{% endif -%}
+
+{%- if compute_count > 0 %}
+- name: Compute{{ node_type }}
+  count: {{ compute_count }}
+  hostname_format: compute{{ node_type }}-%index%
+  ansible_playbooks:
+    - playbook: /home/stack/overcloud-node-growvols.yml
+  defaults:
+    profile: baremetal{{ node_type }}
+    network_config:
+      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: internal_api
+    - network: tenant
+    - network: external
+{% endif -%}
+{% endfor %}
+{% endif %}
+
+{% if ceph_enabled %}
 - name: CephStorage
   count: {{ ceph_node_count }}
   hostname_format: ceph-%index%
@@ -140,4 +94,4 @@
       vif: true
     - network: storage
     - network: storage_mgmt
-{% endif -%}
+{% endif %}
