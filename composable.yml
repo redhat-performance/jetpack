@@ -7,6 +7,17 @@
         infrared_oc_deploy_template:  "{{ ansible_user_dir }}/.infrared/plugins/tripleo-overcloud/templates/overcloud_deploy.sh.j2"
       shell: |
         cp   {{ oc_deploy_template }} {{ infrared_oc_deploy_template }}
+
+    - name: avoid compute role of controller machine type when insufficient nodes
+      set_fact:
+        machine_types: "{{ machine_types | difference(controller_machine_type) }}"
+      when: machine_count[controller_machine_type]|int == controller_count|int
+
+    - name: avoid compute role of ceph machine type when insufficient nodes
+      set_fact:
+        machine_types: "{{ machine_types | difference(ceph_machine_type) }}"
+      when: ceph_enabled and (machine_count[ceph_machine_type]|int == ceph_node_count|int)
+
 - hosts: undercloud
   vars:
     machine_types:  "{{ hostvars['localhost']['machine_types'] }}"

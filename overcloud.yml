@@ -16,7 +16,7 @@
             insertafter: "    excludes:"
             line: '    - ceph'
 
-      when: (ceph_enabled != true) and (osp_release > 13)
+      when: (ceph_enabled != true) and (osp_release|int > 13)
 
     - name: get tht version
       shell: |
@@ -50,6 +50,13 @@
         state: absent
         path: /home/stack/templates
       ignore_errors: true
+
+    - name: workaround for BZ 2123252
+      become: true
+      shell: |
+        dnf install containernetworking-plugins -y
+        sed -i 's/netavark/cni/g' /etc/containers/containers.conf
+      when: osp_release|int == 17
 
 - hosts: localhost
   gather_facts: yes

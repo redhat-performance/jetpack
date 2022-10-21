@@ -129,7 +129,7 @@
               dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
               force: yes
             when: ceph_enabled
-        when: osp_release < 17
+        when: osp_release|int < 17
 
       - block:
           - name: prepare network-environment_v2.yaml.j2
