@@ -286,6 +286,3 @@ osd_objectstore: bluestore
 #overcloud_timeout:
 foreman_url: https://foreman.example.com
 manila_enabled: false
-
-#image path for overcloud nodes
-remote_image_path: https://sf.redhat.com

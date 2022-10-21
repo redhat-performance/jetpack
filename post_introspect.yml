@@ -66,19 +66,6 @@
       include_tasks: tasks/set_boot_mode.yml
       when: osp_release|int >= 17 or composable_roles
 
-    - name: get overcloud node images
-      vars:
-        image_path: /home/stack/images
-      include_tasks: tasks/overcloud_images.yaml
-      when: osp_release|int == 17
-
-    - name: Set name for overcloud nodes
-      shell: |
-        source ~/stackrc
-        openstack baremetal node list --fields uuid driver_info -f table | grep ipmi | sed -e "s/u'/'/g" -e "s/'/\\\\\"/g" \
-        | awk -F\| '  driver_info = $3   { system(  "name=$(echo  " driver_info " |jq .ipmi_address) ;\
-        openstack baremetal node set --name $name " $2) }  '
-
 - hosts: localhost
   gather_facts: yes
   vars:
