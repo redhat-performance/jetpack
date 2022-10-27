@@ -263,6 +263,7 @@
               src: ceph-storage.yaml.j2
               dest: "{{ nic_config_path }}/ceph-storage.yaml.j2"
               force: yes
+            when: osp_release|int < 17
 
         when: ceph_enabled
 
@@ -327,5 +328,16 @@
               - "{{ isolated_interfaces }}"
               - "{{ openshift_vlan_interfaces }}"
 
-        when: osp_release|int >= 17
+          - name: prepare ceph-storage.j2.j2
+            vars:
+              ctlplane_interface: "{{ ceph_ctlplane_interface }}"
+              external_interface: "{{ ceph_external_interface }}"
+              storage_interface: "{{ ceph_storage_interface }}"
+            template:
+              src: ceph-storage.j2.j2
+              dest: "~/virt/network/vlans/ceph-storage.j2"
+              force: yes
+            delegate_to: undercloud
+            when: ceph_enabled
 
+        when: osp_release|int >= 17

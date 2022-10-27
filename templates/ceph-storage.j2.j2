@@ -19,7 +19,7 @@ network_config:
   use_dhcp: false
   members:
   - type: interface
-    name: {{ isolated_interface }}
+    name: {{ storage_interface }}
     primary: true
   - type: vlan
     vlan_id: {{ storage_network_vlan_id }}
