@@ -1,6 +1,8 @@
 - name: Controller
   count: {{ controller_count }}
   hostname_format: controller-%index%
+  ansible_playbooks:
+    - playbook: /home/stack/overcloud-node-growvols.yml
   defaults:
 {% if composable_roles %}
     profile: baremetal{{ controller_machine_type }}
@@ -22,6 +24,8 @@
 - name: Compute
   count: {{ compute_count }}
   hostname_format: compute-%index%
+  ansible_playbooks:
+    - playbook: /home/stack/overcloud-node-growvols.yml
   defaults:
     network_config:
       template: /home/stack/virt/network/vlans/compute.j2
@@ -86,6 +90,8 @@
 - name: CephStorage
   count: {{ ceph_node_count }}
   hostname_format: ceph-%index%
+  ansible_playbooks:
+    - playbook: /home/stack/overcloud-node-growvols.yml
   defaults:
     network_config:
       template: /home/stack/virt/network/vlans/ceph-storage.j2

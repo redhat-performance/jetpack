@@ -1,0 +1,13 @@
+---
+- name: Specify extra vars for extending logical volumes
+  import_playbook: /usr/share/ansible/tripleo-playbooks/cli-overcloud-node-growvols.yaml
+  vars:
+    growvols_args: >
+        /=30GB
+        /tmp=5GB
+        /home=10GB
+        /var/log=10GB
+        /var/log/audit=1GB
+        /var=90%
+        /srv=10%
+

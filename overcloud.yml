@@ -265,6 +265,16 @@
           deployment_timeout: 2400
         when: scale_compute_vms == true
 
+      - name: change the default values for overcloud-node-growvols
+        copy:
+          src: "overcloud-node-growvols.yml"
+          dest: "/home/stack/cli-overcloud-node-growvols.yml"
+        delegate_to: "{{ undercloud_hostname }}"
+        vars:
+          ansible_python_interpreter: "{{ python_interpreter }}"
+          ansible_user: "stack"
+        when: osp_release|int >= 17
+
       - name: run tripleo-overcloud deploy
         shell: |
             source .venv/bin/activate
