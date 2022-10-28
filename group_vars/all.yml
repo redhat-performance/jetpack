@@ -133,6 +133,8 @@ interfaces:
 # - NeutronBridgeMappings=openshift:br-openshift,datacentre:br-ex
 # - NeutronNetworkVLANRanges=openshift:500:1000,datacentre:1:500
 # - ComputeParameters.NeutronBridgeMappings=openshift:br-openshift
+# For non-DVR OVN deployments, the comment on the line below should be removed to boot VMs on provider networks created on the datacentre network.
+# - ComputeParameters.NeutronBridgeMappings=datacentre:br-ex
 
 #resource_registry:
   # Enable root user password for all nodes
