@@ -257,13 +257,25 @@
 
       - name: set facts for ceph deployment
         set_fact:
-          ceph_params: "--storage-backend ceph --storage-external no"
+          ceph_params: "{{ (osp_release|int >= 17) | ternary('--storage-backend ceph --storage-external no --ceph-osd-spec-file {{ osd_spec_file }}','--storage-backend ceph --storage-external no') }}"
         when: ceph_enabled
 
       - name: set deployment_timeout to 2400
         set_fact:
           deployment_timeout: 2400
         when: scale_compute_vms == true
+
+      - block:
+        - name: set fact for osd-spec.yml file
+          set_fact:
+            osd_spec_file: "{{ ansible_user_dir }}/osd-spec.yml"
+
+        - name: generate osd-spec.yml.j2
+          template:
+            src: osd-spec.yml.j2
+            dest: "{{ osd_spec_file }}"
+            force: yes
+        when: ceph_enabled and osp_release|int >= 17
 
       - name: run tripleo-overcloud deploy
         shell: |

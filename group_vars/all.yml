@@ -279,6 +279,9 @@ osd_objectstore: bluestore
 #Note:By default storage_node_disks can be detected automatically
 #using introspection data
 #storage_node_disks: ['/dev/nvme0n1']
+#Note: By default the number of osds_per_device is set to 1. It can
+#be changed to another value through this parameter for OSP17.
+osds_per_device: 1
 #osd_pool_default_pg_num:
 #osd_pool_default_pgp_num:
 
