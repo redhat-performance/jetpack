@@ -71,7 +71,13 @@
 
     - name: update host to install new os
       shell: |
+        podman run --rm --sdnotify=ignore hammercli {{ hammer_build_cmd }}
+      when: ansible_distribution_major_version >= '8'
+
+    - name: update host to install new os
+      shell: |
         podman run --rm hammercli {{ hammer_build_cmd }}
+      when: ansible_distribution_major_version < '8'
 
     - name: set hypervisor host to PXE boot (Supermicro)
       shell: ipmitool -I lanplus -H mgmt-{{ hypervisor_host }} -U quads -P {{ chassis_password }} chassis bootdev pxe options=persistent
