@@ -14,22 +14,17 @@ network_config:
     default: true
 {% endraw %}
 
-- type: ovs_bridge
-  name: br-isolated
-  use_dhcp: false
-  members:
-  - type: interface
-    name: {{ storage_interface }}
-    primary: true
-  - type: vlan
-    vlan_id: {{ storage_network_vlan_id }}
-    {% raw -%}
-    addresses:
-    - ip_netmask: {{ storage_ip }}/{{ storage_cidr }}
+- type: vlan
+  device: {{ storage_interface }}
+  vlan_id: {{ storage_network_vlan_id }}
+  {% raw -%}
+  addresses:
+  - ip_netmask: {{ storage_ip }}/{{ storage_cidr }}
 {% endraw  %}
-  - type: vlan
-    vlan_id: {{ storage_mgmt_network_vlan_id }}
-    {% raw -%}
-    addresses:
-    - ip_netmask: {{ storage_mgmt_ip }}/{{ storage_mgmt_cidr }}
+- type: vlan
+  device: {{ storage_interface }}
+  vlan_id: {{ storage_mgmt_network_vlan_id }}
+  {% raw -%}
+  addresses:
+  - ip_netmask: {{ storage_mgmt_ip }}/{{ storage_mgmt_cidr }}
 {% endraw %}

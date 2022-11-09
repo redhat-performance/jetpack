@@ -1,23 +1,18 @@
 ---
 network_config:
-- type: ovs_bridge
-  name: br-isolated
-  use_dhcp: false
-  members:
-  - type: interface
-    name: {{ isolated_interface }}
-    primary: true
-  - type: vlan
-    vlan_id: {{ internal_api_network_vlan_id }}
-    {% raw -%}
-    addresses:
-    - ip_netmask: {{ internal_api_ip }}/{{ internal_api_cidr }}
+- type: vlan
+  device: {{ isolated_interface }}
+  vlan_id: {{ internal_api_network_vlan_id }}
+  {% raw -%}
+  addresses:
+  - ip_netmask: {{ internal_api_ip }}/{{ internal_api_cidr }}
 {% endraw %}
-  - type: vlan
-    vlan_id: {{ storage_network_vlan_id }}
-    {% raw -%}
-    addresses:
-    - ip_netmask: {{ storage_ip }}/{{ storage_cidr }}
+- type: vlan
+  device: {{ isolated_interface }}
+  vlan_id: {{ storage_network_vlan_id }}
+  {% raw -%}
+  addresses:
+  - ip_netmask: {{ storage_ip }}/{{ storage_cidr }}
 {% endraw %}
 
 - type: interface
