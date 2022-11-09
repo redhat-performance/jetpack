@@ -59,6 +59,10 @@ parameter_defaults:
   Compute{{ pci_node_type }}PCICount: {{ pci_node_count }}
 {% endif %}
 
+{% if controller_machine_type is defined %}
+  OvercloudControllerFlavor: baremetal{{ controller_machine_type }}
+{% endif %}
+
 {% for node_type in machine_types %}
   OvercloudCompute{{ node_type }}Flavor: baremetal{{ node_type }}
 {% endfor %}
