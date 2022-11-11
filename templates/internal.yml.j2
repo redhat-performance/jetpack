@@ -14,10 +14,12 @@ parameter_defaults:
   CephPoolDefaultPgNum: 32
   CephAnsiblePlaybookVerbosity: 1
   CephAnsibleDisksConfig:
+{% if osp_release|int < 17 %}
     devices:
 {% for disk in storage_node_disks[1:] %}
       - {{ disk }}
 {% endfor %}
+{% endif %}
 
 # the following two parameters are the defaults. Just included them here for info
     osd_scenario: {{ osd_scenario }}

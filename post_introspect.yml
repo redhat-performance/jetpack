@@ -27,7 +27,6 @@
           with_items: "{{ total_nodes.stdout_lines | default([]) }}"
           when: composable_roles != true
 
-
         - name: introspection data for a nodes
           shell: |
             source ~/stackrc
@@ -53,12 +52,12 @@
             storage_node_disks: "{{ storage_node_disks|default([]) + item.stdout_lines }}"
           with_items: "{{ storage_disks_info_comp.results }}"
           when: composable_roles
-      when: storage_node_disks is not defined and ceph_enabled
+      when: storage_node_disks is not defined and ceph_enabled and osp_release|int < 17
 
     - name: show the storage_node_disks
       debug:
         msg: "{{ storage_node_disks|unique }}"
-      when: ceph_enabled
+      when: ceph_enabled and osp_release|int < 17
 
     - name: setting node capabilities (boot_mode bios)
       vars:
@@ -119,7 +118,7 @@
       - name: set fact for storage nodes
         set_fact:
           storage_node_disks: "{{ hostvars['undercloud']['storage_node_disks']|unique }}"
-        when: ceph_enabled and storage_node_disks is not defined
+        when: ceph_enabled and storage_node_disks is not defined and osp_release|int < 17
 
       - name: generate internal.yml.j2
         template:

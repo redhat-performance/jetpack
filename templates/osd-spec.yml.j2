@@ -1,0 +1,10 @@
+data_devices:
+{%if storage_node_disks is defined %}
+  paths:
+{% for disk in storage_node_disks %}
+    - '{{disk}}'
+{% endfor %}
+{% else %}
+  all: true
+{% endif %}
+osds_per_device: {{ osds_per_device }}
