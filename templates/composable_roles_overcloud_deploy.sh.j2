@@ -13,7 +13,6 @@ openstack overcloud deploy \
   --ntp-server {{ install.ntp.server }} \
   --stack {{ install.overcloud.stack }} \
   -r /home/stack/roles_data.yaml \
-
 {% if install.version|default(undercloud_version)|openstack_release >= 17 %}
   --deployed-server \
   -e /usr/share/openstack-tripleo-heat-templates/environments/deployed-server-environment.yaml \

@@ -166,17 +166,21 @@
       - name: set fact controller machine type
         set_fact:
           controller_machine_type: "{{ (machine_count[machine_types[0]]|int >= controller_count|int)| ternary(machine_types[0], false) }}"
-        when: controller_ifaces is not defined
+        when: controller_machine_type is not defined
 
       - name: set fact controller machine type
         set_fact:
           controller_machine_type: "{{ (machine_count[controller_machine_type]|int >= controller_count|int) | ternary(controller_machine_type, false) }}"
-        when: controller_ifaces is defined
+        when: controller_machine_type is defined
 
       -  name: fail when controller_machine_type is false
          fail:
             msg: Not enough nodes of same machine_type for controller
          when: controller_machine_type == false
+
+      - name: identify the controller_ifaces
+        set_fact:
+          controller_ifaces: "{{  machine_ifaces[controller_machine_type] }}"
 
       - name: Executed when user specifies controller_ifaces
         block:
@@ -230,11 +234,6 @@
         when: osp_release|int < 17
 
       - block:
-          - name: fail if ceph_machine_type or ceph_ifaces are not defined
-            fail:
-              msg: check if ceph_machine_type and ceph_ifaces are defined
-            when: ceph_machine_type is not defined or ceph_ifaces is  not defined
-
           - name: set fact ceph machine type
             set_fact:
               ceph_machine_type: "{{ (machine_count[ceph_machine_type]|int >= ceph_node_count|int) | ternary(ceph_machine_type, false) }}"
@@ -243,6 +242,10 @@
             fail:
               msg: Not enough nodes of same machine_type for ceph
             when: ceph_machine_type == false
+
+          - name: identify the ceph_ifaces
+            set_fact:
+              ceph_ifaces: "{{  machine_ifaces[ceph_machine_type] }}"
 
           - name: set fact for ceph ext iface
             set_fact:

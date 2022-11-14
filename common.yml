@@ -1,6 +1,11 @@
 ---
 - hosts: localhost
   tasks:
+      - name: fail if ceph machine type is not defined
+        fail:
+          msg: ceph machine type is not defined
+        when:  ceph_enabled and (ceph_machine_type is not defined)
+
       - name: load instackenv file
         include_tasks: tasks/load_instackenv.yml
 
