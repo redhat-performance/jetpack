@@ -8,6 +8,19 @@
       shell: |
         cp   {{ oc_deploy_template }} {{ infrared_oc_deploy_template }}
 
+    - name: create flavors
+      shell: |
+        source ~/stackrc
+        openstack flavor create --id auto --ram 4096 --disk 40 --vcpus 1 baremetal{{ item }}
+        openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal{{ item }}" baremetal{{ item }}
+        openstack flavor set baremetal{{ item }} --property "resources:VCPU"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:MEMORY_MB"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:DISK_GB"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
+      with_items: "{{ machine_types }} "
+      delegate_to: undercloud
+      when: osp_release|int < 17
+
     - name: avoid compute role of controller machine type when insufficient nodes
       set_fact:
         machine_types: "{{ machine_types | difference(controller_machine_type) }}"
@@ -23,18 +36,6 @@
     machine_types:  "{{ hostvars['localhost']['machine_types'] }}"
     tn10rt: "{{ hostvars['localhost']['tn10rt'] }}"
   tasks:
-    - name: create flavors
-      shell: |
-        source ~/stackrc
-        openstack flavor create --id auto --ram 4096 --disk 40 --vcpus 1 baremetal{{ item }}
-        openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal{{ item }}" baremetal{{ item }}
-        openstack flavor set baremetal{{ item }} --property "resources:VCPU"="0"
-        openstack flavor set baremetal{{ item }} --property "resources:MEMORY_MB"="0"
-        openstack flavor set baremetal{{ item }} --property "resources:DISK_GB"="0"
-        openstack flavor set baremetal{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
-      with_items: "{{ machine_types }} "
-      when: osp_release|int < 17
-
     - name: copy roles directory
       command: |
         cp -r /usr/share/openstack-tripleo-heat-templates/roles /home/stack
