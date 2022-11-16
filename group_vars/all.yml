@@ -261,14 +261,12 @@ scale_compute_vms: false
 #case you need specific machines as controllers. Else default controller
 #machine type is the first node in overcloud_instackenv.json
 composable_roles: false
-#controller_ifaces: []
 # if your machine is 1029U type you need to specify the product type also
 # refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
 # rest are 1029utrtp machines
 #controller_machine_type: "1029p"
 
 #Ceph deployment params
-#ceph_ifaces: []
 # if your machine is 1029U type you need to specify the product type also
 # refer http://wiki.scalelab.redhat.com/1029u/ for list of 1029utn10rt machines
 # rest are 1029utrtp machines

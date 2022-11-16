@@ -265,12 +265,16 @@
             src: osd-spec.yml.j2
             dest: "{{ osd_spec_file }}"
             force: yes
+
+        - name: set facts for ceph deployment
+          set_fact:
+            ceph_params: "--storage-backend ceph --storage-external no --ceph-osd-spec-file {{ osd_spec_file }}"
         when: ceph_enabled and osp_release|int >= 17
 
       - name: set facts for ceph deployment
         set_fact:
-          ceph_params: "{{ (osp_release|int >= 17) | ternary('--storage-backend ceph --storage-external no --ceph-osd-spec-file ' + osd_spec_file,'--storage-backend ceph --storage-external no') }}"
-        when: ceph_enabled
+          ceph_params: '--storage-backend ceph --storage-external no'
+        when: ceph_enabled and osp_release|int < 17
 
       - name: set deployment_timeout to 2400
         set_fact:
