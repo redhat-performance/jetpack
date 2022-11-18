@@ -6,9 +6,9 @@ flavors:
   - { name: 'm5.2xlarge', ram: 31488, vcpus: 8, disk: 128 }
   - { name: 'm5.large', ram: 7936, vcpus: 2, disk: 96 }
   - { name: 'ci.master', ram: 124672, vcpus: 16, disk: 220 }
-  - { name: 'ci.worker', ram: 31488, vcpus: 8, disk: 100 }
-  - { name: 'ci.infra', ram: 124672, vcpus: 24, disk: 100 }
-  - { name: 'ci.workload', ram: 65280, vcpus: 16, disk: 300 }
+  - { name: 'ci.worker', ram: 31488, vcpus: 8, disk: 40 }
+  - { name: 'ci.infra', ram: 65280, vcpus: 16, disk: 100 }
+  - { name: 'ci.workload', ram: 65280, vcpus: 16, disk: 200 }
 nvme_flavors:
   - { name: 'r5.4xlarge-pci', ram: 124672, vcpus: 16, disk: 128 }
   - { name: 'm5.10xlarge-pci', ram: 163584, vcpus: 40, disk: 256 }
