@@ -1,4 +1,8 @@
+{% if manila_enabled %}
+- name: ControllerStorageNfs
+{% else %}
 - name: Controller
+{% endif %}
   count: {{ controller_count }}
   hostname_format: controller-%index%
   defaults:
@@ -14,6 +18,9 @@
       vif: true
     - network: storage
     - network: storage_mgmt
+{% if manila_enabled %}
+    - network: storage_nfs
+{% endif %}
     - network: internal_api
     - network: tenant
     - network: external

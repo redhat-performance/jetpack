@@ -58,3 +58,16 @@
       physical_network: external
       vlan: {{ external_network_vlan_id }}
 
+{% if manila_enabled %}
+- name: StorageNFS
+  name_lower: storage_nfs
+  subnets:
+    storage_nfs_subnet:
+      allocation_pools:
+      - end: {{ storage_nfs_allocation_pools_end }}
+        start: {{ storage_nfs_allocation_pools_start }}
+      ip_subnet: {{ storage_nfs_net_cidr }}
+      physical_network: storage_nfs
+      vlan: {{ storage_nfs_network_vlan_id }}
+  vip: true
+{% endif %}
