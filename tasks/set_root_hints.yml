@@ -4,6 +4,8 @@
     source ~/stackrc
     if [[ $(openstack baremetal introspection data save "{{ item }}" |jq '.inventory.disks[] | select(.vendor == "ATA" ) | .serial') ]]; then
       echo $(openstack baremetal introspection data save "{{ item }}" |jq '.inventory.disks[] | select(.vendor == "ATA" ) | .serial' | head -n 1)
+    elif [[ $(openstack baremetal introspection data save "{{ item }}"  |jq '.inventory.disks[] | select(.hctl | test("0:0")?)| .serial' | head -n 1) ]]; then
+      echo $(openstack baremetal introspection data save "{{ item }}"  |jq '.inventory.disks[] | select(.hctl | test("0:0")?)| .serial' | head -n 1)
     else
       echo $(openstack baremetal introspection data save "{{ item }}" | jq '.inventory.disks[0]["serial"]')
     fi
@@ -11,7 +13,7 @@
   with_items:
     - "{{ total_nodes.stdout_lines }}"
 
-- name: set root hints based on model
+- name: set root hints based on serial
   shell: |
     source ~/stackrc
     openstack baremetal node set "{{ item[0] }}" --property root_device='{"serial": {{ item[1].stdout_lines[0] }} }'
