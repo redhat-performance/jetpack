@@ -16,19 +16,28 @@
   set_fact:
     rhel_stdout: "{{ (rhel_release.results[0].stdout) | ternary(rhel_release.results[0].stdout, rhel_release.results[1].stdout) }}"
 
-# forman is not having 8.4. So we need to install previsous version and upgrade later
-# We don't install RHEL 8.2 or RHEL 8.4 when host already has this for OSP16.2
-- name: set os_install when installed OS version not matching with the needed
+# Foreman does not have RHEL 8.4. So we need to install the previous version and upgrade later.
+# We don't install RHEL 8.2 or RHEL 8.4 when the host already has this for OSP16.2.
+- name: set os_install when installed OS version not matching with the needed (RHEL < 9.0)
   vars:
     lab_available_os: "{{ (needed_os == 'RHEL 8.4') | ternary('RHEL 8.2', needed_os) }}"
   set_fact:
     os_install: "{{ lab_available_os }}"
-  when: (force_reprovision == true) or (rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))
+  when: ((force_reprovision == true) or (rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))) and (needed_os.split()[1] is version('9.0', '<'))
+
+# Foreman does not have RHEL 9.1. So we need to install the previous version and upgrade later.
+# We don't install RHEL 9.0 or RHEL 9.1 when the host already has this for OSP17.1.
+- name: set os_install when installed OS version not matching with the needed (RHEL >= 9.0)
+  vars:
+    lab_available_os: "{{ (needed_os == 'RHEL 9.1') | ternary('RHEL 9.0', needed_os) }}"
+  set_fact:
+    os_install: "{{ lab_available_os }}"
+  when: ((force_reprovision == true) or (rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))) and (needed_os.split()[1] is version('9.0', '>='))
 
 - name: set upgrade_os
   set_fact:
     upgrade_os: "{{ needed_os.split()[1] }}"
-  when: (needed_os == 'RHEL 8.4') and ((os_install is defined) or ('8.2' in rhel_stdout))
+  when: ((needed_os == 'RHEL 8.4') and ((os_install is defined) or ('8.2' in rhel_stdout))) or ((needed_os == 'RHEL 9.1') and ((os_install is defined) or ('9.0' in rhel_stdout)))
 
 - name: Reboot if OS install needed
   block:
