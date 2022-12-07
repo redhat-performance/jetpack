@@ -1,0 +1,8 @@
+resource_registry:
+  OS::TripleO::NodeUserData: {% raw %}{{ template_base }}{% endraw %}/firstboot/firstboot-infrared.yaml
+{% if mount_nvme is defined or passthrough_nvme is defined %}
+  OS::TripleO::NodeUserData: /home/stack/firstboot-nvme.yaml
+{% endif %}
+
+parameter_defaults:
+  {% raw %} FirstBootUniqueID: {{ deployment_unique_id }} {% endraw %}
