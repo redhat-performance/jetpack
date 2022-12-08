@@ -27,10 +27,16 @@
       set_fact:
         heat_template_version: "{{ tht_version.stdout }}"
 
-    - name: generate firstboot-nvme.yaml
-      template:
-        src: "firstboot-nvme.yaml.j2"
-        dest: "/home/stack/firstboot-nvme.yaml"
+    - block:
+        - name: generate firstboot-nvme.yaml
+          template:
+            src: "firstboot-nvme.yaml.j2"
+            dest: "/home/stack/firstboot-nvme.yaml"
+        - name: override the firstboot.yaml
+          template:
+            src: "firstboot.yaml.j2.j2"
+            dest: "{{ hostvars['localhost'].ansible_user_dir }}/.infrared/plugins/tripleo-overcloud/templates/firstboot.yaml.j2"
+          delegate_to: localhost
       when: passthrough_nvme is defined or mount_nvme is defined
 
     - name: generate wipe-disks.yaml
@@ -107,13 +113,6 @@
         set_fact:
           parameter_defaults: "{{ parameter_defaults|default({}) | combine(nvme_params) }}"
         when: passthrough_nvme is defined
-
-      - name: set resource_registry nvme parameters
-        vars:
-          res_reg: "{{ resource_registry|default([]) }}"
-        set_fact:
-          resource_registry: "{{ res_reg + ['OS::TripleO::NodeUserData=/home/stack/firstboot-nvme.yaml'] }}"
-        when: passthrough_nvme is defined or mount_nvme is defined
 
       - name: add tripleo_heat_templates to template
         set_fact:
