@@ -76,6 +76,11 @@
       shell: |
         oc label nodes --overwrite -l 'node-role.kubernetes.io/worker=' computenode=true
 
+    - name: Relabel the cinder-csi availability zone
+      shell: |
+        oc label nodes --overwrite -l 'node-role.kubernetes.io/infra=' topology.cinder.csi.openstack.org/zone-
+        oc label nodes --overwrite -l 'node-role.kubernetes.io/infra=' topology.cinder.csi.openstack.org/zone=nova
+
     - name: Taint the workload node
       shell: |
         oc adm taint node -l node-role.kubernetes.io/workload= role=workload:NoSchedule --overwrite=true
