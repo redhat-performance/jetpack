@@ -15,6 +15,8 @@ network_config:
   - ip_netmask: {{ storage_ip }}/{{ storage_cidr }}
 {% endraw %}
 
+{% if external_interface != ctlplane_interface %}
+
 - type: interface
   name: {{ ctlplane_interface }}
   {% raw -%}
@@ -28,6 +30,7 @@ network_config:
     next_hop: {{ ctlplane_gateway_ip }}
     default: true
 {% endraw %}
+{% endif %}
 
 - type: ovs_bridge
   name: br-tenant
@@ -46,6 +49,20 @@ network_config:
 - type: ovs_bridge
   name: br-ex
   use_dhcp: false
+  {% raw -%}
+  dns_servers: {{ ctlplane_dns_nameservers }}
+  domain: {{ dns_search_domains }}
+{% endraw %}
+{% if external_interface == ctlplane_interface %}
+  addresses:
+  {% raw -%}
+  - ip_netmask: {{ ctlplane_ip }}/{{ ctlplane_subnet_cidr }}
+  routes:
+  - ip_netmask: 0.0.0.0/0
+    next_hop: {{ ctlplane_gateway_ip }}
+    default: true
+{% endraw %}
+{% endif %}
   members:
   - type: interface
     name: {{ external_interface }}

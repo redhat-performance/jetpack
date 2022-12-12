@@ -76,3 +76,9 @@ parameter_defaults:
 {%raw%}{% endif %}{%endraw%}
 
     ControlPlaneSubnetCidr: "{{ subnet_mask }}"
+
+{% if dvr_enabled == true %}
+
+    NeutronBridgeMappings: "datacentre:br-ex,tenant:br-tenant"
+    NeutronEnableDVR: 'true'
+{% endif %}
