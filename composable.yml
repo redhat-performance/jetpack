@@ -113,3 +113,14 @@
         openstack overcloud roles generate -o ~/roles_data.yaml --roles-path ~/roles {{ roles }}
       args:
         chdir: "/home/stack"
+
+    - block:
+      - name: create roles directory as required for infrared
+        file:
+          path: "~/virt/roles"
+          state: directory
+
+      - name: copy roles_data file to virt directory
+        shell: |
+          cp ~/roles_data.yaml ~/virt/roles/
+      when: ceph_enabled and osp_release|int >= 17

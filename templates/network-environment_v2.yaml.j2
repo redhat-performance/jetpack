@@ -1,7 +1,11 @@
 # v2 config
 
 resource_registry:
+{% if manila_enabled %}
+    OS::TripleO::ControllerStorageNfs::Net::SoftwareConfig: OS::Heat::None
+{% else %}
     OS::TripleO::Controller::Net::SoftwareConfig: OS::Heat::None
+{% endif %}
 {% if composable_roles %}
 {% for node_type in machine_types %}
     OS::TripleO::Compute{{ node_type }}::Net::SoftwareConfig: OS::Heat::None
@@ -13,7 +17,11 @@ resource_registry:
     OS::TripleO::CephStorage::Net::SoftwareConfig: OS::Heat::None
 {% endif %}
 parameter_defaults:
+{% if manila_enabled %}
+    ControllerStorageNfsNetworkConfigTemplate: '/home/stack/virt/network/vlans/controller.j2'
+{% else %}
     ControllerNetworkConfigTemplate: '/home/stack/virt/network/vlans/controller.j2'
+{% endif %}
 {% if composable_roles %}
 {% for node_type in machine_types %}
     Compute{{ node_type }}NetworkConfigTemplate: '/home/stack/virt/network/vlans/compute_{{ node_type }}.j2'
@@ -24,8 +32,13 @@ parameter_defaults:
 {% if ceph_enabled %}
     CephStorageNetworkConfigTemplate: '/home/stack/virt/network/vlans/ceph-storage.j2'
 {% endif %}
+{% if manila_enabled %}
+    ControllerStorageNfsParameters:
+      NeutronBridgeMappings: "datacentre:br-ex,tenant:br-tenant,storage:br-isolated"
+{% else %}
     ControllerParameters:
-      NeutronBridgeMappings: "datacentre:br-ex,tenant:br-isolated"
+      NeutronBridgeMappings: "datacentre:br-ex,tenant:br-tenant"
+{% endif %}
 {% if composable_roles %}
 {% if dvr_enabled == false %}
 {% for node_type in machine_types %}
@@ -35,9 +48,12 @@ parameter_defaults:
 {% endif %}
 {% endif %}
     NeutronExternalNetworkBridge: ""
-    NeutronNetworkVLANRanges: " datacentre:300:900, tenant:200:2000"
-
 {% if dvr_enabled == true %}
     NeutronBridgeMappings: "datacentre:br-ex,tenant:br-tenant"
     NeutronEnableDVR: 'true'
+{% endif %}
+{% if manila_enabled %}
+    NeutronNetworkVLANRanges: "datacentre:300:900, tenant:200:2000, storage:305:305"
+{% else %}
+    NeutronNetworkVLANRanges: "datacentre:300:900, tenant:200:2000"
 {% endif %}
