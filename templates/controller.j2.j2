@@ -109,9 +109,19 @@ network_config:
   - type: interface
     name: {{ external_interface }}
     primary: true
+{% if external_network_vlan_id is not defined %}
+  {% raw -%}
+  addresses:
+    - ip_netmask: {{ external_ip }}/{{ external_cidr }}
+  routes:
+    - default: true
+      next_hop: {{ external_gateway_ip }}
+{% endraw %}
+{% else %}
   - type: vlan
     vlan_id: {{ external_network_vlan_id }}
     {% raw -%}
     addresses:
     - ip_netmask: {{ external_ip }}/{{ external_cidr }}
 {% endraw %}
+{% endif %}
