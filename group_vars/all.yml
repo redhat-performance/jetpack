@@ -89,7 +89,7 @@ scale:
         rhel7_interfaces_f04: [p3p1, p3p2, p2p1, p2p2]
         rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
         rhel8_interfaces_f04: [ens3f0, ens3f1, ens2f0, ens2f1]
-        rhel9_interfaces: [ens1f0, ens1f1, ens2f0np0, ens2f0np1]
+        rhel9_interfaces: [ens1f0, ens1f1, ens2f0np0, ens2f1np1]
       r650:
         rhel7_interfaces: []
         rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
