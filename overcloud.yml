@@ -114,6 +114,41 @@
           parameter_defaults: "{{ parameter_defaults|default({}) | combine(nvme_params) }}"
         when: passthrough_nvme is defined
 
+      - name: set tls-everywhere parameter_defaults
+        vars:
+          tls_e_params: {
+            DnsSearchDomains: ["{{ ipa_domain }}"],
+            CloudDomain: "{{ ipa_domain }}",
+            CloudName: "overcloud.{{ ipa_domain }}",
+            CloudNameInternal: "overcloud.internalapi.{{ ipa_domain }}",
+            CloudNameStorage: "overcloud.storage.{{ ipa_domain }}",
+            CloudNameStorageManagement: "overcloud.storagemgmt.{{ ipa_domain }}",
+            CloudNameCtlplane: "overcloud.ctlplane.{{ ipa_domain }}",
+            IdMServer: "{{ idm_host_fqdn }}",
+            IdMDomain: "{{ ipa_domain }}",
+            IdMInstallClientPackages: true
+          }
+        set_fact:
+          parameter_defaults: "{{ parameter_defaults|default({}) | combine(tls_e_params) }}"
+        when: tls_everywhere == true
+
+      - name: set resource_registry tls-everywhere parameters
+        vars:
+          res_reg: "{{ resource_registry|default([]) }}"
+        set_fact:
+          resource_registry: "{{ res_reg + ['OS::TripleO::Services::IpaClient=/usr/share/openstack-tripleo-heat-templates/deployment/ipa/ipaservices-baremetal-ansible.yaml'] }}"
+        when: tls_everywhere == true
+
+      - name: add templates for tls-everywhere to extra_templates
+        vars:
+          tls_e_templates:
+            - /usr/share/openstack-tripleo-heat-templates/environments/ssl/tls-everywhere-endpoints-dns.yaml
+            - /usr/share/openstack-tripleo-heat-templates/environments/services/haproxy-public-tls-certmonger.yaml
+            - /usr/share/openstack-tripleo-heat-templates/environments/ssl/enable-internal-tls.yaml
+        set_fact:
+          extra_templates: "{{ extra_templates | default([]) + tls_e_templates }}"
+        when: tls_everywhere == true
+
       - name: add tripleo_heat_templates to template
         set_fact:
           config_template: "{{ config_template | default({}) | combine({'tripleo_heat_templates': extra_templates}) }}"
@@ -165,7 +200,7 @@
               src: "{{ item.item| basename }}"
               dest: "/home/stack/"
             loop: "{{ env_files.results }}"
-            when: (extra_templates is defined) and (not item.stat.exists)
+            when: (item.item | basename != "enable-internal-tls.yaml") and (extra_templates is defined) and (not item.stat.exists)
             delegate_to: "{{ undercloud_hostname }}"
             vars:
               ansible_python_interpreter: "{{ python_interpreter }}"

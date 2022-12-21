@@ -3,6 +3,13 @@
   become: yes
   become_user: stack
   tasks:
+    - name: set REQUESTS_CA_BUNDLE in .bash_profile
+      lineinfile:
+        path: /home/stack/.bash_profile
+        line: export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-bundle.crt
+        state: present
+      when: tls_everywhere == true
+
     - name: get default route
       shell: |
         ip r | grep default | cut -d ' ' -f5

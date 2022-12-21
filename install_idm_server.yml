@@ -1,0 +1,96 @@
+- hosts: localhost
+  vars:
+    chassis_password:  "{{ instackenv_content.nodes[0].pm_password }}"
+    idm_osp_rhel_mapping:
+      17.0: 9.0
+      17.1: 9.1
+  tasks:
+    - name: add IdM host to inventory file
+      add_host:
+        name: "{{ idm_host_fqdn }}"
+        groups: "idm"
+        ansible_host: "{{ idm_host_fqdn }}"
+        ansible_user: "root"
+        ansible_ssh_private_key_file: "{{ ansible_ssh_key }}"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+    - name: install os on IdM node
+      vars:
+        needed_os: "RHEL {{ idm_osp_rhel_mapping[osp_release|float] }}"
+        hypervisor_host: "{{ idm_host_fqdn }}"
+        hypervisor_password: "{{ ansible_ssh_pass }}"
+      include_tasks: tasks/install_os.yml
+
+    - name: remove entry for IdM host from known_hosts file
+      known_hosts:
+        path: "{{ ansible_user_dir }}/.ssh/known_hosts"
+        name: "{{ idm_host_fqdn }}"
+        state: absent
+
+- hosts: idm
+  become: yes
+  become_user: root
+
+  tasks:
+    - name: Enable FIPS
+      shell: |
+        fips-mode-setup --enable
+
+    - name: Reboot the host
+      reboot:
+        reboot_timeout: 1200
+
+    - name: Get IP address of host
+      shell: |
+        ping {{ idm_host_fqdn }} -c 1 | head -1 | cut -d " " -f 3 | tr -d "(" | tr -d ")"
+      register: idm_host_ip_address
+
+    - name: Add entry in /etc/hosts
+      lineinfile:
+        path: /etc/hosts
+        line: '{{ idm_host_ip_address.stdout }} {{ idm_host_fqdn }} idm.{{ ipa_domain }}'
+
+    - name: Provide access to ports required by the IdM server
+      shell: |
+        systemctl unmask firewalld.service
+        systemctl start firewalld.service
+        systemctl enable firewalld.service
+        firewall-cmd --permanent --add-port={80/tcp,443/tcp,389/tcp,636/tcp,88/tcp,88/udp,464/tcp,464/udp,53/tcp,53/udp,123/udp}
+        firewall-cmd --permanent --add-service={freeipa-ldap,freeipa-ldaps,dns}
+        firewall-cmd --reload
+
+    - name: Install epel-release
+      dnf:
+        name: 'https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm'
+        state: present
+
+    - name: Install repositories for IdM
+      dnf:
+        name:
+          - ipa-server
+          - ipa-server-dns
+        state: present
+
+    - name: Get umask
+      shell: |
+        umask
+      register: current_umask
+
+    - name: Set umask if required
+      shell: |
+        umask 0022
+      when: current_umask != "0022"
+
+    - name: Enable IPv6 in sysctl.conf
+      lineinfile:
+        path: /etc/sysctl.conf
+        regexp: '^net.ipv6.conf.all.disable_ipv6 ='
+        line: net.ipv6.conf.all.disable_ipv6 = 0
+
+    - name: Update sysctl parameters
+      shell: |
+        sysctl -p
+
+    - name: Install IdM server
+      shell: |
+        ipa-server-install --domain {{ ipa_domain }} --realm {{ ipa_realm }} --ds-password {{ ipa_password }} --admin-password {{ ipa_password }} --unattended --setup-dns --auto-forwarders --auto-reverse --ntp-server {{ hostvars['localhost']['time_servers'][0] }} --ip-address {{ idm_host_ip_address.stdout }}

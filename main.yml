@@ -2,10 +2,16 @@
 - import_playbook: bootstrap.yml
   tags:
     - undercloud
+    - install_idm_server
 
 - import_playbook: common.yml
   tags:
     - always
+
+- import_playbook: install_idm_server.yml
+  tags:
+    - install_idm_server
+  when: tls_everywhere == true
 
 - import_playbook: setup_undercloud.yml
   tags:
