@@ -84,4 +84,3 @@
         vars:
           hostname: "{{ undercloud_hostname }}"
           user: "root"
-

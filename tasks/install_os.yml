@@ -23,7 +23,7 @@
     lab_available_os: "{{ (needed_os == 'RHEL 8.4') | ternary('RHEL 8.2', needed_os) }}"
   set_fact:
     os_install: "{{ lab_available_os }}"
-  when: ((force_reprovision == true) or (rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))) and (needed_os.split()[1] is version('9.0', '<'))
+  when: ((force_reprovision == true) or (hypervisor_host == idm_host_fqdn or rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))) and (needed_os.split()[1] is version('9.0', '<'))
 
 # Foreman does not have RHEL 9.1. So we need to install the previous version and upgrade later.
 # We don't install RHEL 9.0 or RHEL 9.1 when the host already has this for OSP17.1.
@@ -32,7 +32,7 @@
     lab_available_os: "{{ (needed_os == 'RHEL 9.1') | ternary('RHEL 9.0', needed_os) }}"
   set_fact:
     os_install: "{{ lab_available_os }}"
-  when: ((force_reprovision == true) or (rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))) and (needed_os.split()[1] is version('9.0', '>='))
+  when: ((force_reprovision == true) or (hypervisor_host == idm_host_fqdn or rhel_stdout == "" or ((needed_os.split()[1] not in rhel_stdout) and (lab_available_os.split()[1] not in rhel_stdout)) or (os_search_string not in rhel_stdout))) and (needed_os.split()[1] is version('9.0', '>='))
 
 - name: set upgrade_os
   set_fact:
@@ -131,7 +131,7 @@
   set_fact:
     async_install: "{{ async_install|default([]) + [hyp_reachable.ansible_job_id] }}"
 
-- name: Wait for undercloud to be available
+- name: Wait for undercloud/IdM host to be available
   async_status:
     jid: "{{ item }}"
   register: install_uc

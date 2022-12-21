@@ -1,0 +1,40 @@
+---
+- name: Get IP address of IdM host
+  shell: |
+    ping {{ idm_host_fqdn }} -c 1 | head -1 | cut -d " " -f 3 | tr -d "(" | tr -d ")"
+  register: idm_host_ip_address
+
+- name: Change DNS server in /etc/resolv.conf
+  lineinfile:
+    path: /etc/resolv.conf
+    regexp: "^nameserver"
+    line: |
+      nameserver {{ idm_host_ip_address.stdout }}
+  become: yes
+
+- name: Add entry in /etc/hosts for IdM server
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ idm_host_ip_address.stdout }} {{ idm_host_fqdn }} idm.{{ ipa_domain }}"
+  become: yes
+
+- name: Remove old environment variables
+  lineinfile:
+    path: /home/stack/.bash_profile
+    regexp: "^export"
+    state: absent
+
+- name: Add environment variables for FreeIPA client installation
+  lineinfile:
+    path: /home/stack/.bash_profile
+    insertafter: 'User specific environment and startup programs'
+    line: |
+      export IPA_DOMAIN={{ ipa_domain }}
+      export IPA_REALM={{ ipa_realm }}
+      export IPA_ADMIN_USER=admin
+      export IPA_ADMIN_PASSWORD={{ ipa_password }}
+      export IPA_SERVER_HOSTNAME={{ idm_host_fqdn }}
+      export UNDERCLOUD_FQDN=undercloud.{{ ipa_domain }}
+      export USER=stack
+      export CLOUD_DOMAIN={{ ipa_domain }}
+    state: present

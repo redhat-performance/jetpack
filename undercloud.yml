@@ -1,3 +1,9 @@
+- hosts: undercloud
+  tasks:
+    - name: configure undercloud for tls-everywhere
+      include_tasks: tasks/undercloud_tls_e_config.yml
+      when: tls_everywhere == true
+
 - hosts: localhost
   vars:
     container_params: ""
@@ -30,6 +36,18 @@
               undercloud_local_interface: "{{ local_interface.stdout }}"
         when: virtual_uc != true
 
+      - name: set undercloud_nameservers
+        block:
+          - name: Get IP address of IdM host
+            shell: |
+              ping {{ idm_host_fqdn }} -c 1 | head -1 | cut -d " " -f 3 | tr -d "(" | tr -d ")"
+            register: idm_host_ip_address
+
+          - name: set undercloud_nameservers
+            set_fact:
+              undercloud_nameservers: "{{ idm_host_ip_address.stdout }}"
+        when: tls_everywhere == true
+
       - name: set undercloud_local_interface
         set_fact:
           undercloud_local_interface: "{{ undercloud_local_interface }}"
@@ -39,6 +57,7 @@
         template:
             src: undercloud.conf.j2
             dest: "{{ undercloud_conf }}"
+
       - name: Set container params
         set_fact:
           container_params: "--registry-mirror {{ registry_mirror }} --registry-namespace {{ registry_namespace }}"
@@ -70,3 +89,16 @@
             chdir: "{{ infrared_dir }}"
         changed_when: false
         when: osp_release|int >= 17
+
+      - name: Run the undercloud-ipa-install.yml playbook
+        shell: |
+          source /home/stack/.bash_profile
+          ansible-playbook --ssh-extra-args "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" /usr/share/ansible/tripleo-playbooks/undercloud-ipa-install.yaml
+        when: tls_everywhere == true
+        delegate_to: undercloud
+
+      - name: Update the undercloud for TLS-Everywhere
+        shell:
+          time openstack undercloud install 2>&1 | tee undercloud_install_tls_e.log
+        when: tls_everywhere == true
+        delegate_to: undercloud

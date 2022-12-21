@@ -296,3 +296,11 @@ manila_enabled: false
 # DVR is enabled by default for osp_releases >= 16, set this to false for non-dvr based deployments.
 # This variable has no affect on osp_releases < 16, as jetpack doesn't support dvr for osp_releases < 16 as of now.
 dvr_enabled: true
+
+# TLS-Everywhere has been tested on OSP 17.
+tls_everywhere: false
+# vars for TLS-Everywhere deployment
+idm_host_fqdn:
+ipa_domain: redhat.local
+ipa_realm: REDHAT.LOCAL
+ipa_password: redhatidm

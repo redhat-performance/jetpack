@@ -1,6 +1,9 @@
 [DEFAULT]
 local_interface = {{ undercloud_local_interface }}
 local_ip = {{ gateway }}/{{ subnet_mask }}
+{% if tls_everywhere %}
+undercloud_nameservers = {{ undercloud_nameservers }}
+{% endif %}
 undercloud_ntp_servers = {{ time_servers | join(",") }}
 {% if clean_nodes %}
 clean_nodes = True
@@ -12,7 +15,11 @@ undercloud_timezone = UTC
 undercloud_public_host = {{ undercloud_public_host }}
 undercloud_admin_host = {{ undercloud_admin_host }}
 {% endif %}
+{% if tls_everywhere %}
+overcloud_domain_name = {{ ipa_domain }}
+{% else %}
 overcloud_domain_name = redhat.local
+{% endif %}
 
 {% if osp_release|int <= 12 %}
 network_cidr = {{ cidr }}

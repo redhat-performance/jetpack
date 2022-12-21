@@ -24,6 +24,7 @@
           chdir: "{{ browbeat_dir }}/ansible"
     - name: install browbeat
       shell: |
+          source /home/stack/.bash_profile
           ansible-playbook -i hosts.yml install/browbeat.yml
       args:
           chdir: "{{ browbeat_dir }}/ansible"

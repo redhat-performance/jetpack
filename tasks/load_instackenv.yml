@@ -32,6 +32,13 @@
     state: absent
   when: osp_release|int < 17
 
+- name: Remove IdM host from instackenv file
+  shell: |
+    cp {{ instackenv_file }} {{ playbook_dir }}/instackenv2.json
+    jq 'del(.nodes[] | select(.name == "{{ idm_host_fqdn }}"))' {{ playbook_dir }}/instackenv2.json > {{ instackenv_file }}
+    rm {{ playbook_dir }}/instackenv2.json
+  when: tls_everywhere == true and idm_host_fqdn is defined
+
 - name: read instack env file
   set_fact:
     instackenv_content: "{{ instackenv_content }}"
