@@ -1,0 +1,30 @@
+# ocpinventory.json for MAC addresses
+---
+- name: Download ocpinventory.json
+  get_url:
+      url: "{{ alias.lab_url }}/cloud/{{ cloud_name }}_ocpinventory.json"
+      dest: ~/
+      mode: '0644'
+      force: yes
+  when: lab_name == "alias"
+
+- name: Download ocpinventory.json
+  get_url:
+      url: "{{ scale.lab_url }}/cloud/{{ cloud_name }}_ocpinventory.json"
+      dest: ~/
+      mode: '0644'
+      force: yes
+  when: lab_name == "scale"
+
+- name: set fact for ocpinventory file
+  set_fact:
+    ocpinventory_file: "~/{{ cloud_name }}_ocpinventory.json"
+
+- name: load ocpinventory data
+  slurp:
+    src: "{{ ocpinventory_file }}"
+  register: ocpinventory_data
+
+- name: read ocpinventory file
+  set_fact:
+    ocpinventory_content: "{{ ocpinventory_data['content'] | b64decode | from_json }}"

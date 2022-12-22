@@ -75,6 +75,18 @@
   defaults:
     profile: baremetal{{ node_type }}
     network_config:
+{# workaround for r640's that has different interface namings #}
+{% if node_type|string() == "r640" %}
+      net_config_data_lookup:
+{% for i in range(0, ocpinventory_content.nodes | length) %}
+{% if node_type|string() in ocpinventory_content.nodes[i].pm_addr|string() %}
+        node{{ i|int + 1 }}:
+{% for j in range(0, ocpinventory_content.nodes[i].mac | length) %}
+          nic{{ j|int + 1 }}: "{{ ocpinventory_content.nodes[i].mac[j] }}"
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
       template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
     networks:
     - network: ctlplane

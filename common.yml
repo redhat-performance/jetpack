@@ -9,6 +9,9 @@
       - name: load instackenv file
         include_tasks: tasks/load_instackenv.yml
 
+      - name: load ocpinventory file
+        include_tasks: tasks/load_ocpinventory.yml
+
       - name: get tn10rt machines list
         shell: curl http://wiki.scalelab.redhat.com/1029u/ > ~/tn10rt.html
 

@@ -75,6 +75,20 @@
           lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
         when: lab_name in ['scale', 'alias'] and osp_release|int >= 17
 
+      - name: generic interface names for r640
+        set_fact:
+          machine_ifaces: "{{ machine_ifaces | combine(update_item) }}"
+        vars:
+          update_item: "{ 'r640': {{ ['nic1', 'nic2', 'nic3', 'nic4'] }} }"
+        when: lab_name == "scale" and osp_release|int >= 17
+
+      - name: generic interface names for r640
+        set_fact:
+          machine_ifaces: "{{ machine_ifaces | combine(update_item) }}"
+        vars:
+          update_item: "{ 'r640': {{ ['nic2', 'nic1', 'nic3', 'nic4'] }} }"
+        when: lab_name == "alias" and osp_release|int >= 17
+
       - name: set interfaces
         set_fact:
           ifaces: "{{ ifaces|default([]) + [ machine_ifaces[item]] }}"
