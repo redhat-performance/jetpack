@@ -309,6 +309,15 @@ ansible-playbook scale_compute_vms_prepare.yml
 ansible-playbook main.yaml
 ```
 
+# TLS-Everywhere
+Deployment with TLS-Everywhere enables HTTPS on all overcloud endpoints. The feature is currently supported in Jetpack for OSP releases >= 17.0 and has been tested in the Scale Lab. The steps mentioned below should be followed to deploy an environment with TLS-Everywhere.
+
+1) In ``group_vars/all.yml``, set ``tls_everywhere: true`` and ``idm_host_fqdn`` to a host in your allocation which you want to use for the Identity Management(IdM) server.
+2) i)  Deployment without tags :  
+       Run ``ansible-playbook main.yml``  
+   ii) Deployment with tags :  
+       Run ``ansible-playbook main.yml -t install_idm_server`` before running undercloud deployment with the ``undercloud`` tag.
+
 # Limitations
 1. Overcloud nodes with existing software raid disks pre-deployment will lead to deployment failures due to [ironic bug](https://bugzilla.redhat.com/show_bug.cgi?id=1933256).
    It is common for storage-class servers like 6049p to be predeployed with software raid. There are 2 workarounds until this ironic bug is resolved.
