@@ -1,0 +1,309 @@
+---
+- hosts: localhost
+  tasks:
+    - name: load instackenv
+      include_tasks: tasks/load_instackenv.yml
+
+    - name: get intrepeter
+      include_tasks: tasks/get_interpreter.yml
+      vars:
+        hostname: "{{ undercloud_hostname }}"
+        user: "stack"
+
+    - name: add undercloud
+      add_host:
+        name: "undercloud"
+        ansible_host: "{{ undercloud_hostname }}"
+        ansible_user: "stack"
+        ansible_python_interpreter: "{{ python_interpreter }}"
+
+
+- hosts: undercloud
+  vars:
+    new_instack: /home/stack/newnodes.json
+  tasks:
+    - name: get the new nodes file
+      copy:
+        src: "{{ new_nodes_instack }}"
+        dest: "{{ new_instack }}"
+        force: yes
+
+    - name: get tn10rt machines list
+      shell: curl http://wiki.scalelab.redhat.com/1029u/ > ~/tn10rt.html
+
+    - name: load tn10rt machines list
+      slurp:
+        src: /home/stack/tn10rt.html
+      register: tn10rt
+
+    - block:
+        - name: load instack data
+          slurp:
+            src: /home/stack/newnodes.json
+          register: stack_data
+
+        - name: load new instackenv
+          set_fact:
+            stack_data: "{{ stack_data['content'] | b64decode | from_json }}"
+
+        - name: get machine types
+          set_fact:
+            machine_types: "{{ machine_types|default([]) + [ (type != '1029u') | ternary(type, (item.pm_addr.replace('mgmt-', '') in tn10rt['content'] | b64decode) | ternary('1029utn10rt', '1029utrtp')) ] }}"
+          vars:
+            type: "{{ (lab_name == 'scale') | ternary(item.pm_addr.split('.')[0].split('-')[4], item.pm_addr.split('.')[0].split('-')[3]) }}"
+          loop: "{{ stack_data.nodes|flatten(levels=1) }}"
+
+        - name: set vendors of overcloud nodes
+          set_fact:
+            vendors: "{{ vendors|default([])+ [(item in lab_vars['machine_types']['supermicro']) | ternary('supermicro', 'dell')] }}"
+          with_items:
+            - "{{ machine_types }}"
+
+        - name: list stack_data
+          shell: |
+            echo "{{ (stack_data.nodes[item | int].pm_addr | replace('mgmt-','') | replace('-drac', '')) }}"
+          with_sequence: 0-{{ (stack_data.nodes|length - 1) }}
+          register: host_list
+      vars:
+        lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+      when: lab_name in ['scale', 'alias']
+
+    - name: set machine count
+      set_fact:
+       total_machine_count: {}
+
+    - name: set machine count for each machine type
+      set_fact:
+        total_machine_count: "{{ total_machine_count | combine({item: (item in total_machine_count)|ternary(total_machine_count[item], 0)|int + 1 }, recursive=True) }}"
+      with_items:
+        "{{ machine_types }}"
+
+    - name: register new nodes
+      shell: |
+        source /home/stack/stackrc
+        openstack overcloud node import {{ new_instack }}
+
+    - name: wait for nodes to move From enroll, Verifying and to manageable state
+      wait_for:
+        timeout: 15
+      delegate_to: localhost
+
+    - name: get the new nodes detail
+      shell: |
+        source /home/stack/stackrc
+        openstack baremetal node list -f yaml
+      register: new_nodes_detail
+
+    - name: set new nodes fact
+      set_fact:
+        new_nodes_list: "{{ new_nodes_detail.stdout | from_yaml }}"
+
+    - name: filter manageable/available nodes
+      set_fact:
+        new_nodes: "{{ (new_nodes | default([])) + [ item['UUID'] ] }}"
+      with_items: "{{ new_nodes_list | default([]) }}"
+      when:
+        item.get('Provisioning State') == 'manageable' or item.get('Provisioning State') == 'available'
+
+    - name: introspect new nodes
+      shell: |
+        source /home/stack/stackrc
+        openstack overcloud node introspect --all-manageable
+      ignore_errors: true
+
+    - name: delete instrospect failed nodes
+      include_tasks: tasks/delete_introspection_failed_nodes.yml
+
+      # keep track of count for each machine type after
+      # deleting introspect failed nodes.
+    - block:
+        - name: reduce machine count for introspect failed machine type
+          set_fact:
+            total_machine_count: "{{ total_machine_count | combine(update_item, recursive=true) }}"
+          vars:
+            update_item: "{ '{{ item.key }}': {{ total_machine_count[item.key]|int - failed_nodes_machine_count[item.key]|int }} }"
+          with_dict: "{{ failed_nodes_machine_count }}"
+
+        - name: remove introspect failed machine types that have count of zero
+          set_fact:
+            total_machine_count: "{{ total_machine_count | combine({ item: (total_machine_count[item]|int > 0) | ternary(total_machine_count[item], omit) }) }}"
+          with_items: "{{ total_machine_count.keys() }}"
+
+        - name: delete introspect failed node UUID's
+          set_fact:
+            new_nodes: "{{ new_nodes | difference(failed_nodes_uuids) }}"
+      when: failed_nodes_machine_type is defined
+
+    - name: set command for getting overcloud host list
+      set_fact:
+        overcloud_host_list: "metalsmith -c Hostname -f value list"
+      when: osp_release|int >= 17
+
+    - name: set command for getting overcloud host list
+      set_fact:
+        overcloud_host_list: "openstack server list -c Name -f value"
+      when: osp_release|int < 17
+
+      # figure out existing machine types and newly added machine types
+    - block:
+        - name: get existing machine types
+          shell: |
+            source /home/stack/stackrc
+            {{ overcloud_host_list }} | grep compute | cut -d'-' -f 1 | sed 's/compute/''/gI' | sort | uniq
+          register: existing_machine_types
+
+        - name: get new machine types that are newly being added
+          set_fact:
+            new_machine_types: "{{ total_machine_count.keys()|list | difference(existing_machine_types.stdout_lines|list) }}"
+      when: composable_roles == true
+
+    - name: Configure the image properties
+      shell: |
+        source /home/stack/stackrc
+        openstack overcloud node configure {{ item }}
+      with_items: "{{ new_nodes | default([]) }}"
+      ignore_errors: true
+      changed_when: false
+
+      # set root hints
+    - block:
+        # workaround for using existing root hint tasks
+        - block:
+            - name: remove existing total nodes file
+              shell: |
+                rm -f /home/stack/total_nodes.txt
+
+            - name: get all nodes
+              shell: |
+                echo {{ item }} >> /home/stack/total_nodes.txt
+              with_items: "{{ new_nodes | default([]) }}"
+
+            - name: register the output of total new nodes
+              shell: |
+                cat /home/stack/total_nodes.txt
+              register: total_nodes
+
+        - name: set root hints
+          include_tasks: tasks/set_root_hints.yml
+          when: lab_name in ['scale', 'alias']
+
+    - name: create flavors
+      shell: |
+        source ~/stackrc
+        openstack flavor create --id auto --ram 4096 --disk 40 --vcpus 1 baremetal{{ item }}
+        openstack flavor set --property "capabilities:boot_option"="local" --property "capabilities:profile"="baremetal{{ item }}" baremetal{{ item }}
+        openstack flavor set baremetal{{ item }} --property "resources:VCPU"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:MEMORY_MB"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:DISK_GB"="0"
+        openstack flavor set baremetal{{ item }} --property "resources:CUSTOM_BAREMETAL"="1"
+      with_items: "{{ new_machine_types | default([]) }} "
+      when: osp_release|int < 17 and composable_roles == true
+
+    - name: setting node capabilities (boot_mode bios)
+      vars:
+        boot_mode: bios
+      include_tasks: tasks/set_boot_mode.yml
+      when: osp_release|int >= 17 or composable_roles
+
+    - block:
+        - name: copy roles definition for new machine types
+          command:  |
+            cp -r ~/roles/Compute.yaml ~/roles/Compute{{ item }}.yaml
+          with_items: "{{ new_machine_types | default([]) }}"
+
+        - name: Edit role name
+          lineinfile:
+            path: "/home/stack/roles/Compute{{ item }}.yaml"
+            regexp: '- name:'
+            line: "- name: Compute{{ item }}"
+          with_items: "{{ new_machine_types | default([]) }}"
+
+        - name: Edit hostname format
+          lineinfile:
+            path: "/home/stack/roles/Compute{{ item }}.yaml"
+            regexp: '  HostnameFormatDefault:'
+            line: "  HostnameFormatDefault: 'compute{{ item }}-%index%'"
+          with_items: "{{ new_machine_types | default([]) }}"
+
+        - name: write entries for new roles
+          include_tasks: tasks/new_roles_for_scaleout.yml
+          vars:
+            check_type: "{{ item }}"
+          loop: "{{ new_machine_types | default([]) }}"
+
+        - name: prepare nic configs
+          include_tasks: tasks/composable_prepare_nic_configs_for_scaleout.yml
+
+        - name: write entries for new roles in baremetal_deployment.yaml
+          include_tasks: tasks/baremetal_deployment_prepare_for_scaleout.yaml
+          vars:
+            node_type: "{{ item }}"
+          loop: "{{ total_machine_count.keys()|list }}"
+          when: osp_release|int >= 17
+
+        - name: update nodes_data.yaml
+          include_tasks: tasks/update_nodes_data_for_scaleout.yaml
+          vars:
+            node_type: "{{ item }}"
+          loop: "{{ total_machine_count.keys()|list }}"
+
+        - name: update network-environment.yaml
+          include_tasks: tasks/update_network_environment_for_scaleout.yaml
+          vars:
+            node_type: "{{ item }}"
+          loop: "{{ new_machine_types | default([]) }}"
+          when: osp_release|int < 17
+      when: composable_roles == true
+
+    - block:
+        - name: get existing compute count
+          shell: |
+            source /home/stack/stackrc
+            {{ overcloud_host_list }} | grep compute | wc -l
+          register: compute_count
+
+        - name: set fact for compute count
+          set_fact:
+            compute_count: "{{ compute_count.stdout|int + new_nodes|length }}"
+
+        - name: update count in baremetal_deployment.yaml with added computes
+          replace:
+            path: /home/stack/virt/network/baremetal_deployment.yaml
+            after: "- name: Compute"
+            before: "  hostname_format: compute-%index%"
+            regexp: '.*count.*'
+            replace: "  count: {{ compute_count }}"
+          when: osp_release|int >= 17
+
+        - name: update nodes_data.yaml
+          lineinfile:
+            regexp: ".*ComputeCount.*"
+            line: "  ComputeCount: {{ compute_count }}"
+            path: /home/stack/virt/nodes_data.yaml
+          when: osp_release|int >= 17
+
+        - name: update compute count in nodes_data.yaml
+          lineinfile:
+            regexp: ".*ComputeCount.*"
+            line: "    ComputeCount: {{ compute_count }}"
+            path: /home/stack/virt/nodes_data.yaml
+          when: osp_release|int < 17 
+      when: composable_roles == false
+
+    - name: provision nodes
+      shell: | 
+        source /home/stack/stackrc
+        set -o pipefail
+        openstack overcloud node provision \
+        --network-config --stack overcloud \
+        -o /home/stack/templates/overcloud-baremetal-deployed.yaml /home/stack/virt/network/baremetal_deployment.yaml -y | \
+        tee -a /home/stack/overcloud_provision_nodes.log
+      when: osp_release|int >= 17
+
+    - name: overcloud deploy
+      shell: |
+        source /home/stack/stackrc
+        set -o pipefail
+        ./overcloud_deploy.sh &> /home/stack/overcloud_install.log
+      args:
+        chdir: /home/stack/

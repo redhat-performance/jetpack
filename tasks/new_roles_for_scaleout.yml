@@ -1,0 +1,11 @@
+- name: check for existence of a role
+  lineinfile:
+    line: "- name: Compute{{ check_type }}"
+    path: /home/stack/roles_data.yaml
+  check_mode: true
+  register: line_check
+
+- name: write entry for new role
+  shell: |
+    cat /home/stack/roles/Compute{{ check_type }}.yaml >> /home/stack/roles_data.yaml
+  when: line_check.changed

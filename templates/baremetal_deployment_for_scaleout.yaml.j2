@@ -1,0 +1,14 @@
+- name: Compute{{ node_type }}
+  count: {{ total_machine_count[node_type] }}
+  hostname_format: compute{{ node_type }}-%index%
+  defaults:
+    profile: baremetal{{ node_type }}
+    network_config:
+      template: /home/stack/virt/network/vlans/compute_{{ node_type }}.j2
+    networks:
+    - network: ctlplane
+      vif: true
+    - network: storage
+    - network: internal_api
+    - network: tenant
+    - network: external

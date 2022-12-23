@@ -1,0 +1,37 @@
+- name: get existing compute count
+  shell: |
+    source /home/stack/stackrc
+    {{ overcloud_host_list }} | grep compute | grep {{ node_type }} | wc -l
+  register: compute_count
+
+- name: set fact for compute count
+  set_fact:
+    compute_count: "{{ compute_count.stdout|int + total_machine_count[node_type]|int }}"
+
+- block:
+    - name: update compute count
+      lineinfile:
+        regexp: ".*Compute{{ node_type }}Count.*"
+        line: "  Compute{{ node_type }}Count: {{ compute_count }}"
+        path: /home/stack/virt/nodes_data.yaml
+
+    - name: update compute flavor
+      lineinfile:
+        regexp: ".*OvercloudCompute{{ node_type }}Flavor.*"
+        line: "  OvercloudCompute{{ node_type }}Flavor: baremetal{{ node_type }}"
+        path: /home/stack/virt/nodes_data.yaml
+  when: osp_release|int >= 17
+
+- block:
+    - name: update compute count
+      lineinfile:
+        regexp: ".*Compute{{ node_type }}Count.*"
+        line: "    Compute{{ node_type }}Count: {{ compute_count }}"
+        path: /home/stack/virt/nodes_data.yaml
+
+    - name: update compute flavor
+      lineinfile:
+        regexp: ".*OvercloudCompute{{ node_type }}Flavor.*"
+        line: "    OvercloudCompute{{ node_type }}Flavor: baremetal{{ node_type }}"
+        path: /home/stack/virt/nodes_data.yaml
+  when: osp_release|int < 17
