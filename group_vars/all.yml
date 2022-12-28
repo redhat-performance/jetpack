@@ -277,21 +277,24 @@ ceph_machine_type: ''
 ceph_enabled: false
 osd_scenario: lvm
 osd_objectstore: bluestore
-#Note:By default storage_node_disks can be detected automatically
-#using introspection data
-#storage_node_disks: ['/dev/nvme0n1']
+#Note:By default storage_node_disks can be detected automatically using
+#introspection data when ceph machine type count is equal to total
+#no.of nodes of that machine type. In case of 1029u or if user wants
+#to specify the storage_node_disks. The first element is always root
+#disk partition followed by the storage_node_disks user wants to use.
+#storage_node_disks: ['/dev/sda', '/dev/<storage_node_disk>']
 #Note: By default the number of osds_per_device is set to 1. It can
 #be changed to another value through this parameter for OSP17.
 osds_per_device: 1
 #osd_pool_default_pg_num:
 #osd_pool_default_pgp_num:
+manila_enabled: false
 
 #Default value for introspection timeout is 2400s, but user can configure
 #the timeout for large cloud
 #introspection_timeout:
 #overcloud_timeout:
 foreman_url: https://foreman.example.com
-manila_enabled: false
 
 # DVR is enabled by default for osp_releases >= 16, set this to false for non-dvr based deployments.
 # This variable has no affect on osp_releases < 16, as jetpack doesn't support dvr for osp_releases < 16 as of now.
