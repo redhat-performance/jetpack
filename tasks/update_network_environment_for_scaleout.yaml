@@ -1,4 +1,5 @@
 - name: add nic config path for {{ node_type }}
   lineinfile:
-     regexp: ".*OS::TripleO::Compute{{ node_type }}::Net::SoftwareConfig:.*"
-     line: "    OS::TripleO::Compute{{ node_type }}::Net::SoftwareConfig: vlans//compute_{{ node_type }}.yaml"
+    regexp: ".*OS::TripleO::Compute{{ node_type }}::Net::SoftwareConfig:.*"
+    line: "    OS::TripleO::Compute{{ node_type }}::Net::SoftwareConfig: vlans//compute_{{ node_type }}.yaml"
+    path: /home/stack/virt/network/network-environment.yaml

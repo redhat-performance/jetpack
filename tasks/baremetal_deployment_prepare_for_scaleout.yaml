@@ -26,6 +26,7 @@
     - name: set fact for compute count
       set_fact:
         compute_count: "{{ compute_count.stdout|int + total_machine_count[node_type]|int }}" 
+
     - name: update counts in baremetal_deployment.yaml with added computes
       replace:
         path: /home/stack/virt/network/baremetal_deployment.yaml

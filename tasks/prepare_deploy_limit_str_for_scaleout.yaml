@@ -1,0 +1,12 @@
+- name: get existing compute count
+  shell: |
+    source /home/stack/stackrc
+    {{ overcloud_host_list }} | grep compute | grep {{ node_type }} | wc -l
+  register: compute_count
+
+- name: add hosts to deploy_limit_str of type {{ node_type }}
+  set_fact:
+    deploy_limit_str: "{{ deploy_limit_str + append_item }}"
+  vars:
+    append_item: "{{ (deploy_limit_str|length == 0) | ternary(item, (',' + item)) }}"
+  with_sequence: "start={{ compute_count.stdout|int }} end={{ compute_count.stdout|int + total_machine_count[node_type]|int - 1 }} format=compute{{ node_type }}-%1u"

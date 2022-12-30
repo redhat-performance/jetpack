@@ -70,7 +70,7 @@
 
     - name: set machine count
       set_fact:
-       total_machine_count: {}
+        total_machine_count: {}
 
     - name: set machine count for each machine type
       set_fact:
@@ -205,6 +205,10 @@
       include_tasks: tasks/set_boot_mode.yml
       when: osp_release|int >= 17 or composable_roles
 
+    - name: set fact for defining list of hosts for which the deployment should be limited
+      set_fact:
+        deploy_limit_str: ""
+
     - block:
         - name: copy roles definition for new machine types
           command:  |
@@ -253,6 +257,12 @@
             node_type: "{{ item }}"
           loop: "{{ new_machine_types | default([]) }}"
           when: osp_release|int < 17
+
+        - name: prepare deploy_limit_str
+          include_tasks: tasks/prepare_deploy_limit_str_for_scaleout.yaml
+          vars:
+            node_type: "{{ item }}"
+          loop: "{{ total_machine_count.keys()|list }}"
       when: composable_roles == true
 
     - block:
@@ -261,6 +271,13 @@
             source /home/stack/stackrc
             {{ overcloud_host_list }} | grep compute | wc -l
           register: compute_count
+
+        - name: prepare deploy_limit_str
+          set_fact:
+            deploy_limit_str: "{{ deploy_limit_str + append_item }}"
+          vars:
+            append_item: "{{ (deploy_limit_str|length == 0) | ternary(item, (',' + item)) }}"
+          with_sequence: "start={{ compute_count.stdout|int }} end={{ compute_count.stdout|int + new_nodes|length - 1 }} format=compute-%1u"
 
         - name: set fact for compute count
           set_fact:
@@ -300,10 +317,26 @@
         tee -a /home/stack/overcloud_provision_nodes.log
       when: osp_release|int >= 17
 
+    - block:
+        - name: format deploy_limit_str
+          set_fact:
+            deploy_limit_str: "  --limit \"{{ deploy_limit_str }}\" \\"
+
+        - name: copy overcloud_deploy.sh
+          shell: |
+            cp /home/stack/overcloud_deploy.sh /home/stack/overcloud_deploy_with_limit.sh
+
+        - name: update overcloud deploy script
+          lineinfile:
+            regexp: ".*--limit.*"
+            line: "{{ deploy_limit_str }}"
+            insertafter: ".*openstack overcloud deploy.*"
+            path: /home/stack/overcloud_deploy_with_limit.sh
+
     - name: overcloud deploy
       shell: |
         source /home/stack/stackrc
         set -o pipefail
-        ./overcloud_deploy.sh &> /home/stack/overcloud_install.log
+        ./overcloud_deploy_with_limit.sh &> /home/stack/overcloud_install.log
       args:
         chdir: /home/stack/
