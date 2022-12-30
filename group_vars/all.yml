@@ -18,6 +18,8 @@ controller_count: 3
 #compute_count: 1
 ceph_node_count: 0
 set_boot_order: true
+#specify undercloud host when using scaleout.yml
+#undercloud_hostname:
 alias:
 #lab specific vars
   lab_url: "http://quads.alias.bos.scalelab.redhat.com"

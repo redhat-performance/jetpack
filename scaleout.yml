@@ -1,22 +1,13 @@
 ---
 - hosts: localhost
   tasks:
-    - name: load instackenv
-      include_tasks: tasks/load_instackenv.yml
-
-    - name: get intrepeter
-      include_tasks: tasks/get_interpreter.yml
-      vars:
-        hostname: "{{ undercloud_hostname }}"
-        user: "stack"
-
+    #Make sure public key of ansible controller node is copied on to undercloud host
     - name: add undercloud
       add_host:
         name: "undercloud"
         ansible_host: "{{ undercloud_hostname }}"
         ansible_user: "stack"
-        ansible_python_interpreter: "{{ python_interpreter }}"
-
+        ansible_connection: "ssh"
 
 - hosts: undercloud
   vars:
