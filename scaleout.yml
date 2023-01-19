@@ -8,6 +8,7 @@
         ansible_host: "{{ undercloud_hostname }}"
         ansible_user: "stack"
         ansible_connection: "ssh"
+        ansible_ssh_pass: "{{ undercloud_password }}"
 
 - hosts: undercloud
   vars:
@@ -59,6 +60,24 @@
         lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
       when: lab_name in ['scale', 'alias']
 
+    - block:
+        - name: clear existing dell-hosts file
+          shell: echo "" > {{ playbook_dir }}/badfish/dell-hosts
+
+        - name: prepare dell hosts for badfish
+          shell: echo "mgmt-{{ item[1].stdout }}" >> {{ playbook_dir }}/badfish/dell-hosts
+          when: vendors is defined and item[0] == "dell"
+          with_together:
+            - "{{ vendors }}"
+            - "{{ host_list.results }}"
+
+        - name: set boot order to director
+          include_tasks: tasks/set_boot_order_director.yml
+          vars:
+            chassis_password:  "{{ stack_data.nodes[0].pm_password }}"
+      when: lab_name in ['scale', 'alias'] and set_boot_order == true
+      delegate_to: localhost
+
     - name: set machine count
       set_fact:
         total_machine_count: {}
@@ -104,6 +123,17 @@
 
     - name: delete instrospect failed nodes
       include_tasks: tasks/delete_introspection_failed_nodes.yml
+
+    # when automated cleaning is enabled, this check is needed
+    - name: wait for nodes to reach available state
+      shell: |
+        source /home/stack/stackrc
+        openstack baremetal node show {{ item }} -f value -c provision_state
+      register: node_state
+      until: node_state.stdout == "available"
+      retries: 15
+      delay: 120
+      loop: "{{ manageable_nodes.stdout_lines | default([]) }}"
 
       # keep track of count for each machine type after
       # deleting introspect failed nodes.
