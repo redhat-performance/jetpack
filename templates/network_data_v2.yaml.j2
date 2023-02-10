@@ -56,7 +56,9 @@
       gateway_ip: {{ external_interface_default_route }}
       ip_subnet: {{ external_net_cidr }}
       physical_network: external
+{% if external_network_vlan_id is defined %}
       vlan: {{ external_network_vlan_id }}
+{% endif %}
 
 {% if manila_enabled %}
 - name: StorageNFS
