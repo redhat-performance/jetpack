@@ -307,3 +307,6 @@ idm_host_fqdn:
 ipa_domain: redhat.local
 ipa_realm: REDHAT.LOCAL
 ipa_password: redhatidm
+
+# Barbican has been tested on OSP 17
+barbican_enabled: false
