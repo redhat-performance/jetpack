@@ -80,7 +80,7 @@ scale:
         rhel9_interfaces: [eno1, eno2, eno3, eno4]
       r730xd:
         rhel7_interfaces: [em1, em2, p4p1, p4p2]
-        rhel8_interfaces: []
+        rhel8_interfaces: [eno1, eno2, enp130s0f0, enp130s0f1]
       r930:
         rhel7_interfaces: [em1, em2, p1p1, p1p2]
         rhel8_interfaces: []
@@ -94,6 +94,9 @@ scale:
         rhel7_interfaces: []
         rhel8_interfaces: [ens1f0, ens1f1, ens2f0, ens2f1]
         rhel9_interfaces: [ens1f0, ens1f1, ens2f0np0, ens2f1np1]
+
+      fc640:
+        rhel8_interfaces: [eno2, ens2f0, ens2f1]
 
 # Other lab machines have to define their interfaces through below
 # 'interfaces' variable. prepare_nic_configs.yml will use that
