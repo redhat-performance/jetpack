@@ -27,6 +27,10 @@ alias:
         rhel7_interfaces: [em2, em1, p7p1, p7p2]
         rhel8_interfaces: [eno2, eno1, ens7f0, ens7f1]
         rhel9_interfaces: [eno2, eno1, ens7f0, ens7f1]
+      r750:
+        rhel7_interfaces: []
+        rhel8_interfaces: []
+        rhel9_interfaces: [ens3f1, ens3f0, ens6f0, ens6f1]
     supermicro:
       6029r:
         rhel7_interfaces: [enp95s0f1, enp95s0f0, enp94s0f0, enp94s0f1]
