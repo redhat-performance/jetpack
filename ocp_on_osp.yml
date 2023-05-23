@@ -8,13 +8,14 @@
     - name: Add undercloud host to inventory for each cluster to be created
       add_host:
         name: "undercloud-{{ item }}"
-        group: underclouds
+        group: undercloud_host
         ansible_host: "{{ undercloud_host }}"
         ansible_connection: "ssh"
-        ansible_user: "stack"
+        ansible_user: "{{ undercloud_user }}"
+        ansible_ssh_pass: "{{ undercloud_password }}"
       with_sequence: "start=1 count={{ ocp_cluster_count }} format=%04u"
 
-- hosts: underclouds
+- hosts: undercloud_host
   gather_facts: true
   vars_files:
     - vars/shift_stack_vars.yaml

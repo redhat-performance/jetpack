@@ -1,13 +1,21 @@
-ocp_release: 4.10.18
+ocp_release: 4.12.10
 ocp_dev_preview: false
 install_client: true
 ocp_base_domain: rdu2.scalelab.redhat.com
+
+# cluster_name prefix is useful for uniquely identifying installed clusters.
+# Default prefix is "rhocp". Change it as per ur convinience
+# length of the prefix should not exceed more than 6 characters
+cluster_name_prefix: "rhocp"
 
 # set this variable to desired count to install multiple openshift clusters
 ocp_cluster_count: 1
 
 # pass ip/hostname used for sshing into the undercloud
-undercloud_host:  
+undercloud_host:
+undercloud_user: stack
+undercloud_password:
+
 public_net_name: public
 
 # by enabling random_ip, the ocp will choose randomly availble fips
