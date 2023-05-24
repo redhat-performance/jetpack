@@ -279,15 +279,28 @@
         set_fact:
           oc_extra_templates: "--overcloud-templates none"
 
-      - name: set extra template facts
-        set_fact:
-          oc_extra_templates: "--overcloud-templates docker-ceph-mds,manila-cephganesha"
-        when: manila_enabled
+      - block:
+          - name: copy extra.yml to .infrared dir, where infrared usually refers to for overcloud templates
+            copy:
+              src: "{{ ansible_user_dir }}/infrared/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+              dest: "{{ ansible_user_dir }}/.infrared/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
+            delegate_to: localhost
+
+          - name: set extra template facts
+            set_fact:
+              oc_extra_templates: "--overcloud-templates docker-ceph-mds,manila-cephganesha,extra"
+            when: manila_enabled
+
+          - name: set extra template facts
+            set_fact:
+              oc_extra_templates: "--overcloud-templates extra"
+            when: not manila_enabled
+        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults.keys()|length>0 )
 
       - name: set extra template facts
         set_fact:
-          oc_extra_templates: "--overcloud-templates {{ infrared_dir }}/plugins/tripleo-overcloud/vars/overcloud/templates/extra.yml"
-        when: ( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults.keys()|length>0 ) and manila_enabled != true
+          oc_extra_templates: "--overcloud-templates docker-ceph-mds,manila-cephganesha"
+        when: manila_enabled and not (( extra_templates is defined and extra_templates|length>0 ) or ( parameter_defaults is defined and parameter_defaults.keys()|length>0 ))
 
       - name: set heat config facts
         set_fact:
