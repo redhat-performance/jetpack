@@ -61,21 +61,21 @@
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"
       set_fact:
-        hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'generic-rhel' --overwrite 1"
+        hammer_build_cmd: "hammer -u {{ cloud_name }} --verify-ssl false -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'generic-rhel' --overwrite 1"
       when: lab_name == "scale" and osp_release|int < 17
 
     - name: set hammer build command (OSP17)
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS Local', 'RHEL Local') }}"
       set_fact:
-        hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'RHEL9-ONLY' --overwrite 1"
+        hammer_build_cmd: "hammer -u {{ cloud_name }} --verify-ssl false -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'RHEL9-ONLY' --overwrite 1"
       when: lab_name == "scale"  and osp_release|int == 17
 
     - name: set hammer build params
       vars:
         medium: "{{ ('CentOS' in os_install) | ternary('CentOS mirror', 'rhel_local') }}"
       set_fact:
-        hammer_build_cmd: "hammer -u {{ cloud_name }} -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'ALIAS-Partition' --overwrite 1"
+        hammer_build_cmd: "hammer -u {{ cloud_name }} --verify-ssl false -p {{ chassis_password }}  host update --name {{ hypervisor_host }} --build 1 --operatingsystem '{{ os_install }}' --medium '{{ medium }}' --partition-table 'ALIAS-Partition' --overwrite 1"
       when: lab_name == "alias"
 
     - name: update host to install new os
