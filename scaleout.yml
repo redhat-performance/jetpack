@@ -341,7 +341,7 @@
     - block:
         - name: format deploy_limit_str
           set_fact:
-            deploy_limit_str: "  --limit \"{{ deploy_limit_str }}\" \\"
+            deploy_limit_str: "  --limit \"Undercloud,Controller,{{ deploy_limit_str }}\" \\"
 
         - name: copy overcloud_deploy.sh
           shell: |
