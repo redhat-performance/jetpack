@@ -1,0 +1,149 @@
+- block:
+    - name: set fact rhel8_interfaces
+      set_fact:
+        rhel8_interfaces: "{{ rhel8_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel8_interfaces_f04', 'rhel8_interfaces') ] }}"
+      with_together:
+        - "{{ host_list.results }}"
+        - "{{ machine_types }}"
+
+    - name: set fact rhel7_interfaces
+      set_fact:
+        rhel7_interfaces: "{{ rhel7_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel7_interfaces_f04', 'rhel7_interfaces') ] }}"
+      with_together:
+        - "{{ host_list.results }}"
+        - "{{ machine_types }}"
+
+    - name: set fact for iface_rhel_version
+      set_fact:
+        iface_rhel_version: "{{ iface_rhel_version|default([]) + [(osp_release|int > 14)| ternary( item.0, item.1)] }}"
+      with_together:
+        - "{{ rhel8_interfaces }}"
+        - "{{ rhel7_interfaces }}"
+
+    - name: set machine_ifaces
+      set_fact:
+        machine_ifaces: "{{ machine_ifaces|default({})  | combine({ item[1]: lab_vars['machine_types'][item[0]][item[1]][item[2]] }) }}"
+      with_together:
+        - "{{ vendors }}"
+        - "{{ machine_types }}"
+        - "{{ iface_rhel_version }}"
+  vars:
+    lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+  when: lab_name in ['scale', 'alias'] and osp_release|int < 17
+
+- block:
+    - name: set fact for rhel 9 interfaces
+      set_fact:
+        rhel9_interfaces: "{{ rhel9_interfaces|default([]) + [ (item.1 == 'r640' and item.0.stdout.split('-')[0] == 'f04') | ternary('rhel9_interfaces_f04', 'rhel9_interfaces') ] }}"
+      with_together:
+        - "{{ host_list.results }}"
+        - "{{ machine_types }}"
+
+    - name: set machine_ifaces
+      set_fact:
+        machine_ifaces: "{{ machine_ifaces|default({})  | combine({ item[1]: lab_vars['machine_types'][item[0]][item[1]][item[2]] }) }}"
+      with_together:
+        - "{{ vendors }}"
+        - "{{ machine_types }}"
+        - "{{ rhel9_interfaces }}"
+  vars:
+    lab_vars: "{{ (lab_name == 'scale') | ternary(scale, alias) }}"
+  when: lab_name in ['scale', 'alias'] and osp_release|int >= 17
+
+- name: set interfaces
+  set_fact:
+    ifaces: "{{ ifaces|default([]) + [ machine_ifaces[item]] }}"
+  with_items:
+    - "{{ machine_types|unique }}"
+  when: lab_name in ['scale', 'alias']
+
+- name: set control interfaces for custom roles
+  set_fact:
+    ctlplane_interfaces: "{{  ctlplane_interfaces|default([]) +[(item|length > 1)| ternary(item[1], item[0])]  }}"
+  with_items:
+    - "{{ ifaces }}"
+
+- name: set external interface for custom roles
+  set_fact:
+    external_interfaces: "{{ external_interfaces|default([]) + [(item|length > 3) | ternary(item[3], item[1] )] }}"
+  when: item|length > 1
+  with_items:
+    - "{{ ifaces }}"
+
+- name: set external interface for custom roles
+  set_fact:
+    external_interfaces: "{{ external_interfaces|default([]) + [(item|length > 3) | ternary(item[3], item[0] )] }}"
+  when: item|length == 1
+  with_items:
+    - "{{ ifaces }}"
+
+- name: set tenant interface for custom roles
+  set_fact:
+    tenant_interfaces: "{{ tenant_interfaces|default([]) + [item[2]] }}"
+  when: item|length > 2
+  with_items:
+    - "{{ ifaces }}"
+
+- name: set isolated interface for custom roles
+  set_fact:
+    isolated_interfaces: "{{ isolated_interfaces|default([])+ [item[0]] }}"
+  when: item|length > 1
+  with_items:
+    - "{{ ifaces }}"
+
+- name: set storage interface for custom roles
+  set_fact:
+    storage_interfaces: "{{ isolated_interfaces }}"
+  when: ceph_enabled and isolated_interfaces is defined
+
+- name: set dedicated vlan based provider network
+  set_fact:
+    openshift_vlan_interfaces: "{{ openshift_vlan_interfaces|default([]) + [item[2]] }}"
+  when: item|length > 2
+  with_items:
+    - "{{ ifaces }}"
+
+- name: remove duplicates from machine types
+  set_fact:
+    machine_types: "{{ machine_types | unique }}"
+
+- name: prepare compute.yaml.j2
+  vars:
+    ctlplane_interface: "{{ item.1 }}"
+    external_interface: "{{ item.2 }}"
+    tenant_interface: "{{ item.3 }}"
+    isolated_interface: "{{ item.4 }}"
+    openshift_vlan_interface: "{{ item.5 }}"
+  template:
+    src: "{{ (osp_release|int > 10) | ternary('compute.yaml.j2', false) }}"
+    dest: "{{ nic_config_path }}/compute_{{ item.0 }}.yaml.j2"
+    force: yes
+  with_together:
+   - "{{ machine_types }}"
+   - "{{ ctlplane_interfaces }}"
+   - "{{ external_interfaces }}"
+   - "{{ tenant_interfaces }}"
+   - "{{ isolated_interfaces }}"
+   - "{{ openshift_vlan_interfaces }}"
+  when: osp_release|int < 17
+
+- name: prepare compute.j2.j2
+  vars:
+    ctlplane_interface: "{{ item.1 }}"
+    external_interface: "{{ item.2 }}"
+    tenant_interface: "{{ item.3 }}"
+    isolated_interface: "{{ item.4 }}"
+    openshift_vlan_interface: "{{ item.5 }}"
+  template:
+    src: compute.j2.j2
+    dest: "~/virt/network/vlans//compute_{{ item.0 }}.j2"
+    force: yes
+  delegate_to: undercloud
+  with_together:
+    - "{{ machine_types }}"
+    - "{{ ctlplane_interfaces }}"
+    - "{{ external_interfaces }}"
+    - "{{ tenant_interfaces }}"
+    - "{{ isolated_interfaces }}"
+    - "{{ openshift_vlan_interfaces }}"
+  when: osp_release|int >= 17

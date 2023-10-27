@@ -1,15 +1,9 @@
-- name: get node UUIDs
-  shell: |
-    source ~/stackrc
-    openstack baremetal node list --format value -c UUID
-  register: node_uuid
-
 - name: get the node fqdn list
   shell: |
     source ~/stackrc
     openstack baremetal node show {{ item }} --fields driver_info -f json | jq '.driver_info.ipmi_address'
   register: node_fqdn
-  loop: "{{ node_uuid.stdout_lines|flatten(levels=1) }}"
+  loop: "{{ total_nodes.stdout_lines|flatten(levels=1) }}"
 
 - name: populate uuid type map
   set_fact:
@@ -19,7 +13,7 @@
     type1: "{{ (lab_name == 'scale') | ternary(item.1.stdout.split('.')[0].split('-')[4], item.1.stdout.split('.')[0].split('-')[3]) }}"
     type: "{{ (type1 != '1029u') | ternary(type1, (item.1.stdout.replace('mgmt-', '').replace('\"', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp')) }}"
   with_together:
-    - "{{ node_uuid.stdout_lines }}"
+    - "{{ total_nodes.stdout_lines }}"
     - "{{ node_fqdn.results }}"
 
 - name: setting profile for node type (Composable Roles)

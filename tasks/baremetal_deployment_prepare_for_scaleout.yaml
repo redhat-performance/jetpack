@@ -1,0 +1,38 @@
+- name: check for existence of a role
+  lineinfile:
+    line: "- name: Compute{{ node_type }}"
+    path: /home/stack/virt/network/baremetal_deployment.yaml
+  check_mode: true
+  register: line_check
+
+- block:
+    - name: prepare baremetal_deployment_for_scaleout.yaml
+      template:
+        src: baremetal_deployment_for_scaleout.yaml.j2
+        dest: /home/stack/baremetal_deployment_for_scaleout.yaml
+
+    - name: write entry for new role
+      shell: |
+        cat /home/stack/baremetal_deployment_for_scaleout.yaml >> /home/stack/virt/network/baremetal_deployment.yaml
+  when: line_check.changed
+
+- block:
+    - name: get existing compute count
+      shell: |
+        source /home/stack/stackrc
+        {{ overcloud_host_list }} | grep compute | grep {{ node_type }} | wc -l
+      register: compute_count
+
+    - name: set fact for compute count
+      set_fact:
+        compute_count: "{{ compute_count.stdout|int + total_machine_count[node_type]|int }}" 
+
+    - name: update counts in baremetal_deployment.yaml with added computes
+      replace:
+        path: /home/stack/virt/network/baremetal_deployment.yaml
+        after: "- name: Compute{{ node_type }}"
+        before: "  hostname_format: compute{{ node_type }}-%index%"
+        regexp: '.*count.*'
+        replace: "  count: {{ compute_count }}"       
+  when: not line_check.changed
+  
