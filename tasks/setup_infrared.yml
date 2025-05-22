@@ -14,7 +14,7 @@
 
 - name: infrared setup
   shell: |
-      virtualenv --python=python3 .venv && source .venv/bin/activate
+      python3 -m venv .venv && . .venv/bin/activate
       pip install --upgrade pip
       pip install --upgrade setuptools
       pip install .
@@ -24,7 +24,7 @@
   changed_when: false
 
 - name: add infrared plugins
-  shell: source .venv/bin/activate && infrared plugin add all
+  shell: . .venv/bin/activate && infrared plugin add all
   args:
     chdir: "{{ infrared_dir }}"
   register: plugin_add
@@ -35,7 +35,7 @@
 
 - name: Create infrared workspace
   shell: |
-    source .venv/bin/activate
+    . .venv/bin/activate
     infrared workspace create {{ workspace_name }}
     infrared workspace checkout {{ workspace_name }}
   args:

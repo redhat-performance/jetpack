@@ -18,18 +18,18 @@
           sed -i 's/dns_server: 8.8.8.8/dns_server: {{ dns_server.stdout }}/g' {{ browbeat_dir }}/ansible/install/group_vars/all.yml
     - name: generate hosts file
       shell: |
-          source /home/stack/stackrc
+          . /home/stack/stackrc
           ./generate_tripleo_inventory.sh -l
       args:
           chdir: "{{ browbeat_dir }}/ansible"
     - name: install browbeat
       shell: |
-          source /home/stack/.bash_profile
+          . /home/stack/.bash_profile
           ansible-playbook -i hosts.yml install/browbeat.yml
       args:
           chdir: "{{ browbeat_dir }}/ansible"
     - name: Activate virtualenv to run tests
       shell: |
-           source .browbeat-venv/bin/activate
+           . .browbeat-venv/bin/activate
       args:
           chdir: "{{ browbeat_dir }}"

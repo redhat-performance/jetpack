@@ -83,7 +83,7 @@
         when: osp_release|int < 17
       - name: run tripleo-undercloud for osp17
         shell: |
-          source {{ infrared_dir }}/.venv/bin/activate
+          . {{ infrared_dir }}/.venv/bin/activate
           infrared tripleo-undercloud -vv \
           --version {{ osp_release }} \
           --build {{ osp_puddle }} \
@@ -98,7 +98,7 @@
 
       - name: Run the undercloud-ipa-install.yml playbook
         shell: |
-          source /home/stack/.bash_profile
+          . /home/stack/.bash_profile
           ansible-playbook --ssh-extra-args "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" /usr/share/ansible/tripleo-playbooks/undercloud-ipa-install.yaml
         when: tls_everywhere == true
         delegate_to: undercloud

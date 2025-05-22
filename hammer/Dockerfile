@@ -2,6 +2,9 @@ FROM quay.io/centos/centos:stream8
 
 ARG foreman_url=https://foreman.example.com
 
+RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-*
+RUN sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*
+
 RUN dnf install -y epel-release \
         python3
 
