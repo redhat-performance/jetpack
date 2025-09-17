@@ -31,7 +31,7 @@
 
           - name: set machine type for virtual undercloud
             set_fact:
-              machine_type: "{{ (type != '1029u') | ternary(type, (instackenv_content.nodes[0].pm_addr.replace('mgmt-', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp') }}"
+              machine_type: "{{ (type != '1029u') | ternary(type, (instackenv_content.nodes[0].pm_addr.replace('mgmt-', '') in tn10rt) | ternary('1029utn10rt', '1029utrtp')) }}"
             vars:
               type: "{{ (lab_name == 'scale') | ternary(instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[4], instackenv_content.nodes[0].pm_addr.split('.')[0].split('-')[3]) }}"
             when: virtual_uc
