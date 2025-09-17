@@ -14,7 +14,8 @@ ocp_cluster_count: 1
 # pass ip/hostname used for sshing into the undercloud
 undercloud_host:
 undercloud_user: stack
-undercloud_password:
+undercloud_ssh_key:
+undercloud_python_interpreter: /usr/libexec/platform-python
 
 public_net_name: public
 
