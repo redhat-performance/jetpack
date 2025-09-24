@@ -14,7 +14,7 @@
       - block:
           - name: run tripleo-overcloud introspection
             shell: |
-              source .venv/bin/activate
+              . .venv/bin/activate
               infrared tripleo-overcloud -vvv --version {{ osp_release }} {{ custom_instackenv | default('') }} --deployment-files {{ nic_configs }} --introspect yes {{ hybrid_params | default('') }} > {{ log_directory }}/overcloud_introspect.log 2>&1
             args:
               chdir: "{{ infrared_dir }}"
@@ -27,7 +27,7 @@
       - block:
           - name: run tripleo-overcloud introspection
             shell: |
-              source .venv/bin/activate
+              . .venv/bin/activate
               infrared tripleo-overcloud -vvv --version {{ osp_release }} {{ custom_instackenv | default('') }} --deployment-files {{ nic_configs }} --introspect yes {{ hybrid_params | default('') }} > {{ log_directory }}/overcloud_introspect.log 2>&1
             args:
               chdir: "{{ infrared_dir }}"

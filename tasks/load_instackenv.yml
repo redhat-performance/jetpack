@@ -10,7 +10,7 @@
 
 - name: Download instackenv.json
   get_url:
-      url: "{{ alias.lab_url }}/cloud/{{ cloud_name }}_instackenv.json"
+      url: "{{ alias.lab_url }}/instack/{{ cloud_name }}_instackenv.json"
       dest: "{{ instackenv_file }}"
       mode: '0644'
       force: yes
@@ -18,10 +18,11 @@
 
 - name: Download instackenv.json
   get_url:
-      url: "{{ scale.lab_url }}/cloud/{{ cloud_name }}_instackenv.json"
+      url: "{{ scale.lab_url }}/instack/{{ cloud_name }}_instackenv.json"
       dest: "{{ instackenv_file }}"
       mode: '0644'
       force: yes
+      validate_certs: no
   when: st.stat.exists == False and lab_name == "scale"
 
 - name: remove the name field from instackenv

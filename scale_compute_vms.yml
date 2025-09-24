@@ -109,7 +109,7 @@
 
     - name: run virsh for multi hypervisor
       shell: |
-            source .venv/bin/activate
+            . .venv/bin/activate
             infrared virsh {{ host_address }} --host-key {{ ansible_ssh_key }} --topology-nodes compute:{{ compute_count|default(1) }} --topology-network {{ topology_network_path }} --host-memory-overcommit True > {{ log_directory }}/virsh.log 2>&1
       args:
         chdir: "{{ infrared_dir }}"
